@@ -93,14 +93,15 @@ class Tower(Installation):
 
         # The calculated moving parts
         self.resources = {
-            self.fuelname: TowerResourceBuffer(self, delta, None, 0),
+            self.fuelname: TowerResourceBuffer(
+                self, self.base_fuel_rate, None, 0),
             'Strontium': TowerResourceBuffer(self, 1, None, 0, freeze=True),
+            'Charter': TowerResourceBuffer(self, 1, None, 0),
         }
 
+        self.required = [self.fuelname]
         if self.empire:
-            self.resources.update({
-                'charter': TowerResourceBuffer(self, delta, None, 0),
-            })
+            self.required.append('charter')
 
     @property
     def fuel_rate(self):
