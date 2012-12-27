@@ -1,4 +1,5 @@
 import sys
+from math import ceil
 
 from mtj.evedb.structure import ControlTower
 from mtj.evedb.map import Map
@@ -12,18 +13,6 @@ from mtj.eve.tracker.evelink import Helper
 pos_info = ControlTower()
 eve_map = Map()
 evelink_helper = Helper()
-
-
-class SovChangeEvent(Event):
-    """
-    Update fuel consumption based on the new sovereignty state.
-    """
-
-
-class Reinforcement(Event):
-    """
-    Initiate strontium consumption and 
-    """
 
 
 class Tower(Installation):
@@ -91,9 +80,14 @@ class Tower(Installation):
 
         # Determine fuel type from systemID + factionID
         faction_id = sov_info['faction_id']
+        security = eve_map.getSolarSystem(self.locationID)['security']
 
         for fuel in all_fuels:
             if fuel['factionID'] in (faction_id, None):
+                if fuel['factionID'] and security < fuel['minSecurityLevel']:
+                    # Lowsec don't need charters.
+                    continue
+
                 self.setResourceBuffer(
                     bufferGroupName='fuels',
                     bufferKey=fuel['resourceTypeID'],
@@ -138,6 +132,11 @@ class Tower(Installation):
             value, resourceTypeName)
         bufferGroup[bufferKey] = res_buffer
 
+    def updateResourceBuffer(self, bufferGroupName, bufferKey, timestamp, 
+            value):
+
+        pass
+
     def updateFuels(self):
         pass
         # Determine if discount changed by
@@ -169,10 +168,45 @@ class Tower(Installation):
                 continue
 
             calculated = fuel_buffer.getCurrent(timestamp)
-            if verifier != calculated:
+            if verifier != calculated.value:
                 mismatches.append(fuel_id)
 
         return mismatches
+
+    def updateResources(self, values, timestamp):
+        mismatches = self.verifyResources(values, timestamp)
+        all_fuels = {v['resourceTypeID']: v for v in
+            pos_info.getControlTowerResource(self.typeID)}
+        sov_info = evelink_helper.sov[self.locationID]
+
+        for resourceTypeID, value in values.iteritems():
+            if resourceTypeID not in mismatches:
+                continue
+
+            fuel = all_fuels.get(resourceTypeID)
+            # base delta
+            delta = fuel['quantity']
+
+            # Sovereignty discounts is also done here.
+
+            # As the API does not provide the current development index
+            # of the system, so if the discount is dependent on this
+            # index, it will be impossible to reliably determine whether
+            # the discount is indeed applied.
+
+            if sov_info['alliance_id'] == self.allianceID:
+                # TODO determine whether it's round or ceil.
+                delta = int(ceil(delta * 0.75))
+
+            self.setResourceBuffer(
+                bufferGroupName='fuels',
+                bufferKey=resourceTypeID,
+                delta=delta,
+                timestamp=timestamp,
+                purpose=fuel['purpose'],
+                value=value,
+                resourceTypeName=fuel['typeName'],
+            )
 
     def update(self):
         if not self.fuel:
@@ -189,14 +223,6 @@ class Tower(Installation):
         # mismatch, tower size mismatch, sov status mismatch there 
         # should be a way to override the delta until the condition
         # triggering this is corrected.
-
-    def updateResources(self):
-        raise NotImplementedError()
-
-        # loop through all resources
-        # while doing that, check that the states are consistent with
-        # what the tower is representing
-        # commit the states if they differ.
 
 
 class TowerResourceBuffer(TimedBuffer):

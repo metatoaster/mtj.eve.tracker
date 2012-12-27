@@ -64,26 +64,41 @@ derived from the API, but they can be manually added.
 
 To set fuel levels, first verify that the levels needs updating::
 
-    >>> fuels = {
+    >>> fuel1 = {
     ...     4247: 12345,
     ...     16275: 7200,
     ... }
-    >>> sorted(tower1.verifyResources(fuels, 1338508800))
+    >>> sorted(tower1.verifyResources(fuel1, 1338508800))
     [4247, 16275]
 
 The return values are the fuel types that does not match the expected
 value given the input.  This means the fuel levels will need to be
 updated, like so::
 
-    >>> fuels = {
-    ...     4247: 12345,
+    >>> tower1.updateResources(fuel1, 1338508800)
+
+Apply the fuel update to the highsec tower also::
+
+    >>> fuel2 = {
+    ...     4246: 19999,
     ...     16275: 7200,
+    ...     24592: 200,
     ... }
-    >>> sorted(tower1.verifyResources(fuels, 1338508800))
-    [4247, 16275]
+    >>> tower2.updateResources(fuel2, 1338508800)
 
 Day-to-day fuel calculation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Back to the first tower.  As its owner's alliance has sovereignty in the
 system, the fuel consumption rate should reflect the discounts granted::
+
+    >>> tower1.fuels[4247].delta
+    30
+    >>> tower1.fuels[16275].delta
+    300
+    >>> tower2.fuels[4246].delta
+    40
+    >>> tower2.fuels[16275].delta
+    400
+    >>> tower2.fuels[24592].delta
+    1
