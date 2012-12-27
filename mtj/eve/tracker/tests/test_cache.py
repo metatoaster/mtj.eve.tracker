@@ -37,6 +37,8 @@ class CacheTestCase(TestCase):
         self.assertNotEqual(api.cache, cache.EvelinkCache._cache)
         self.assertTrue(isinstance(api.cache, APICache))
 
+    # include failure test cases (like bad path)
+
 
 def test_suite():
     suite = TestSuite()

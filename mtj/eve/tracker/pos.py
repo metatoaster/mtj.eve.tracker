@@ -1,6 +1,7 @@
 import sys
 
 from mtj.evedb.structure import ControlTower
+from mtj.evedb.map import Map
 
 from mtj.multimer.buffer import TimedBuffer
 from mtj.multimer.timeline import Event
@@ -9,6 +10,8 @@ from mtj.multimer.installation import Installation, InstallationFactory
 from mtj.eve.tracker.evelink import Helper
 
 pos_info = ControlTower()
+eve_map = Map()
+evelink_helper = Helper()
 
 
 class SovChangeEvent(Event):
@@ -40,12 +43,12 @@ class Tower(Installation):
         self.itemID = itemID
         self.typeID = typeID
         self.locationID = locationID
-        self.moonID = moonID
+        self.moonID = moonID  # should validate against locationID
+
+        # variable retrieved values
         self.state = state
         self.onlineTimestamp = onlineTimestamp
         self.standingOwnerID = standingOwnerID
-
-        # variable retrieved values
         self.stateTimestamp = stateTimestamp
 
         # derived but fixed values
@@ -54,12 +57,28 @@ class Tower(Installation):
         self.celestialName = None
         self.solarSystemName = None
 
+        self._setDerivedValues()
+
         # variable values
         self.sov = None  # sovereignty discount
 
         # The calculated values
         self.fuels = {}  # fuel
         self.resources = {}  # silos
+
+    def _setDerivedValues(self):
+        # TODO error checking and other validation somewhere
+        moon = eve_map.getCelestial(self.moonID)
+        solar_system = eve_map.getSolarSystem(self.locationID)
+        pos = pos_info.getControlTower(self.typeID)
+        self.celestialName = moon['itemName']
+        self.solarSystemName = solar_system['solarSystemName']
+        self.typeName = pos['typeName']
+
+        # check whether standingOwnerID is already alliance or part of
+        # one.
+        self.allianceID = evelink_helper.alliances.get(self.standingOwnerID,
+            evelink_helper.corporations.get(self.standingOwnerID))
 
     def initFuels(self):
         all_fuels = pos_info.getControlTowerResource(self.typeID)
@@ -72,14 +91,49 @@ class Tower(Installation):
 
         for fuel in all_fuels:
             if fuel['factionID'] in (faction_id, None):
-                res_buffer = TowerResourceBuffer(self, 
+                self.setResourceBuffer(
+                    bufferGroupName='fuels',
+                    bufferKey=fuel['resourceTypeID'],
                     delta=fuel['quantity'],
                     timestamp=0,  # defined later
                     purpose=fuel['purpose'],
                     value=0,  # defined later
                     resourceTypeName=fuel['typeName'],
                 )
-                self.fuels[fuel['resourceTypeID']] = res_buffer
+
+    def setResourceBuffer(self, bufferGroupName, bufferKey, delta, timestamp,
+            purpose, value, resourceTypeName):
+        """
+        A unified method to assign buffers into the containers.
+
+        bufferGroupName
+            The name of the resource group to assign the buffer to.
+        bufferKey
+            The key used to identify this buffer within the bufferGroup.
+        delta
+            The delta value.
+        timestamp
+            The timestamp current to the value.
+        purpose
+            ID of the purpose of this buffer
+        value
+            The value for the amount of the tracked resource.
+        resourceTypeName
+            Human readable name of the resource type.
+        """
+
+        bufferGroup = getattr(self, bufferGroupName, None)
+
+        # TODO this should be some sort of management smarter than a
+        # simple dict.
+        if not isinstance(bufferGroup, dict):
+            raise ValueError('`%s` is not a valid bufferGroupName' %
+                bufferGroupName)
+
+        # TODO log this action
+        res_buffer = TowerResourceBuffer(self, delta, timestamp, purpose,
+            value, resourceTypeName)
+        bufferGroup[bufferKey] = res_buffer
 
     def updateFuels(self):
         pass
