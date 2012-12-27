@@ -29,18 +29,31 @@ for the charter requirements::
     u'6VDT-H'
     >>> tower1.celestialName
     u'6VDT-H III - Moon 1'
+    >>> tower1.allianceID
+    498125261
 
 As the above is a null security system, no charters are required.  We
 can try again using one in high security space::
 
-    >>> from mtj.eve.tracker.pos import Tower
     >>> tower2 = Tower(1000001, 16214, 30004268, 40270415, 4,
-    ...     1325376000, 1306886400, 498125261)
+    ...     1325376661, 1306887061, 498125261)
     >>> tower2.initFuels()
     >>> sorted(tower2.fuels.keys())
     [4246, 16275, 24592]
     >>> tower2.celestialName
     u'Shenda VIII - Moon 8'
+
+Low security, on the other hand, shouldn't need a charter either::
+
+    >>> tower3 = Tower(1000001, 16214, 30004267, 40270327, 4,
+    ...     1325376661, 1306887061, 1018389948)
+    >>> tower3.initFuels()
+    >>> sorted(tower3.fuels.keys())
+    [4246, 16275]
+    >>> tower3.celestialName
+    u'Nema X - Moon 10'
+    >>> tower3.allianceID
+    498125261
 
 Adding/setting fuel levels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

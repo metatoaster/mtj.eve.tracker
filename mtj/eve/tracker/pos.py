@@ -77,8 +77,11 @@ class Tower(Installation):
 
         # check whether standingOwnerID is already alliance or part of
         # one.
-        self.allianceID = evelink_helper.alliances.get(self.standingOwnerID,
-            evelink_helper.corporations.get(self.standingOwnerID))
+        if evelink_helper.alliances.get(self.standingOwnerID):
+            self.allianceID = self.standingOwnerID
+        else:
+            self.allianceID = evelink_helper.corporations.get(
+                self.standingOwnerID)
 
     def initFuels(self):
         all_fuels = pos_info.getControlTowerResource(self.typeID)
