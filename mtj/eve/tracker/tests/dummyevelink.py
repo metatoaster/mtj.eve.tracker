@@ -10,10 +10,6 @@ class DummyHelper(object):
     Provides access to the dummy data below this class definition.
     """
 
-    _alliances = None
-    _corporations = None
-    _sov = None
-
     # the data indexes for the dynamic data tests.
     alliances_index = 0
     sov_index = 0
