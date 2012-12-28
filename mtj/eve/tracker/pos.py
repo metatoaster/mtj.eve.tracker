@@ -230,8 +230,36 @@ class Tower(Installation):
         Get the current resource levels
         """
 
+        # everything after offline time will not be defined.
+        timestamp = min(timestamp, self.getOfflineTimestamp(fuel_pair=True))
+
         return {key: fuel.getCurrent(timestamp=timestamp).value
             for key, fuel in self.fuels.iteritems()}
+
+    def getOfflineTimestamp(self, fuel_pair=False):
+        """
+        Figure out from all the fuels when will the pos go offline,
+        which is the moment when remaining cycles is less than zero
+        (or -1).
+
+        However, for fuel pairing calculation, provide the final
+        timestamp for when to deduct fuel for calculating consumption.
+        """
+
+        offlineTimestamps = []
+        for key, fuel in self.fuels.iteritems():
+            if not fuel.isNormalFuel():
+                continue
+
+            # cycles remaining == -1, or last fuel pairing == 0
+            remaining = (fuel.getCyclesAvailable() + int(not fuel_pair)) 
+            offlineTimestamps.append(remaining * fuel.period + fuel.timestamp)
+
+        return min(offlineTimestamps)
+
+    def getTimeRemaining(self, timestamp):
+        offlineAt = self.getOfflineTimestamp()
+        return max(offlineAt - timestamp, 0)
 
     def update(self):
         if not self.fuel:

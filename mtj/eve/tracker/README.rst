@@ -130,3 +130,30 @@ tower::
     [(4247, 12045), (16275, 7200)]
     >>> sorted(tower2.getResources(timestamp=1325413800).items())
     [(4246, 19559), (16275, 7200), (24592, 189)]
+
+Fuel consumption needs to be linked, as the moment when one fuel type
+is depleted the tower will no longer be online, so any excess fuels of
+other types will not be consumed::
+
+    >>> sorted(tower2.getResources(timestamp=1326092400).items())
+    [(4246, 12039), (16275, 7200), (24592, 1)]
+    >>> sorted(tower2.getResources(timestamp=1326096000).items())
+    [(4246, 11999), (16275, 7200), (24592, 0)]
+    >>> sorted(tower2.getResources(timestamp=1326099600).items())
+    [(4246, 11999), (16275, 7200), (24592, 0)]
+    >>> sorted(tower2.getResources(timestamp=1326103200).items())
+    [(4246, 11999), (16275, 7200), (24592, 0)]
+
+Naturally there needs to be a way to know how long the POS will stay
+online till::
+
+    >>> tower1.getTimeRemaining(timestamp=1326855600)
+    3600
+    >>> tower1.getTimeRemaining(timestamp=1326859200)
+    0
+    >>> tower2.getTimeRemaining(timestamp=1326092400)
+    4261
+    >>> tower2.getTimeRemaining(timestamp=1326096000)
+    661
+    >>> tower2.getTimeRemaining(timestamp=1326099600)
+    0
