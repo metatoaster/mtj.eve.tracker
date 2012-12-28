@@ -5,7 +5,6 @@ from mtj.evedb.map import Map
 
 from mtj.multimer.buffer import TimedBuffer
 from mtj.multimer.timeline import Event
-from mtj.multimer.installation import Installation, InstallationFactory
 
 from mtj.eve.tracker.evelink import Helper
 
@@ -16,7 +15,7 @@ eve_map = Map()
 evelink_helper = Helper()
 
 
-class Tower(Installation):
+class Tower(object):
     """
     A Player Owned Structure (POS).
     """
