@@ -1,5 +1,4 @@
 import sys
-from math import ceil
 
 from mtj.evedb.structure import ControlTower
 from mtj.evedb.map import Map
@@ -9,6 +8,8 @@ from mtj.multimer.timeline import Event
 from mtj.multimer.installation import Installation, InstallationFactory
 
 from mtj.eve.tracker.evelink import Helper
+
+SECONDS_PER_HOUR = 3600
 
 pos_info = ControlTower()
 eve_map = Map()
@@ -41,6 +42,7 @@ class Tower(Installation):
         self.stateTimestamp = stateTimestamp
 
         # derived but fixed values
+        self.resourcePulse = onlineTimestamp % SECONDS_PER_HOUR
         self.typeName = None
         self.allianceID = None
         self.celestialName = None
@@ -129,6 +131,8 @@ class Tower(Installation):
         # TODO log this action
         res_buffer = TowerResourceBuffer(self, delta, timestamp, purpose,
             value, resourceTypeName)
+        # freeze consumption of stront
+        res_buffer.freeze = not res_buffer.isNormalFuel()
         bufferGroup[bufferKey] = res_buffer
 
     def updateResourceBuffer(self, bufferGroupName, bufferKey, timestamp, 
@@ -194,8 +198,9 @@ class Tower(Installation):
             # the discount is indeed applied.
 
             if sov_info['alliance_id'] == self.allianceID:
-                # TODO determine whether it's round or ceil.
-                delta = int(ceil(delta * 0.75))
+                delta = int(round(delta * 0.75))
+
+            timestamp = self.resourcePulseTimestamp(timestamp)
 
             self.setResourceBuffer(
                 bufferGroupName='fuels',
@@ -206,6 +211,27 @@ class Tower(Installation):
                 value=value,
                 resourceTypeName=fuel['typeName'],
             )
+
+    def resourcePulseTimestamp(self, timestamp):
+        """
+        Calculate the buffer pulse with the given timestamp.
+
+        This is to ensure resource buffer timestamps are set correctly
+        so that the calculated values will be synchronized with actual
+        values.
+        """
+
+        return ((timestamp - timestamp % SECONDS_PER_HOUR -
+            int((timestamp % SECONDS_PER_HOUR) < self.resourcePulse) *
+            SECONDS_PER_HOUR) + self.resourcePulse)
+
+    def getResources(self, timestamp=None):
+        """
+        Get the current resource levels
+        """
+
+        return {key: fuel.getCurrent(timestamp=timestamp).value
+            for key, fuel in self.fuels.iteritems()}
 
     def update(self):
         if not self.fuel:
@@ -233,6 +259,7 @@ class TowerResourceBuffer(TimedBuffer):
             value=0, resourceTypeName=None, *a, **kw):
 
         self.tower = tower
+        self.purpose = purpose
         self.resourceTypeName = resourceTypeName
 
         super(TowerResourceBuffer, self).__init__(
@@ -246,7 +273,6 @@ class TowerResourceBuffer(TimedBuffer):
             delta_factor=-1,
             # always running, determined by below
             freeze=False,
-            extra_freeze_conditions=None,
             # No real upper limit due to the possibility to stuff more 
             # items into fuel bay because :ccp:
             full=sys.maxint,
@@ -254,6 +280,20 @@ class TowerResourceBuffer(TimedBuffer):
             # Empty level always 0.  Fortunately.
             empty=0,
         )
+
+    def isConsumingFuel(self):
+        # if this is orphaned, assume consuming.
+        return self.tower is None or self.tower.state in [3, 4]
+
+    def isNormalFuel(self):
+        return self.purpose == 1
+
+    def freeze_FuelCheck(self, timestamp):
+        # Strontium is never consumed normally - the entire buffer is
+        # swallowed up all at once upon start of reinforcement cycle.
+        # The exit time should be retrieved from API or entered
+        # seperately as the time is highly variable.
+        return not self.isConsumingFuel() and not self.isNormalFuel()
 
 
 def reinforceTower(tower):

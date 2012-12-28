@@ -44,7 +44,7 @@ can try again using one in high security space::
 Low security, on the other hand, shouldn't need a charter either::
 
     >>> tower3 = Tower(1000003, 16214, 30004267, 40270327, 4,
-    ...     1325376661, 1306887061, 1018389948)
+    ...     1325376661, 1306886400, 1018389948)
     >>> tower3.initFuels()
     >>> sorted(tower3.fuels.keys())
     [4246, 16275]
@@ -66,14 +66,14 @@ To set fuel levels, first verify that the levels needs updating::
     ...     4247: 12345,
     ...     16275: 7200,
     ... }
-    >>> sorted(tower1.verifyResources(fuel1, 1338508800))
+    >>> sorted(tower1.verifyResources(fuel1, 1306890000))
     [4247, 16275]
 
 The return values are the fuel types that does not match the expected
 value given the input.  This means the fuel levels will need to be
 updated, like so::
 
-    >>> tower1.updateResources(fuel1, 1338508800)
+    >>> tower1.updateResources(fuel1, 1306890000)
 
 Apply the fuel update to the highsec tower also.  Note that fuel types
 not previously initialized will not be added::
@@ -84,7 +84,7 @@ not previously initialized will not be added::
     ...     16275: 7200,
     ...     24592: 200,
     ... }
-    >>> tower2.updateResources(fuel2, 1338508800)
+    >>> tower2.updateResources(fuel2, 1306890000)
     >>> sorted(tower2.fuels.keys())
     [4246, 16275, 24592]
 
@@ -98,9 +98,35 @@ system, the fuel consumption rate should reflect the discounts granted::
     30
     >>> tower1.fuels[16275].delta
     300
+
+Second tower is in highsec, so no discounts and the need for charters::
+
     >>> tower2.fuels[4246].delta
     40
     >>> tower2.fuels[16275].delta
     400
     >>> tower2.fuels[24592].delta
     1
+
+Now let's see if we can get the fuel levels ten hours after the initial
+setup::
+
+    >>> sorted(tower1.getResources(timestamp=1306926000).items())
+    [(4247, 12045), (16275, 7200)]
+
+For the second tower, we use the same timestamp, ten hours after the
+fuel level check::
+
+    >>> sorted(tower2.getResources(timestamp=1306926000).items())
+    [(4246, 19599), (16275, 7200), (24592, 190)]
+
+However, if we elapse the time by another thirty minutes, a different
+story emerges.  Since the second tower ticks on the 11m01s mark, the
+previous update was already 48m59s out of date, so there is really in
+fact eleven cycles worth of fuel consumed at this point for the second
+tower::
+
+    >>> sorted(tower1.getResources(timestamp=1306927800).items())
+    [(4247, 12045), (16275, 7200)]
+    >>> sorted(tower2.getResources(timestamp=1306927800).items())
+    [(4246, 19559), (16275, 7200), (24592, 189)]
