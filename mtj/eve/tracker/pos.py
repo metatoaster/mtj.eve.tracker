@@ -134,11 +134,6 @@ class Tower(object):
         res_buffer.freeze = not res_buffer.isNormalFuel()
         bufferGroup[bufferKey] = res_buffer
 
-    def updateResourceBuffer(self, bufferGroupName, bufferKey, timestamp, 
-            value):
-
-        pass
-
     def updateFuels(self):
         pass
         # Determine if discount changed by
@@ -321,7 +316,3 @@ class TowerResourceBuffer(TimedBuffer):
         # The exit time should be retrieved from API or entered
         # seperately as the time is highly variable.
         return not self.isConsumingFuel() and not self.isNormalFuel()
-
-
-def reinforceTower(tower):
-    tower.getResourceBay('Strontium')
