@@ -1,17 +1,42 @@
 EVE POS Tracker
 ===============
 
-The following is a brief introduction on the basic initialization and
-demonstration the pos tracker in action.
+This POS tracker aims to bring comprehensive coverage for management of
+tasks commonly done by the logistics team of sovereignty holding
+coalitions or alliances in the MMORPG EVE Online.  These tasks include
+the management of player owned structures (POS, also known as control
+towers), resource caches and distribution of workload amongst the
+logistics team.
 
-First we instantiate the dummy data helper class::
+Management of player owned structures involves knowing where they are,
+what function(s) they may serve, who should attend or has been attending
+them and lastly, how much fuel remains or resources have accumulated in
+them.  This task is aided by knowing how much fuel are available to keep
+the operations running, and naturally note down which team members may
+be available for any tasks at hand.
+
+Demonstration
+=============
+
+The following is a demonstration of the functions provided by this pos
+tracker module, an overview from the foundations to the overall
+management classes.
+
+To begin, install the dummy data helper class::
 
     >>> from mtj.eve.tracker.tests import dummyevelink
     >>> import mtj.eve.tracker.pos
     >>> dummyevelink.installDummy(mtj.eve.tracker.pos)
 
+Tower Basics
+------------
+
+At the core for every pos tracker are the classes for the tracking of
+the actual control towers.  The following is a brief introduction on the
+tower classes to show how the pos tracker is constructed at the core.
+
 Tower initialization
---------------------
+~~~~~~~~~~~~~~~~~~~~
 
 First initialize a tower.  This process will fetch the fuel requirements
 from evedb and the API for the empire currently controlling the system
