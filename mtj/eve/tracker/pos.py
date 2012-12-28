@@ -188,14 +188,14 @@ class Tower(object):
 
         return mismatches
 
-    def updateResources(self, values, timestamp):
+    def updateResources(self, values, timestamp, force=False):
         mismatches = self.verifyResources(values, timestamp)
         # dict comprehension
         all_fuels = {v['resourceTypeID']: v for v in
             pos_info.getControlTowerResource(self.typeID)}
 
         for resourceTypeID, value in values.iteritems():
-            if resourceTypeID not in mismatches:
+            if resourceTypeID not in mismatches and not force:
                 continue
 
             fuel = all_fuels.get(resourceTypeID)
@@ -230,10 +230,15 @@ class Tower(object):
 
         if sov != self.sov:
             # Get the correct fuel values before sov status change.
+            # XXX timestamp could be multiple things - it could be the
+            # time when the corporation join/leaves the alliance, or the
+            # timestamp of when the sovereignty status changed.  Trust
+            # the provided value for now.
             values = self.getResources(timestamp)
             # Set the new sov value and then update
             self.sov = sov
-            self.updateResources(values, timestamp)
+            # force update
+            self.updateResources(values, timestamp, True)
 
     def resourcePulseTimestamp(self, timestamp):
         """

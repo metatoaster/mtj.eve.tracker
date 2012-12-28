@@ -182,3 +182,52 @@ online till::
     661
     >>> tower2.getTimeRemaining(timestamp=1326099600)
     0
+
+Tower Ownership and Sovereignty
+-------------------------------
+
+Due to wars, diplomacy and/or other circumstances, sovereignty status of
+the system any given tower against its ownership may change, granting or
+removing fuel discounts.  This need to be tracked to ensure accurate
+bookkeeping of fuel levels.
+
+To simulate sovereignty changes, we can forcibily set our dummy api
+wrapper to provide the desired values::
+
+    >>> tower1.findSovStatus()
+    True
+    >>> mtj.eve.tracker.pos.evelink_helper.sov_index = 1
+    >>> tower1.findSovStatus()
+    False
+
+Now the owner of tower1 no longer gain sovereignty bonuses as the
+ownership state is reverted to unclaimed.  Provide the timestamp for
+when this happened and update the owner details like so::
+
+    >>> tower1.getTimeRemaining(timestamp=1326000000)
+    859200
+    >>> tower1.updateSovOwner(timestamp=1326000000)
+    >>> tower1.getTimeRemaining(timestamp=1326000000)
+    643200
+    >>> tower1.getResources(timestamp=1326000000)[4247]
+    7155
+
+Consumption should continue at the normal non-discounted rate::
+
+    >>> tower1.getResources(timestamp=1326002400)[4247]
+    7115
+    >>> tower1.getResources(timestamp=1326639600)[4247]
+    35
+    >>> tower1.getTimeRemaining(timestamp=1326640000)
+    3200
+
+After some time someone remembers to pay the sovereignty bill (or fix
+the TCU or whatever) and brought the sovereignty status back up just in
+time, buying an extra hour for the tower::
+
+    >>> mtj.eve.tracker.pos.evelink_helper.sov_index = 0
+    >>> tower1.findSovStatus()
+    True
+    >>> tower1.updateSovOwner(timestamp=1326640000)
+    >>> tower1.getTimeRemaining(timestamp=1326640000)
+    6800
