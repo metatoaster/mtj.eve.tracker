@@ -33,7 +33,7 @@ for the charter requirements::
 As the above is a null security system, no charters are required.  We
 can try again using one in high security space::
 
-    >>> tower2 = Tower(1000001, 16214, 30004268, 40270415, 4,
+    >>> tower2 = Tower(1000002, 16214, 30004268, 40270415, 4,
     ...     1325376661, 1306887061, 498125261)
     >>> tower2.initFuels()
     >>> sorted(tower2.fuels.keys())
@@ -43,7 +43,7 @@ can try again using one in high security space::
 
 Low security, on the other hand, shouldn't need a charter either::
 
-    >>> tower3 = Tower(1000001, 16214, 30004267, 40270327, 4,
+    >>> tower3 = Tower(1000003, 16214, 30004267, 40270327, 4,
     ...     1325376661, 1306887061, 1018389948)
     >>> tower3.initFuels()
     >>> sorted(tower3.fuels.keys())
@@ -75,14 +75,18 @@ updated, like so::
 
     >>> tower1.updateResources(fuel1, 1338508800)
 
-Apply the fuel update to the highsec tower also::
+Apply the fuel update to the highsec tower also.  Note that fuel types
+not previously initialized will not be added::
 
     >>> fuel2 = {
+    ...     4247: 12345,
     ...     4246: 19999,
     ...     16275: 7200,
     ...     24592: 200,
     ... }
     >>> tower2.updateResources(fuel2, 1338508800)
+    >>> sorted(tower2.fuels.keys())
+    [4246, 16275, 24592]
 
 Day-to-day fuel calculation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
