@@ -19,6 +19,9 @@ class Tower(object):
     """
     A Player Owned Structure (POS).
     """
+    # TODO verify the argument ordering of some methods in this class
+    # that contain timestamp.  Value tends to be fuel value and they all
+    # precede it, but other optional arguments have to follow after.
 
     def __init__(self, itemID, typeID, locationID, moonID, state,
             stateTimestamp, onlineTimestamp, standingOwnerID):
@@ -47,10 +50,11 @@ class Tower(object):
         self.celestialName = None
         self.solarSystemName = None
 
-        self._setDerivedValues()
+        # variable derived values
+        self.allianceID = None
+        self.sov = None
 
-        # variable values
-        self.sov = None  # sovereignty discount
+        self._setDerivedValues()
 
         # The calculated values
         self.fuels = {}  # fuel
@@ -65,17 +69,31 @@ class Tower(object):
         self.solarSystemName = solar_system['solarSystemName']
         self.typeName = pos['typeName']
 
-        # check whether standingOwnerID is already alliance or part of
-        # one.
+        # Not calling the update method defined below as this is part of
+        # initialization.
+        self.allianceID = self.findAllianceID()
+        self.sov = self.findSovStatus()
+
+    def findAllianceID(self):
+        """
+        Return the alliance ID of the standing owner of this tower.
+        """
+
         if evelink_helper.alliances.get(self.standingOwnerID):
-            self.allianceID = self.standingOwnerID
+            return self.standingOwnerID
         else:
-            self.allianceID = evelink_helper.corporations.get(
-                self.standingOwnerID)
+            return evelink_helper.corporations.get(self.standingOwnerID)
+
+    def findSovStatus(self):
+        # As the API does not provide the current development index
+        # of the system, so if the discount is dependent on this
+        # index, it will be impossible to reliably determine whether
+        # the discount is indeed applied.
+        sov_info = evelink_helper.sov[self.locationID]
+        return sov_info['alliance_id'] == self.allianceID
 
     def initFuels(self):
         all_fuels = pos_info.getControlTowerResource(self.typeID)
-
         sov_info = evelink_helper.sov[self.locationID]
 
         # Determine fuel type from systemID + factionID
@@ -172,26 +190,18 @@ class Tower(object):
 
     def updateResources(self, values, timestamp):
         mismatches = self.verifyResources(values, timestamp)
+        # dict comprehension
         all_fuels = {v['resourceTypeID']: v for v in
             pos_info.getControlTowerResource(self.typeID)}
-        sov_info = evelink_helper.sov[self.locationID]
 
         for resourceTypeID, value in values.iteritems():
             if resourceTypeID not in mismatches:
                 continue
 
             fuel = all_fuels.get(resourceTypeID)
-            # base delta
+
             delta = fuel['quantity']
-
-            # Sovereignty discounts is also done here.
-
-            # As the API does not provide the current development index
-            # of the system, so if the discount is dependent on this
-            # index, it will be impossible to reliably determine whether
-            # the discount is indeed applied.
-
-            if sov_info['alliance_id'] == self.allianceID:
+            if self.sov:
                 delta = int(round(delta * 0.75))
 
             timestamp = self.resourcePulseTimestamp(timestamp)
@@ -206,6 +216,25 @@ class Tower(object):
                 resourceTypeName=fuel['typeName'],
             )
 
+    def updateSovOwner(self, timestamp, standingOwnerID=None):
+        """
+        Update the ownership of the tower.
+
+        This will trigger an updateResource if the sov status changes
+        """
+
+        if standingOwnerID:
+            self.standingOwnerID = standingOwnerID
+        self.allianceID = self.findAllianceID()
+        sov = self.findSovStatus()
+
+        if sov != self.sov:
+            # Get the correct fuel values before sov status change.
+            values = self.getResources(timestamp)
+            # Set the new sov value and then update
+            self.sov = sov
+            self.updateResources(values, timestamp)
+
     def resourcePulseTimestamp(self, timestamp):
         """
         Calculate the buffer pulse with the given timestamp.
@@ -219,7 +248,7 @@ class Tower(object):
             int((timestamp % SECONDS_PER_HOUR) < self.resourcePulse) *
             SECONDS_PER_HOUR) + self.resourcePulse)
 
-    def getResources(self, timestamp=None):
+    def getResources(self, timestamp):
         """
         Get the current resource levels
         """
@@ -227,6 +256,7 @@ class Tower(object):
         # everything after offline time will not be defined.
         timestamp = min(timestamp, self.getOfflineTimestamp(fuel_pair=True))
 
+        # dict comprehension
         return {key: fuel.getCurrent(timestamp=timestamp).value
             for key, fuel in self.fuels.iteritems()}
 
@@ -262,14 +292,6 @@ class Tower(object):
             self.init_fuels()
 
         self.update_fuels()
-
-        # delta is determined by the tower (or this parent), but still
-        # have to be provided as a standard parameter (rather than a
-        # calculated one) to satisfy parent class invariants.
-        # if for whatever reason a delta mismatch occurs due to API
-        # mismatch, tower size mismatch, sov status mismatch there 
-        # should be a way to override the delta until the condition
-        # triggering this is corrected.
 
 
 class TowerResourceBuffer(TimedBuffer):
