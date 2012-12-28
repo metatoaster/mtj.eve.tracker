@@ -4,13 +4,11 @@ EVE POS Tracker
 The following is a brief introduction on the basic initialization and
 demonstration the pos tracker in action.
 
-Right now we don't have mocks, so set up a cache to limit hits::
+First we instantiate the dummy data helper class::
 
-    >>> import tempfile
-    >>> import os.path
-    >>> from mtj.eve.tracker import cache
-    >>> cache_file = os.path.join(tempfile.gettempdir(), 'evelink_mjt.sqlite')
-    >>> cache.set_evelink_cache(cache_file)
+    >>> from mtj.eve.tracker.tests import dummyevelink
+    >>> import mtj.eve.tracker.pos
+    >>> dummyevelink.installDummy(mtj.eve.tracker.pos)
 
 Tower initialization
 --------------------

@@ -75,8 +75,7 @@ class Tower(Installation):
     def initFuels(self):
         all_fuels = pos_info.getControlTowerResource(self.typeID)
 
-        helper = Helper()
-        sov_info = helper.sov[self.locationID]
+        sov_info = evelink_helper.sov[self.locationID]
 
         # Determine fuel type from systemID + factionID
         faction_id = sov_info['faction_id']
