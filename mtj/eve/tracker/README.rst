@@ -194,10 +194,10 @@ bookkeeping of fuel levels.
 To simulate sovereignty changes, we can forcibily set our dummy api
 wrapper to provide the desired values::
 
-    >>> tower1.findSovStatus()
+    >>> tower1.querySovStatus()
     True
     >>> mtj.eve.tracker.pos.evelink_helper.sov_index = 1
-    >>> tower1.findSovStatus()
+    >>> tower1.querySovStatus()
     False
 
 Now the owner of tower1 no longer gain sovereignty bonuses as the
@@ -226,7 +226,7 @@ the TCU or whatever) and brought the sovereignty status back up just in
 time, buying an extra hour for the tower::
 
     >>> mtj.eve.tracker.pos.evelink_helper.sov_index = 0
-    >>> tower1.findSovStatus()
+    >>> tower1.querySovStatus()
     True
     >>> tower1.updateSovOwner(timestamp=1326640000)
     >>> tower1.getTimeRemaining(timestamp=1326640000)

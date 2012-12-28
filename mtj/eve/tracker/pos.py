@@ -71,10 +71,10 @@ class Tower(object):
 
         # Not calling the update method defined below as this is part of
         # initialization.
-        self.allianceID = self.findAllianceID()
-        self.sov = self.findSovStatus()
+        self.allianceID = self.queryAllianceID()
+        self.sov = self.querySovStatus()
 
-    def findAllianceID(self):
+    def queryAllianceID(self):
         """
         Return the alliance ID of the standing owner of this tower.
         """
@@ -84,7 +84,7 @@ class Tower(object):
         else:
             return evelink_helper.corporations.get(self.standingOwnerID)
 
-    def findSovStatus(self):
+    def querySovStatus(self):
         # As the API does not provide the current development index
         # of the system, so if the discount is dependent on this
         # index, it will be impossible to reliably determine whether
@@ -225,8 +225,8 @@ class Tower(object):
 
         if standingOwnerID:
             self.standingOwnerID = standingOwnerID
-        self.allianceID = self.findAllianceID()
-        sov = self.findSovStatus()
+        self.allianceID = self.queryAllianceID()
+        sov = self.querySovStatus()
 
         if sov != self.sov:
             # Get the correct fuel values before sov status change.
