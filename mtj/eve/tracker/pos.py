@@ -9,6 +9,7 @@ from mtj.multimer.timeline import Event
 from mtj.eve.tracker.evelink import Helper
 
 SECONDS_PER_HOUR = 3600
+STRONTIUM_ITEMID = 16275
 
 pos_info = ControlTower()
 eve_map = Map()
@@ -289,6 +290,13 @@ class Tower(object):
     def getTimeRemaining(self, timestamp):
         offlineAt = self.getOfflineTimestamp()
         return max(offlineAt - timestamp, 0)
+
+    def getReinforcementLength(self):
+        fuel = self.fuels.get(STRONTIUM_ITEMID)
+        if not fuel:
+            return 0
+        remaining = fuel.getCyclesPossible() * fuel.period
+        return remaining
 
     def update(self):
         if not self.fuel:

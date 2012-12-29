@@ -202,15 +202,19 @@ wrapper to provide the desired values::
 
 Now the owner of tower1 no longer gain sovereignty bonuses as the
 ownership state is reverted to unclaimed.  Provide the timestamp for
-when this happened and update the owner details like so::
+this event and update the owner details::
 
     >>> tower1.getTimeRemaining(timestamp=1326000000)
     859200
+    >>> tower1.getReinforcementLength()
+    86400
     >>> tower1.updateSovOwner(timestamp=1326000000)
     >>> tower1.getTimeRemaining(timestamp=1326000000)
     643200
     >>> tower1.getResources(timestamp=1326000000)[4247]
     7155
+    >>> tower1.getReinforcementLength()
+    64800
 
 Consumption should continue at the normal non-discounted rate::
 
@@ -231,3 +235,5 @@ time, buying an extra hour for the tower::
     >>> tower1.updateSovOwner(timestamp=1326640000)
     >>> tower1.getTimeRemaining(timestamp=1326640000)
     6800
+    >>> tower1.getReinforcementLength()
+    86400
