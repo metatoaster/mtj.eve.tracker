@@ -162,15 +162,6 @@ class Tower(object):
         res_buffer.freeze = not res_buffer.isNormalFuel()
         bufferGroup[bufferKey] = res_buffer
 
-    def updateFuels(self):
-        pass
-        # Determine if discount changed by
-        # - Get and store the allianceID (if applicable) XXX should be cached.
-        # - Get sovereignty data from api
-        # If none of these change, report fuel
-        # If changed, generate event so they will be saved, and update
-        # fuel rate calculations.
-
     def verifyResources(self, values, timestamp):
         """
         Verify resources with the given values
@@ -199,6 +190,19 @@ class Tower(object):
         return mismatches
 
     def updateResources(self, values, timestamp, force=False):
+        """
+        Updates resource levels.
+
+        values
+            The new values.  The value type should be a dict with the
+            fuel id as key and value as the amount to be assigned.
+        timestamp
+            The timestamp that the values are current to.
+        force
+            Optional argument.  If supplied, validation against existing
+            levels are not done so an event will be forced.
+        """
+
         mismatches = self.verifyResources(values, timestamp)
         # dict comprehension
         all_fuels = {v['resourceTypeID']: v for v in
@@ -267,6 +271,10 @@ class Tower(object):
     def getResources(self, timestamp):
         """
         Get the current resource levels
+
+        Return value:
+            The new values.  The value type should be a dict with the
+            fuel id as key and value as the amount to be assigned.
         """
 
         # everything after offline time will not be defined.
@@ -290,6 +298,7 @@ class Tower(object):
 
         ideal_cycles = int(self.capacity / cycle_volume)
 
+        # dict comprehension
         return {k: f.delta * ideal_cycles for k, f in self.fuels.iteritems()
             if f.isNormalFuel()}
 
@@ -300,6 +309,8 @@ class Tower(object):
 
         current = self.getResources(timestamp)
         ratio = self.getIdealFuelRatio()
+
+        # dict comprehension
         return {k: v - current.get(k) for k, v in ratio.iteritems()}
 
     def getOfflineTimestamp(self, fuel_pair=False):
@@ -324,6 +335,11 @@ class Tower(object):
         return min(offlineTimestamps)
 
     def getTimeRemaining(self, timestamp):
+        """
+        Get the time until the tower goes offline in seconds, at the
+        specified timestamp.
+        """
+
         offlineAt = self.getOfflineTimestamp()
         return max(offlineAt - timestamp, 0)
 
@@ -333,14 +349,6 @@ class Tower(object):
             return 0
         remaining = fuel.getCyclesPossible() * fuel.period
         return remaining
-
-    def update(self):
-        if not self.fuel:
-            # fuel not initialized.  derive from database for current
-            # factionID and allianceID
-            self.init_fuels()
-
-        self.update_fuels()
 
 
 class TowerResourceBuffer(TimedBuffer):
