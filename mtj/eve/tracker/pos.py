@@ -50,6 +50,8 @@ class Tower(object):
         self.allianceID = None
         self.celestialName = None
         self.solarSystemName = None
+        self.capacity = None
+        self.strontCapacity = None
 
         # variable derived values
         self.allianceID = None
@@ -69,6 +71,10 @@ class Tower(object):
         self.celestialName = moon['itemName']
         self.solarSystemName = solar_system['solarSystemName']
         self.typeName = pos['typeName']
+        self.capacity = pos['capacity']
+
+        # TODO stront capacity, and allow specification of ideal cycle
+        # time.
 
         # Not calling the update method defined below as this is part of
         # initialization.
@@ -115,10 +121,11 @@ class Tower(object):
                     purpose=fuel['purpose'],
                     value=0,  # defined later
                     resourceTypeName=fuel['typeName'],
+                    unitVolume=fuel['volume'],
                 )
 
     def setResourceBuffer(self, bufferGroupName, bufferKey, delta, timestamp,
-            purpose, value, resourceTypeName):
+            purpose, value, resourceTypeName, unitVolume):
         """
         A unified method to assign buffers into the containers.
 
@@ -136,6 +143,8 @@ class Tower(object):
             The value for the amount of the tracked resource.
         resourceTypeName
             Human readable name of the resource type.
+        unitVolume
+            Volume of individual fuel units.
         """
 
         bufferGroup = getattr(self, bufferGroupName, None)
@@ -148,7 +157,7 @@ class Tower(object):
 
         # TODO log this action
         res_buffer = TowerResourceBuffer(self, delta, timestamp, purpose,
-            value, resourceTypeName)
+            value, resourceTypeName, unitVolume)
         # freeze consumption of stront
         res_buffer.freeze = not res_buffer.isNormalFuel()
         bufferGroup[bufferKey] = res_buffer
@@ -215,6 +224,7 @@ class Tower(object):
                 purpose=fuel['purpose'],
                 value=value,
                 resourceTypeName=fuel['typeName'],
+                unitVolume=fuel['volume'],
             )
 
     def updateSovOwner(self, timestamp, standingOwnerID=None):
@@ -252,7 +262,7 @@ class Tower(object):
 
         return ((timestamp - timestamp % SECONDS_PER_HOUR -
             int((timestamp % SECONDS_PER_HOUR) < self.resourcePulse) *
-            SECONDS_PER_HOUR) + self.resourcePulse)
+                SECONDS_PER_HOUR) + self.resourcePulse)
 
     def getResources(self, timestamp):
         """
@@ -265,6 +275,32 @@ class Tower(object):
         # dict comprehension
         return {key: fuel.getCurrent(timestamp=timestamp).value
             for key, fuel in self.fuels.iteritems()}
+
+    def getIdealFuelRatio(self):
+        """
+        Get the ideal fuel ratio
+        """
+
+        # add all normal fuel volumes
+        fuels = [f for k, f in self.fuels.iteritems() if f.isNormalFuel()]
+
+        cycle_volume = 0
+        for fuel in fuels:
+            cycle_volume += fuel.unitVolume * fuel.delta
+
+        ideal_cycles = int(self.capacity / cycle_volume)
+
+        return {k: f.delta * ideal_cycles for k, f in self.fuels.iteritems()
+            if f.isNormalFuel()}
+
+    def getIdealFuelingAmount(self, timestamp):
+        """
+        Get the optimum resource distribution.
+        """
+
+        current = self.getResources(timestamp)
+        ratio = self.getIdealFuelRatio()
+        return {k: v - current.get(k) for k, v in ratio.iteritems()}
 
     def getOfflineTimestamp(self, fuel_pair=False):
         """

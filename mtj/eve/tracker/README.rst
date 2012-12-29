@@ -194,6 +194,36 @@ online till::
     >>> tower2.getTimeRemaining(timestamp=1326099600)
     0
 
+Optimizing fuel levels
+~~~~~~~~~~~~~~~~~~~~~~
+
+While the Crucible expansion eliminated the need to balance individual
+fuel components due to the introduction of fuel blocks, towers anchored
+in empire space still need the charters and they can affect the optimum
+fuel levels slightly.  Notwithstanding that, logistic pilots will need
+to know what and how much fuel to bring to fully top up the tower in the
+most optimize manner.
+
+This method will return the ideal fueling ratios.  Note that sovereignty
+consumption discounts are applied here also::
+
+    >>> tower1.getIdealFuelRatio()
+    {4247: 27990}
+    >>> sorted(tower2.getIdealFuelRatio().items())
+    [(4246, 6980), (24592, 698)]
+    >>> tower3.getIdealFuelRatio()
+    {4246: 28000}
+
+This other method will return the ideal fueling amounts at this
+timestamp, taking account of existing fuels::
+
+    >>> tower1.getIdealFuelingAmount(timestamp=1325412000)
+    {4247: 15945}
+    >>> sorted(tower2.getIdealFuelingAmount(timestamp=1326092400).items())
+    [(4246, 2427), (24592, 697)]
+    >>> sorted(tower2.getIdealFuelingAmount(timestamp=1326096000).items())
+    [(4246, 2437), (24592, 698)]
+
 Tower Ownership and Sovereignty
 -------------------------------
 
