@@ -305,11 +305,13 @@ class TowerResourceBuffer(TimedBuffer):
     """
 
     def __init__(self, tower=None, delta=None, timestamp=None, purpose=None,
-            value=0, resourceTypeName=None, *a, **kw):
+            value=0, resourceTypeName=None, unitVolume=None, freeze=False,
+            *a, **kw):
 
         self.tower = tower
         self.purpose = purpose
         self.resourceTypeName = resourceTypeName
+        self.unitVolume = unitVolume
 
         super(TowerResourceBuffer, self).__init__(
             delta=delta,
@@ -320,8 +322,7 @@ class TowerResourceBuffer(TimedBuffer):
             delta_min=1,
             # depletes
             delta_factor=-1,
-            # always running, determined by below
-            freeze=False,
+            freeze=freeze,
             # No real upper limit due to the possibility to stuff more 
             # items into fuel bay because :ccp:
             full=sys.maxint,
@@ -342,4 +343,12 @@ class TowerResourceBuffer(TimedBuffer):
         # swallowed up all at once upon start of reinforcement cycle.
         # The exit time should be retrieved from API or entered
         # seperately as the time is highly variable.
-        return not self.isConsumingFuel() and not self.isNormalFuel()
+        return not self.isConsumingFuel() or not self.isNormalFuel()
+
+    def getCurrent(self, *a, **kw):
+        return super(TowerResourceBuffer, self).getCurrent(
+            tower=self.tower,
+            purpose=self.purpose,
+            resourceTypeName=self.resourceTypeName,
+            unitVolume=self.unitVolume,
+            *a, **kw)
