@@ -58,7 +58,7 @@ for the charter requirements::
 As the above is a null security system, no charters are required.  We
 can try again using one in high security space::
 
-    >>> tower2 = Tower(1000002, 16214, 30004268, 40270415, 4,
+    >>> tower2 = Tower(1000002, 20066, 30004268, 40270415, 4,
     ...     1325376000, 1306887061, 498125261)
     >>> tower2.initFuels()
     >>> sorted(tower2.fuels.keys())
@@ -105,8 +105,8 @@ not previously initialized will not be added::
 
     >>> fuel2 = {
     ...     4247: 12345,
-    ...     4246: 19999,
-    ...     16275: 7200,
+    ...     4246: 6543,
+    ...     16275: 3600,
     ...     24592: 200,
     ... }
     >>> tower2.updateResources(fuel2, 1325376000)
@@ -124,14 +124,25 @@ system, the fuel consumption rate should reflect the discounts granted::
     >>> tower1.fuels[16275].delta
     300
 
-Second tower is in highsec, so no discounts and the need for charters::
+Second tower is a small, and in highsec, so no sovereignty discounts and
+the need for charters::
 
     >>> tower2.fuels[4246].delta
-    40
+    10
     >>> tower2.fuels[16275].delta
-    400
+    100
     >>> tower2.fuels[24592].delta
     1
+
+Third tower is a large, and in lowsec, so no sovereignty discounts but
+no need for charters::
+
+    >>> tower3.fuels[4246].delta
+    40
+    >>> tower3.fuels[16275].delta
+    400
+    >>> tower3.fuels.get(24592) is None
+    True
 
 Now let's see if we can get the fuel levels ten hours after the initial
 setup::
@@ -143,7 +154,7 @@ For the second tower, we use the same timestamp, ten hours after the
 fuel level check::
 
     >>> sorted(tower2.getResources(timestamp=1325412000).items())
-    [(4246, 19599), (16275, 7200), (24592, 190)]
+    [(4246, 6443), (16275, 3600), (24592, 190)]
 
 However, if we elapse the time by another thirty minutes, a different
 story emerges.  Since the second tower ticks on the 11m01s mark, the
@@ -154,20 +165,20 @@ tower::
     >>> sorted(tower1.getResources(timestamp=1325413800).items())
     [(4247, 12045), (16275, 7200)]
     >>> sorted(tower2.getResources(timestamp=1325413800).items())
-    [(4246, 19559), (16275, 7200), (24592, 189)]
+    [(4246, 6433), (16275, 3600), (24592, 189)]
 
 Fuel consumption needs to be linked, as the moment when one fuel type
 is depleted the tower will no longer be online, so any excess fuels of
 other types will not be consumed::
 
     >>> sorted(tower2.getResources(timestamp=1326092400).items())
-    [(4246, 12039), (16275, 7200), (24592, 1)]
+    [(4246, 4553), (16275, 3600), (24592, 1)]
     >>> sorted(tower2.getResources(timestamp=1326096000).items())
-    [(4246, 11999), (16275, 7200), (24592, 0)]
+    [(4246, 4543), (16275, 3600), (24592, 0)]
     >>> sorted(tower2.getResources(timestamp=1326099600).items())
-    [(4246, 11999), (16275, 7200), (24592, 0)]
+    [(4246, 4543), (16275, 3600), (24592, 0)]
     >>> sorted(tower2.getResources(timestamp=1326103200).items())
-    [(4246, 11999), (16275, 7200), (24592, 0)]
+    [(4246, 4543), (16275, 3600), (24592, 0)]
 
 Naturally there needs to be a way to know how long the POS will stay
 online till::
