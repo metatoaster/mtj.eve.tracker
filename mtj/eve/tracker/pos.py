@@ -4,7 +4,6 @@ from mtj.evedb.structure import ControlTower
 from mtj.evedb.map import Map
 
 from mtj.multimer.buffer import TimedBuffer
-from mtj.multimer.timeline import Event
 
 from mtj.eve.tracker.evelink import Helper
 
