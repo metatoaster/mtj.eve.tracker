@@ -224,6 +224,44 @@ timestamp, taking account of existing fuels::
     >>> sorted(tower2.getIdealFuelingAmount(timestamp=1326096000).items())
     [(4246, 2437), (24592, 698)]
 
+Reinforcement fuel
+~~~~~~~~~~~~~~~~~~
+
+As Strontium Clathrates are used and calculated quite differently from
+normal fuels, a separate method is provided for this.  By default, it
+will use the full secondary fuel bay::
+
+    >>> tower1.getTargetStrontiumAmount()
+    16500
+    >>> tower2.getTargetStrontiumAmount()
+    4100
+    >>> tower3.getTargetStrontiumAmount()
+    16400
+
+Otherwise, if a target number of cycles (or hours) is set, the amount
+calculated based on the desired reinforcement length will be displayed
+in terms of total amount of Strontium needed to be present for the
+length of time tower will be under reinforcement::
+
+    >>> tower1.targetReinforceLength = 40
+    >>> tower2.targetReinforceLength = 20
+    >>> tower3.targetReinforceLength = 40
+    >>> tower1.getTargetStrontiumAmount()
+    12000
+    >>> tower2.getTargetStrontiumAmount()
+    2000
+    >>> tower3.getTargetStrontiumAmount()
+    16000
+
+Lastly, a method is provided to show the changes that must be made to
+the amount of Strontium in the secondary bay to achieve the desired
+reinformcement length::
+
+    >>> tower1.getTargetStrontiumDifference()
+    4800
+    >>> tower2.getTargetStrontiumDifference()
+    -1600
+
 Tower Ownership and Sovereignty
 -------------------------------
 

@@ -1,6 +1,6 @@
 from unittest import TestCase, TestSuite, makeSuite
 
-from mtj.eve.tracker.pos import TowerResourceBuffer
+from mtj.eve.tracker.pos import Tower, TowerResourceBuffer
 
 FUEL_NORMAL = 1
 FUEL_REINFORCE = 4
@@ -22,6 +22,13 @@ class StructureTestCase(TestCase):
 
     def tearDown(self):
         pass
+
+    def test_0000_base_tower(self):
+        tower = Tower(1000001, 12235, 30004608, 40291202, 4,
+            1325376000, 1306886400, 498125261)
+
+        self.assertEqual(tower.capacity, 140000)
+        self.assertEqual(tower.strontCapacity, 50000)
 
     def test_1000_failure_celestial_solarsystem_mismatch(self):
         # Celestial must be located within the solar system

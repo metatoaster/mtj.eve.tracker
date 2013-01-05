@@ -62,18 +62,20 @@ class Tower(object):
         self.fuels = {}  # fuel
         self.resources = {}  # silos
 
+        # user defined values
+        self.targetReinforceLength = None
+
     def _setDerivedValues(self):
         # TODO error checking and other validation somewhere
         moon = eve_map.getCelestial(self.moonID)
         solar_system = eve_map.getSolarSystem(self.locationID)
         pos = pos_info.getControlTower(self.typeID)
+        stront = pos_info.getControlTowerStrontCapacity(self.typeID)
         self.celestialName = moon['itemName']
         self.solarSystemName = solar_system['solarSystemName']
         self.typeName = pos['typeName']
         self.capacity = pos['capacity']
-
-        # TODO stront capacity, and allow specification of ideal cycle
-        # time.
+        self.strontCapacity = stront['capacitySecondary']
 
         # Not calling the update method defined below as this is part of
         # initialization.
@@ -300,6 +302,28 @@ class Tower(object):
         # dict comprehension
         return {k: f.delta * ideal_cycles for k, f in self.fuels.iteritems()
             if f.isNormalFuel()}
+
+    def getTargetStrontiumCycles(self):
+        fuel = self.fuels[STRONTIUM_ITEMID]
+        return int(self.targetReinforceLength or
+                   self.strontCapacity / (fuel.delta * fuel.unitVolume))
+
+    def getTargetStrontiumAmount(self):
+        """
+        Get the target strontium amount as per desired reinforcement
+        timing needs.
+        """
+
+        fuel = self.fuels[STRONTIUM_ITEMID]
+        return fuel.delta * self.getTargetStrontiumCycles()
+
+    def getTargetStrontiumDifference(self):
+        """
+        Return the difference needed to hit the target strontium amount.
+        """
+
+        fuel = self.fuels[STRONTIUM_ITEMID]
+        return self.getTargetStrontiumAmount() - fuel.value
 
     def getIdealFuelingAmount(self, timestamp):
         """
