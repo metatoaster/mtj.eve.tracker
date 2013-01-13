@@ -60,7 +60,7 @@ class Tower(object):
 
         # The calculated values
         self.fuels = {}  # fuel
-        self.resources = {}  # silos
+        self.silos = {}  # silos
 
         # user defined values
         self.targetReinforceLength = None
@@ -346,6 +346,9 @@ class Tower(object):
         timestamp for when to deduct fuel for calculating consumption.
         """
 
+        # XXX what kind of results should this return if state is not
+        # online or reinforced?
+
         offlineTimestamps = []
         for key, fuel in self.fuels.iteritems():
             if not fuel.isNormalFuel():
@@ -372,6 +375,9 @@ class Tower(object):
             return 0
         remaining = fuel.getCyclesPossible() * fuel.period
         return remaining
+
+    def addSilo(self, *a, **kw):
+        pass
 
 
 class TowerResourceBuffer(TimedBuffer):
@@ -426,4 +432,83 @@ class TowerResourceBuffer(TimedBuffer):
             purpose=self.purpose,
             resourceTypeName=self.resourceTypeName,
             unitVolume=self.unitVolume,
+            *a, **kw)
+
+
+class TowerSiloBuffer(TimedBuffer):
+    """
+    The silos for towers.
+
+    Note: due to simplicity, this class cannot be used to track
+    intermediate products, only final products or source reactants.
+    """
+
+    # XXX prototype stage, ignore item volume, track with raw count.
+    def __init__(self, tower=None, typeName=None, unitVolume=None,
+            produces=None, reactants=None, online=True,
+            # overridden
+            delta_min=None, delta_factor=None, period=None,
+            *a, **kw):
+
+        self.tower = tower
+        self.typeName = typeName
+        self.unitVolume = unitVolume
+        # If this is to be consumed.
+        self.produces = produces
+        # reactant is list of silo ids belonging to tower that will be
+        # consumed to make this.
+        self.reactants = reactants
+        self.online = online
+
+        # increase if this is not used to produce stuff, decrease
+        # otherwise.
+        delta_factor = produces is None and 1 or -1
+        # partial product accumulation, no partial reactants
+        delta_min = int(not (produces is None))
+
+        super(TowerSiloBuffer, self).__init__(
+            # one hour
+            period=3600,
+            delta_min=delta_min,
+            delta_factor=delta_factor,
+            *a, **kw
+        )
+
+    def isOnline(self):
+        # if this is an orphan, assume online anyway, otherwise base on
+        # tower's state.
+        return self.online and (
+            self.tower is None or self.tower.state == 4)
+
+    def getCyclesUntilOffline(self):
+        if self.tower is None:
+            return sys.maxint
+
+        timelimit = self.tower.getOfflineTimestamp()
+        # truncate for maximum cycle count
+        result = int((timelimit - self.timestamp) / self.period)
+        return result
+
+    def getCyclesPossible(self):
+        default = super(TowerSiloBuffer, self).getCyclesPossible()
+
+        if not self.isOnline():
+            # Can't do anything if offline...
+            return 0
+
+        cycles_till_offline = self.getCyclesUntilOffline()
+        return min(default, cycles_till_offline)
+
+    def freeze_Reactants(self, timestamp):
+        # Check whether reactants are out.
+        return False
+
+    def getCurrent(self, *a, **kw):
+        return super(TowerSiloBuffer, self).getCurrent(
+            tower=self.tower,
+            typeName=self.typeName,
+            unitVolume=self.unitVolume,
+            produces=self.produces,
+            reactants=self.reactants,
+            online=self.online,
             *a, **kw)

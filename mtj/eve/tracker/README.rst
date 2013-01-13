@@ -316,3 +316,27 @@ time, buying an extra hour for the tower::
     6800
     >>> tower1.getReinforcementLength()
     86400
+
+Silos, moon mining and reactions
+--------------------------------
+
+The primary use cases for towers are the mining of moon materials and
+running reactions.  These are done using moon-harvesting arrays or
+inside reactor arrays, with the ingredients and produced materials
+stored in the silos.
+
+Silo material tracking
+~~~~~~~~~~~~~~~~~~~~~
+
+The pos tracker tracks the entire set of materials in an abstract way -
+As there is no direct API methods to figure out which silo is attached
+to what tower, this process will need to be done manually if the API
+tracking of resources is to be implemented.  At this stage, all input
+will be done manually, and there will be one buffer per resource type
+rather than per silo to ease management.
+
+Add a silo to tower1, and while at it, refuel it to full first::
+
+    >>> tower1.updateResources({4247: 28000}, 1326641400)
+    >>> tower1.addSilo(timestamp=1326641400, typeID=16649, delta=100,
+    ...     maxVolume=60000)
