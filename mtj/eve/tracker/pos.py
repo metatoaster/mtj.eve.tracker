@@ -2,6 +2,7 @@ import sys
 
 from mtj.evedb.structure import ControlTower
 from mtj.evedb.map import Map
+from mtj.evedb.market import Group
 
 from mtj.multimer.buffer import TimedBuffer
 
@@ -12,6 +13,7 @@ STRONTIUM_ITEMID = 16275
 
 pos_info = ControlTower()
 eve_map = Map()
+item_info = Group()
 evelink_helper = Helper()
 
 
@@ -376,8 +378,103 @@ class Tower(object):
         remaining = fuel.getCyclesPossible() * fuel.period
         return remaining
 
-    def addSilo(self, *a, **kw):
-        pass
+    def attachSilo(self, itemID, typeID, resourceTypeID=None):
+        """
+        Attach a silo based directly on the API
+
+        itemID
+            the itemID of the server
+        typeID
+            the typeID of the silo
+        resourceTypeID
+            the typeID of the resource to track.
+        """
+
+        raise NotImplementedError()
+
+    def setSiloBuffer(self, typeID, typeName, unitVolume, products, reactants,
+            online, delta, value, full, timestamp=None):
+
+        silo = TowerSiloBuffer(self, typeName=typeName, unitVolume=unitVolume,
+            products=products, reactants=reactants, online=online, delta=delta,
+            value=value, full=full, timestamp=timestamp)
+        self.silos[typeID] = silo
+
+        # some values can be None, read directly from silo to reconfirm
+        # for logging purposes
+
+        timestamp = silo.timestamp
+        return silo
+
+    def addSiloBuffer(self, typeID, products=None, reactants=None, online=True,
+            delta=1, value=0, full=100, timestamp=None, *a, **kw):
+        """
+        Adds a silo buffer, the abstract representation of a group of
+        silos.  This also uses the item type specified
+        the silo as a whole,
+
+        typeID
+            The typeID of the resource to track
+        products
+            If this resource leads into production of something, specify
+            the list of typeID.
+        reactants
+            A list of reactants this resource needs.
+        delta
+            The absolute value of the rate of change for this resource.
+        value
+            The starting value.
+        full
+            The maximum value the buffer can represent.
+        """
+
+        if typeID in self.silos:
+            raise ValueError('silo already tracking typeID')
+
+        typeInfo = item_info.getType(typeID)
+        if not typeInfo:
+            raise ValueError('invalid typeID')
+
+        typeName = typeInfo['typeName']
+        unitVolume = typeInfo['volume']
+
+        silo = self.setSiloBuffer(typeID, typeName=typeName,
+            unitVolume=unitVolume, products=products, reactants=reactants,
+            online=online, delta=delta, value=value, full=full,
+            timestamp=timestamp)
+        return silo
+
+
+    def updateSiloBuffer(self, typeID, products=None, reactants=None,
+            online=None, delta=None, value=None, full=None, timestamp=None,
+            *a, **kw):
+        """
+        Updates an existing silo buffer.  Refer to addSiloBuffer for
+        parameters and caveats.
+
+        Intent of this method is for individual manual updates.
+        """
+
+        if typeID not in self.silos:
+            raise ValueError('silo not currently tracking typeID')
+
+        silo = self.silos[typeID]
+
+        typeName = silo.typeName
+        unitVolume = silo.unitVolume
+        products = products or silo.products
+        reactants = reactants or silo.reactants
+        online = online or silo.online
+        delta = delta or silo.delta
+        value = value or silo.value
+        full = full or silo.full
+        # timestamp is handled automatically
+
+        silo = self.setSiloBuffer(typeID, typeName=typeName,
+            unitVolume=unitVolume, products=products, reactants=reactants,
+            online=online, delta=delta, value=value, full=full,
+            timestamp=timestamp)
+        return silo
 
 
 class TowerResourceBuffer(TimedBuffer):
@@ -445,8 +542,8 @@ class TowerSiloBuffer(TimedBuffer):
 
     # XXX prototype stage, ignore item volume, track with raw count.
     def __init__(self, tower=None, typeName=None, unitVolume=None,
-            produces=None, reactants=None, online=True,
-            # overridden
+            volume=None, products=None, reactants=None, online=True,
+            # capture these here because they will be overriden.
             delta_min=None, delta_factor=None, period=None,
             *a, **kw):
 
@@ -454,17 +551,17 @@ class TowerSiloBuffer(TimedBuffer):
         self.typeName = typeName
         self.unitVolume = unitVolume
         # If this is to be consumed.
-        self.produces = produces
-        # reactant is list of silo ids belonging to tower that will be
+        self.products = products
+        # reactants is list of silo ids belonging to tower that will be
         # consumed to make this.
         self.reactants = reactants
         self.online = online
 
         # increase if this is not used to produce stuff, decrease
         # otherwise.
-        delta_factor = produces is None and 1 or -1
+        delta_factor = products is None and 1 or -1
         # partial product accumulation, no partial reactants
-        delta_min = int(not (produces is None))
+        delta_min = int(not (products is None))
 
         super(TowerSiloBuffer, self).__init__(
             # one hour
@@ -489,15 +586,61 @@ class TowerSiloBuffer(TimedBuffer):
         result = int((timelimit - self.timestamp) / self.period)
         return result
 
-    def getCyclesPossible(self):
-        default = super(TowerSiloBuffer, self).getCyclesPossible()
+    def getCyclesReactants(self):
+        """
+        Get how many cycles the reactants can sustain the reaction to
+        produce this product.
+        """
 
+        result = sys.maxint
+        if (not self.products is None or self.reactants is None or
+                self.tower is None):
+            return result
+
+        for typeID in self.reactants:
+            target_silo = self.tower.silos.get(typeID)
+            if target_silo is None:
+                continue
+            result = min(result, target_silo.getIndependentCyclesPossible())
+
+        return result
+
+    def getCyclesProducts(self):
+        """
+        Get how many cycles the products can be made, based on the
+        amount of total reactants to make the product.
+        """
+
+        result = sys.maxint
+        if (not self.reactants is None or self.products is None or
+                self.tower is None):
+            return result
+
+        for typeID in self.products:
+            target_silo = self.tower.silos.get(typeID)
+            if target_silo is None:
+                continue
+            result = min(result, target_silo.getCyclesReactants())
+
+        return result
+
+    def getIndependentCyclesPossible(self):
+        """
+        Without involvement of silo dependencies
+        """
+
+        cycles_possible = super(TowerSiloBuffer, self).getCyclesPossible()
         if not self.isOnline():
             # Can't do anything if offline...
             return 0
-
         cycles_till_offline = self.getCyclesUntilOffline()
-        return min(default, cycles_till_offline)
+        return min(cycles_possible, cycles_till_offline)
+
+    def getCyclesPossible(self):
+        default = self.getIndependentCyclesPossible()
+        cycles_products = self.getCyclesProducts()
+        cycles_reactants = self.getCyclesReactants()
+        return min(default, cycles_products, cycles_reactants)
 
     def freeze_Reactants(self, timestamp):
         # Check whether reactants are out.
@@ -508,7 +651,7 @@ class TowerSiloBuffer(TimedBuffer):
             tower=self.tower,
             typeName=self.typeName,
             unitVolume=self.unitVolume,
-            produces=self.produces,
+            products=self.products,
             reactants=self.reactants,
             online=self.online,
             *a, **kw)

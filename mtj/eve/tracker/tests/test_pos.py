@@ -154,24 +154,24 @@ class TowerSiloBufferTestCase(TestCase):
         self.tower.state = 4
         # 16649:Technetium
         silo_t = TowerSiloBuffer(self.tower, 'Technetium', 0.8, delta=100,
-            value=1000, full=25000, produces=16662, timestamp=0)
+            value=1000, full=25000, products=(16662,), timestamp=0)
         # 16644:Platinum
         silo_p = TowerSiloBuffer(self.tower, 'Platinum', 1, delta=100,
-            value=1000, full=20000, produces=16662, timestamp=0)
+            value=1000, full=20000, products=(16662,), timestamp=0)
         # 16662:Platinum Technite
         silo_pt = TowerSiloBuffer(self.tower, 'Platinum Technite', 1,
-            delta=200, value=0, full=25000, reactants=[16644, 16649],
+            delta=200, value=0, full=25000, reactants=(16644, 16649),
             timestamp=0)
-
-        silo_p1 = silo_p.getCurrent(timestamp=36000)
-        self.assertEqual(silo_p1.value, 900)
-        silo_p2 = silo_p.getCurrent(timestamp=3600)
-        self.assertEqual(silo_p2.value, 900)
 
         silo_t1 = silo_t.getCurrent(timestamp=36000)
         self.assertEqual(silo_t1.value, 900)
         silo_t2 = silo_t.getCurrent(timestamp=3600)
         self.assertEqual(silo_t2.value, 900)
+
+        silo_p1 = silo_p.getCurrent(timestamp=36000)
+        self.assertEqual(silo_p1.value, 900)
+        silo_p2 = silo_p.getCurrent(timestamp=3600)
+        self.assertEqual(silo_p2.value, 900)
 
         silo_pt1 = silo_pt.getCurrent(timestamp=36000)
         self.assertEqual(silo_pt1.value, 200)
@@ -182,24 +182,45 @@ class TowerSiloBufferTestCase(TestCase):
         self.tower.state = 4
         self.tower.updateResources({4247: 28000}, 0)
         # 16649:Technetium
-        silo_t = TowerSiloBuffer(self.tower, 'Technetium', 0.8, delta=100,
-            value=1000, full=25000, produces=16662, timestamp=0)
+        silo_t = self.tower.addSiloBuffer(16649, products=(16662,), delta=100,
+            value=1000, full=25000, timestamp=0)
         # 16644:Platinum
-        silo_p = TowerSiloBuffer(self.tower, 'Platinum', 1, delta=100,
-            value=1000, full=20000, produces=16662, timestamp=0)
+        silo_p = self.tower.addSiloBuffer(16644, products=(16662,), delta=100,
+            value=1000, full=20000, timestamp=0)
         # 16662:Platinum Technite
-        silo_pt = TowerSiloBuffer(self.tower, 'Platinum Technite', 1,
-            delta=200, value=0, full=25000, reactants=[16644, 16649],
-            timestamp=0)
-
-        silo_p1 = silo_p.getCurrent(timestamp=36000)
-        self.assertEqual(silo_p1.value, 0)
+        silo_pt = self.tower.addSiloBuffer(16662, reactants=(16644, 16649,),
+            delta=200, value=0, full=25000, timestamp=0)
 
         silo_t1 = silo_t.getCurrent(timestamp=36000)
         self.assertEqual(silo_t1.value, 0)
-
+        silo_p1 = silo_p.getCurrent(timestamp=36000)
+        self.assertEqual(silo_p1.value, 0)
         silo_pt1 = silo_pt.getCurrent(timestamp=36000)
         self.assertEqual(silo_pt1.value, 2000)
+
+        silo_t1 = silo_t.getCurrent(timestamp=39600)
+        self.assertEqual(silo_t1.value, 0)
+        silo_p1 = silo_p.getCurrent(timestamp=39600)
+        self.assertEqual(silo_p1.value, 0)
+        silo_pt1 = silo_pt.getCurrent(timestamp=39600)
+        self.assertEqual(silo_pt1.value, 2000)
+
+    def test_1002_towered_reactants_unbalanced(self):
+        self.tower.state = 4
+        self.tower.updateResources({4247: 28000}, 0)
+        silo_t = self.tower.addSiloBuffer(16649, products=(16662,), delta=100,
+            value=1000, full=25000, timestamp=0)
+        silo_p = self.tower.addSiloBuffer(16644, products=(16662,), delta=100,
+            value=100, full=20000, timestamp=0)
+        silo_pt = self.tower.addSiloBuffer(16662, reactants=(16644, 16649,),
+            delta=200, value=0, full=25000, timestamp=0)
+
+        silo_t1 = silo_t.getCurrent(timestamp=39600)
+        self.assertEqual(silo_t1.value, 900)
+        silo_p1 = silo_p.getCurrent(timestamp=39600)
+        self.assertEqual(silo_p1.value, 0)
+        silo_pt1 = silo_pt.getCurrent(timestamp=39600)
+        self.assertEqual(silo_pt1.value, 200)
 
 
 def test_suite():

@@ -338,5 +338,5 @@ rather than per silo to ease management.
 Add a silo to tower1, and while at it, refuel it to full first::
 
     >>> tower1.updateResources({4247: 28000}, 1326641400)
-    >>> tower1.addSilo(timestamp=1326641400, typeID=16649, delta=100,
+    >>> s = tower1.addSiloBuffer(timestamp=1326641400, typeID=16649, delta=100,
     ...     maxVolume=60000)
