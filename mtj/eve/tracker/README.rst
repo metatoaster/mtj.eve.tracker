@@ -491,9 +491,9 @@ With the reaction completely stopped::
 
 When the reinforcement cycle ends, tower is marked as online again::
 
-    >>> tower3.getState(timestamp=1327501800)
+    >>> tower3.getState(timestamp=1327501799)
     3
-    >>> tower3.getState(timestamp=1327501801)
+    >>> tower3.getState(timestamp=1327501800)
     4
 
 However, the silos need to be manually marked as online again, to not

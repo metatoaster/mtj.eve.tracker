@@ -126,6 +126,7 @@ class TowerSiloBufferTestCase(TestCase):
         # reinforced with no fuel remaining, so 1h runtime, but silo mod
         # will be offline anyway so no accumulation.
         self.tower.state = 3
+        self.tower.stateTimestamp = 36000
         silo = TowerSiloBuffer(self.tower, 'Technetium', 0.8, delta=100,
             value=0, full=75000, timestamp=0)
         silo1 = silo.getCurrent(timestamp=36000)
@@ -229,6 +230,32 @@ class TowerSiloBufferTestCase(TestCase):
         self.assertEqual(silo_p1.value, 0)
         silo_pt1 = silo_pt.getCurrent(timestamp=39600)
         self.assertEqual(silo_pt1.value, 200)
+
+    def test_1100_towered_reinforced(self):
+        self.tower.state = 3
+        self.tower.stateTimestamp = 7200
+        self.tower.updateResources({4247: 28000}, 0)
+        silo_t = self.tower.addSiloBuffer(16649, delta=100,
+            value=0, full=25000, timestamp=0, online=False)
+
+        silo_t1 = silo_t.getCurrent(timestamp=10800)
+        self.assertEqual(silo_t1.value, 0)
+
+        # It's marked online while tower still reinforced, it will not
+        # receive the updated state despite using getState as that is
+        # based on the timestamp of the silo (not to mention this is not
+        # a valid in-game condition either).
+        silo_t = self.tower.updateSiloBuffer(16649, online=True,
+            timestamp=3600)
+        silo_t1 = silo_t.getCurrent(timestamp=10800)
+        self.assertEqual(silo_t1.value, 0)
+
+        # It's marked online as the tower exit reinforcement, so it will
+        # remain online.
+        silo_t = self.tower.updateSiloBuffer(16649, online=True,
+            timestamp=7200)
+        silo_t1 = silo_t.getCurrent(timestamp=10800)
+        self.assertEqual(silo_t1.value, 100)
 
 
 def test_suite():

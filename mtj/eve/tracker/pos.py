@@ -391,9 +391,12 @@ class Tower(object):
         if timestamp > self.getOfflineTimestamp():
             return STATE_ANCHORED
 
+        # XXX verify that this will also apply for the onlining state.
         if self.state in [STATE_ONLINING, STATE_REINFORCED]:
-            # XXX verify that the API onlining state will do this
-            if timestamp > self.stateTimestamp:
+            # Also assume the stateTimestamp is the moment it will be
+            # online, not the last moment that it will be on the defined
+            # state.
+            if timestamp >= self.stateTimestamp:
                 return STATE_ONLINE
 
         return self.state
