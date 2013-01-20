@@ -471,7 +471,7 @@ tower modules from doing things like mining or reacting.
 For this tracker, if a tower was reinforced, a method is provided to
 mark this event::
 
-    >>> tower3.setReinforcement(exitAt=1327501800, timestamp=1327372200)
+    >>> tower3.enterReinforcement(exitAt=1327501800, timestamp=1327372200)
     >>> tower3.getState(timestamp=1327372200)
     3
 
@@ -515,3 +515,18 @@ See that the values are accumulating as expected::
 
     >>> sorted(tower3.getSiloLevels(timestamp=1327509000).items())
     [(16644, 19700), (16649, 19700), (16662, 600)]
+
+Oh yeah, should probably add strontium back into the bay::
+
+    >>> sorted(tower3.getResources(timestamp=1327509000).items())
+    [(4246, 18360), (16275, 0)]
+    >>> tower3.exitReinforcement(strontium=14400, timestamp=1327372200)
+    >>> sorted(tower3.getResources(timestamp=1327509000).items())
+    [(4246, 18360), (16275, 14400)]
+
+Should not interfere with the silo calculations either::
+
+    >>> sorted(tower3.getSiloLevels(timestamp=1327509000).items())
+    [(16644, 19700), (16649, 19700), (16662, 600)]
+    >>> sorted(tower3.getSiloLevels(timestamp=1327512600).items())
+    [(16644, 19600), (16649, 19600), (16662, 800)]

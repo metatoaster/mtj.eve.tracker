@@ -405,7 +405,7 @@ class Tower(object):
         remaining = fuel.getCyclesPossible() * fuel.period
         return remaining
 
-    def setReinforcement(self, exitAt, timestamp=None):
+    def enterReinforcement(self, exitAt, timestamp=None):
         if timestamp is None:
             timestamp = int(time.time())
 
@@ -417,6 +417,16 @@ class Tower(object):
 
         self.state = STATE_REINFORCED
         self.stateTimestamp = exitAt
+
+    def exitReinforcement(self, strontium, timestamp=None):
+        """
+        Used to verify reinforcement is completed, with new strontium
+        added back into the strontium bay.
+        """
+
+        self.updateResources({STRONTIUM_ITEMID: strontium}, timestamp,
+            force=True)
+        self.state = STATE_ONLINE
 
     def attachSilo(self, itemID, typeID, resourceTypeID=None):
         """
