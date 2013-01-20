@@ -410,7 +410,12 @@ that tech moon anyway::
     >>> tower1.getState(timestamp=1330005600)
     1
 
-Now the tower is anchored.  Welp.
+Now that tower is no longer online.  Welp.  So because of that someone
+went and took down that silo::
+
+    >>> tower1.delSiloBuffer(16649)
+    >>> sorted(tower1.getSiloLevels(timestamp=1330005600).items())
+    []
 
 Silo reactions
 ~~~~~~~~~~~~~~
