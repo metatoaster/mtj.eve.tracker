@@ -423,7 +423,7 @@ Silo reactions
 For reactions, we will use another tower.  First fuel the silo to full
 and add the buffers::
 
-    >>> tower3.updateResources({4246: 28000}, 1326641400)
+    >>> tower3.updateResources({4246: 28000, 16275: 4800}, 1326641400)
     >>> silo_p = tower3.addSiloBuffer(16644, products=(16662,), delta=100,
     ...     value=20000, full=20000, timestamp=1326641400)
     >>> silo_t = tower3.addSiloBuffer(16649, products=(16662,), delta=100,
@@ -453,3 +453,38 @@ Now run this for a while::
     [(16644, 100), (16649, 100), (16662, 39800)]
     >>> sorted(tower3.getSiloLevels(timestamp=1327365000).items())
     [(16644, 0), (16649, 0), (16662, 40000)]
+
+Oops, it got full, better empty products and load in more reactants::
+
+    >>> s = tower3.updateSiloBuffer(16644, value=20000, timestamp=1327365000)
+    >>> s = tower3.updateSiloBuffer(16649, value=20000, timestamp=1327365000)
+    >>> s = tower3.updateSiloBuffer(16662, value=0, timestamp=1327365000)
+
+Dealing with reinforcement
+--------------------------
+
+With profits comes hostility.  There will be times when space nerds
+bearing a different flag will come and shoot things up, putting a tower
+into reinforcement.  This will stop them from attack, but also stops
+tower modules from doing things like mining or reacting.
+
+For this tracker, if a tower was reinforced, a method is provided to
+mark this event::
+
+    >>> tower3.setReinforcement(exitAt=1327501800, timestamp=1327372200)
+    >>> tower3.getState(timestamp=1327372200)
+    3
+
+Fortunately, someone was out there to time the tower properly to 1d12h
+(despite the initial lack of strontium).  The strontium bay should have
+been properly deducted::
+
+    >>> sorted(tower3.getResources(timestamp=1327372200).items())
+    [(4246, 19880), (16275, 0)]
+
+With the reaction completely stopped::
+
+    >>> sorted(tower3.getSiloLevels(timestamp=1327372200).items())
+    [(16644, 19800), (16649, 19800), (16662, 400)]
+    >>> sorted(tower3.getSiloLevels(timestamp=1327375800).items())
+    [(16644, 19800), (16649, 19800), (16662, 400)]

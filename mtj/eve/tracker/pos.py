@@ -12,6 +12,7 @@ from mtj.eve.tracker.evelink import Helper
 SECONDS_PER_HOUR = 3600
 STRONTIUM_ITEMID = 16275
 STATE_ANCHORED = 1
+STATE_REINFORCED = 3
 
 pos_info = ControlTower()
 eve_map = Map()
@@ -387,6 +388,18 @@ class Tower(object):
             return 0
         remaining = fuel.getCyclesPossible() * fuel.period
         return remaining
+
+    def setReinforcement(self, exitAt, timestamp=None):
+        if timestamp is None:
+            timestamp = int(time.time())
+
+        self.updateResources({STRONTIUM_ITEMID: 0}, timestamp, force=True)
+        siloLevels = self.getSiloLevels(timestamp)
+        for k, v in siloLevels.iteritems():
+            self.updateSiloBuffer(k, value=v, timestamp=timestamp)
+
+        self.state = STATE_REINFORCED
+        self.stateTimestamp = exitAt
 
     def attachSilo(self, itemID, typeID, resourceTypeID=None):
         """
