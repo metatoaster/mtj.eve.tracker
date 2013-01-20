@@ -194,6 +194,21 @@ online till::
     >>> tower2.getTimeRemaining(timestamp=1326099600)
     0
 
+There is also a getState method that will derive the expected current
+state from the fuel levels::
+
+    >>> tower1.getState(timestamp=1326855600)
+    4
+    >>> tower1.getState(timestamp=1326859200)
+    4
+    >>> tower1.getState(timestamp=1326859201)
+    1
+    >>> tower2.getState(timestamp=1326096000)
+    4
+    >>> tower2.getState(timestamp=1326099600)
+    1
+
+
 Optimizing fuel levels
 ~~~~~~~~~~~~~~~~~~~~~~
 

@@ -1,3 +1,4 @@
+import time
 import sys
 
 from mtj.evedb.structure import ControlTower
@@ -10,6 +11,7 @@ from mtj.eve.tracker.evelink import Helper
 
 SECONDS_PER_HOUR = 3600
 STRONTIUM_ITEMID = 16275
+STATE_ANCHORED = 1
 
 pos_info = ControlTower()
 eve_map = Map()
@@ -362,14 +364,22 @@ class Tower(object):
 
         return min(offlineTimestamps)
 
-    def getTimeRemaining(self, timestamp):
+    def getTimeRemaining(self, timestamp=None):
         """
         Get the time until the tower goes offline in seconds, at the
         specified timestamp.
         """
 
+        if timestamp is None:
+            timestamp = int(time.time())
         offlineAt = self.getOfflineTimestamp()
         return max(offlineAt - timestamp, 0)
+
+    def getState(self, timestamp=None):
+        if timestamp is None:
+            timestamp = int(time.time())
+        return (timestamp <= self.getOfflineTimestamp() and
+            self.state or STATE_ANCHORED)
 
     def getReinforcementLength(self):
         fuel = self.fuels.get(STRONTIUM_ITEMID)
