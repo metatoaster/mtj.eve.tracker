@@ -41,8 +41,12 @@ class TowerResourceBufferTestCase(TestCase):
     """
 
     def setUp(self):
-        self.tower = type('DummyTower', (object,), {})
-        self.tower.state = STATE_ONLINE
+        class DummyTower(object):
+            def __init__(self, state):
+                self.state = state
+            def getState(self, timestamp=None):
+                return self.state
+        self.tower = DummyTower(STATE_ONLINE)
 
     def test_0000_basic(self):
         fuelbay = TowerResourceBuffer(self.tower, 40, 0, FUEL_NORMAL,

@@ -12,7 +12,9 @@ from mtj.eve.tracker.evelink import Helper
 SECONDS_PER_HOUR = 3600
 STRONTIUM_ITEMID = 16275
 STATE_ANCHORED = 1
+STATE_ONLINING = 2
 STATE_REINFORCED = 3
+STATE_ONLINE = 4
 
 pos_info = ControlTower()
 eve_map = Map()
@@ -377,10 +379,24 @@ class Tower(object):
         return max(offlineAt - timestamp, 0)
 
     def getState(self, timestamp=None):
+        """
+        Derive the state at timestamp based on predefined rules and
+        conditions.
+        """
+
         if timestamp is None:
             timestamp = int(time.time())
-        return (timestamp <= self.getOfflineTimestamp() and
-            self.state or STATE_ANCHORED)
+
+        # Out of fuel special case
+        if timestamp > self.getOfflineTimestamp():
+            return STATE_ANCHORED
+
+        if self.state in [STATE_ONLINING, STATE_REINFORCED]:
+            # XXX verify that the API onlining state will do this
+            if timestamp > self.stateTimestamp:
+                return STATE_ONLINE
+
+        return self.state
 
     def getReinforcementLength(self):
         fuel = self.fuels.get(STRONTIUM_ITEMID)
@@ -556,19 +572,20 @@ class TowerResourceBuffer(TimedBuffer):
             empty=0,
         )
 
-    def isConsumingFuel(self):
+    def isConsumingFuel(self, timestamp=None):
         # if this is orphaned, assume consuming.
-        return self.tower is None or self.tower.state in [3, 4]
+        return self.tower is None or self.tower.getState(timestamp) in [
+            STATE_REINFORCED, STATE_ONLINE]
 
     def isNormalFuel(self):
         return self.purpose == 1
 
-    def freeze_FuelCheck(self, timestamp):
+    def freeze_FuelCheck(self, timestamp=None):
         # Strontium is never consumed normally - the entire buffer is
         # swallowed up all at once upon start of reinforcement cycle.
         # The exit time should be retrieved from API or entered
         # seperately as the time is highly variable.
-        return not self.isConsumingFuel() or not self.isNormalFuel()
+        return not self.isConsumingFuel(timestamp) or not self.isNormalFuel()
 
     def getCurrent(self, *a, **kw):
         return super(TowerResourceBuffer, self).getCurrent(
@@ -622,7 +639,7 @@ class TowerSiloBuffer(TimedBuffer):
         # if this is an orphan, assume online anyway, otherwise base on
         # tower's state.
         return self.online and (
-            self.tower is None or self.tower.state == 4)
+            self.tower is None or self.tower.state == STATE_ONLINE)
 
     def getCyclesUntilOffline(self):
         if self.tower is None:
