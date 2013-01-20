@@ -412,7 +412,8 @@ class Tower(object):
         self.updateResources({STRONTIUM_ITEMID: 0}, timestamp, force=True)
         siloLevels = self.getSiloLevels(timestamp)
         for k, v in siloLevels.iteritems():
-            self.updateSiloBuffer(k, value=v, timestamp=timestamp)
+            self.updateSiloBuffer(k, value=v, timestamp=timestamp,
+                online=False)
 
         self.state = STATE_REINFORCED
         self.stateTimestamp = exitAt
@@ -635,11 +636,13 @@ class TowerSiloBuffer(TimedBuffer):
             *a, **kw
         )
 
-    def isOnline(self):
+    def isOnline(self, timestamp=None):
         # if this is an orphan, assume online anyway, otherwise base on
         # tower's state.
         return self.online and (
-            self.tower is None or self.tower.state == STATE_ONLINE)
+            self.tower is None or
+            self.tower.getState(timestamp) == STATE_ONLINE
+        )
 
     def getCyclesUntilOffline(self):
         if self.tower is None:
@@ -694,7 +697,8 @@ class TowerSiloBuffer(TimedBuffer):
         """
 
         cycles_possible = super(TowerSiloBuffer, self).getCyclesPossible()
-        if not self.isOnline():
+        # Have to base this on the state this was originally based on.
+        if not self.isOnline(self.timestamp):
             # Can't do anything if offline...
             return 0
         cycles_till_offline = self.getCyclesUntilOffline()

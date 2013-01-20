@@ -488,3 +488,30 @@ With the reaction completely stopped::
     [(16644, 19800), (16649, 19800), (16662, 400)]
     >>> sorted(tower3.getSiloLevels(timestamp=1327375800).items())
     [(16644, 19800), (16649, 19800), (16662, 400)]
+
+When the reinforcement cycle ends, tower is marked as online again::
+
+    >>> tower3.getState(timestamp=1327501800)
+    3
+    >>> tower3.getState(timestamp=1327501801)
+    4
+
+However, the silos need to be manually marked as online again, to not
+give the impression that things are mining when they are really not::
+
+    >>> sorted(tower3.getSiloLevels(timestamp=1327501800).items())
+    [(16644, 19800), (16649, 19800), (16662, 400)]
+    >>> sorted(tower3.getSiloLevels(timestamp=1327505400).items())
+    [(16644, 19800), (16649, 19800), (16662, 400)]
+
+Now someone with roles finally shows up to restront the tower and put
+modules back online::
+
+    >>> s = tower3.updateSiloBuffer(16644, online=True, timestamp=1327505400)
+    >>> s = tower3.updateSiloBuffer(16649, online=True, timestamp=1327505400)
+    >>> s = tower3.updateSiloBuffer(16662, online=True, timestamp=1327505400)
+
+See that the values are accumulating as expected::
+
+    >>> sorted(tower3.getSiloLevels(timestamp=1327509000).items())
+    [(16644, 19700), (16649, 19700), (16662, 600)]
