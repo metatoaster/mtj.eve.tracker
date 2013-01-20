@@ -150,7 +150,11 @@ class TowerSiloBufferTestCase(TestCase):
         silo2 = silo.getCurrent(timestamp=3600)
         self.assertEqual(silo2.value, 0)
 
-    def test_1000_towered_reactants(self):
+    def test_1000_towered_reactants_naked(self):
+        """
+        Naked silos, linked to tower but tower is unaware.
+        """
+
         self.tower.state = 4
         # 16649:Technetium
         silo_t = TowerSiloBuffer(self.tower, 'Technetium', 0.8, delta=100,

@@ -338,5 +338,23 @@ rather than per silo to ease management.
 Add a silo to tower1, and while at it, refuel it to full first::
 
     >>> tower1.updateResources({4247: 28000}, 1326641400)
-    >>> s = tower1.addSiloBuffer(timestamp=1326641400, typeID=16649, delta=100,
-    ...     maxVolume=60000)
+    >>> silo_t = tower1.addSiloBuffer(16649, delta=100,
+    ...     value=0, full=75000, timestamp=1326641400)
+
+It should be attached to the tower, and will have a few more fields
+filled out::
+
+    >>> tower1.silos.get(16649) == silo_t
+    True
+    >>> print silo_t.typeName
+    Technetium
+
+As time progresses the fuel depletes and silo accumulates with that
+delicious, delicious Technetium, so check it out::
+
+    >>> sorted(tower1.getSiloLevels(timestamp=1326643200).items())
+    [(16649, 100)]
+    >>> sorted(tower1.getResources(timestamp=1326643200).items())
+    [(4247, 27970), (16275, 7200)]
+
+We assume the silo tick time is in sync with the pose fuel cycle time.

@@ -395,6 +395,7 @@ class Tower(object):
     def setSiloBuffer(self, typeID, typeName, unitVolume, products, reactants,
             online, delta, value, full, timestamp=None):
 
+        timestamp = self.resourcePulseTimestamp(timestamp)
         silo = TowerSiloBuffer(self, typeName=typeName, unitVolume=unitVolume,
             products=products, reactants=reactants, online=online, delta=delta,
             value=value, full=full, timestamp=timestamp)
@@ -444,7 +445,6 @@ class Tower(object):
             timestamp=timestamp)
         return silo
 
-
     def updateSiloBuffer(self, typeID, products=None, reactants=None,
             online=None, delta=None, value=None, full=None, timestamp=None,
             *a, **kw):
@@ -475,6 +475,20 @@ class Tower(object):
             online=online, delta=delta, value=value, full=full,
             timestamp=timestamp)
         return silo
+
+    def getSiloLevels(self, timestamp):
+        """
+        Get the current silo levels
+
+        Return value:
+            The new values.  The value type should be a dict with the
+            tracked item typeid as key and value as the amount to be
+            assigned.
+        """
+
+        # dict comprehension
+        return {key: silo.getCurrent(timestamp=timestamp).value
+            for key, silo in self.silos.iteritems()}
 
 
 class TowerResourceBuffer(TimedBuffer):
