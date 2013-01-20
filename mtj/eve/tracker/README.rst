@@ -341,7 +341,7 @@ inside reactor arrays, with the ingredients and produced materials
 stored in the silos.
 
 Silo material tracking
-~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
 
 The pos tracker tracks the entire set of materials in an abstract way -
 As there is no direct API methods to figure out which silo is attached
@@ -372,4 +372,79 @@ delicious, delicious Technetium, so check it out::
     >>> sorted(tower1.getResources(timestamp=1326643200).items())
     [(4247, 27970), (16275, 7200)]
 
-We assume the silo tick time is in sync with the pose fuel cycle time.
+Note how the silo tick time is assumed to be in sync with the pose fuel
+cycle time.
+
+Now run it to full and see that it won't overflow the allocated space::
+
+    >>> sorted(tower1.getSiloLevels(timestamp=1329343200).items())
+    [(16649, 75000)]
+    >>> sorted(tower1.getResources(timestamp=1329343200).items())
+    [(4247, 5470), (16275, 7200)]
+
+As usual, the logistics director neglected to source the required fuel
+blocks beforehand.  The grunts realized they probably should empty that
+silo before losing too many products, so they go and do that::
+
+    >>> s = tower1.updateSiloBuffer(16649, value=0, timestamp=1329343200)
+    >>> sorted(tower1.getSiloLevels(timestamp=1329346800).items())
+    [(16649, 100)]
+
+However, directors being lazy with stocking fuels means they don't want
+that tech moon anyway::
+
+    >>> sorted(tower1.getSiloLevels(timestamp=1329998400).items())
+    [(16649, 18200)]
+    >>> sorted(tower1.getResources(timestamp=1329998400).items())
+    [(4247, 10), (16275, 7200)]
+    >>> tower1.getState(timestamp=1329998400)
+    4
+
+    >>> tower1.getState(timestamp=1330002000)
+    4
+
+    >>> sorted(tower1.getSiloLevels(timestamp=1330005600).items())
+    [(16649, 18300)]
+    >>> sorted(tower1.getResources(timestamp=1330005600).items())
+    [(4247, 10), (16275, 7200)]
+    >>> tower1.getState(timestamp=1330005600)
+    1
+
+Now the tower is anchored.  Welp.
+
+Silo reactions
+~~~~~~~~~~~~~~
+
+For reactions, we will use another tower.  First fuel the silo to full
+and add the buffers::
+
+    >>> tower3.updateResources({4246: 28000}, 1326641400)
+    >>> silo_p = tower3.addSiloBuffer(16644, products=(16662,), delta=100,
+    ...     value=20000, full=20000, timestamp=1326641400)
+    >>> silo_t = tower3.addSiloBuffer(16649, products=(16662,), delta=100,
+    ...     value=20000, full=25000, timestamp=1326641400)
+    >>> silo_pt = tower3.addSiloBuffer(16662, reactants=(16644, 16649,),
+    ...     delta=200, value=0, full=40000, timestamp=1326641400)
+
+Verify the initial levels::
+
+    >>> sorted(tower3.getSiloLevels(timestamp=1326641400).items())
+    [(16644, 20000), (16649, 20000), (16662, 0)]
+
+Now run this for a while::
+
+    >>> sorted(tower3.getSiloLevels(timestamp=1326645000).items())
+    [(16644, 19900), (16649, 19900), (16662, 200)]
+    >>> sorted(tower3.getSiloLevels(timestamp=1327357800).items())
+    [(16644, 100), (16649, 100), (16662, 39800)]
+    >>> sorted(tower3.getSiloLevels(timestamp=1327365000).items())
+    [(16644, 0), (16649, 0), (16662, 40000)]
+
+Now run this for a while::
+
+    >>> sorted(tower3.getSiloLevels(timestamp=1326645000).items())
+    [(16644, 19900), (16649, 19900), (16662, 200)]
+    >>> sorted(tower3.getSiloLevels(timestamp=1327357800).items())
+    [(16644, 100), (16649, 100), (16662, 39800)]
+    >>> sorted(tower3.getSiloLevels(timestamp=1327365000).items())
+    [(16644, 0), (16649, 0), (16662, 40000)]

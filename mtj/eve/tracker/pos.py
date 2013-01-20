@@ -468,17 +468,22 @@ class Tower(object):
         if typeID not in self.silos:
             raise ValueError('silo not currently tracking typeID')
 
+        # Static, "immutable" values that need to be retained
         silo = self.silos[typeID]
-
         typeName = silo.typeName
         unitVolume = silo.unitVolume
+
+        # Retain unless special circumstances or corrections are needed
         products = products or silo.products
         reactants = reactants or silo.reactants
         online = online or silo.online
         delta = delta or silo.delta
         value = value or silo.value
         full = full or silo.full
-        # timestamp is handled automatically
+
+        # Values to be automatically calculated, or passed through and
+        # the method will handle
+        # timestamp
 
         silo = self.setSiloBuffer(typeID, typeName=typeName,
             unitVolume=unitVolume, products=products, reactants=reactants,
