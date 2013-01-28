@@ -72,6 +72,9 @@ class Tower(object):
         # user defined values
         self.targetReinforceLength = None
 
+        # db values?
+        self.entryID = 0
+
     def _setDerivedValues(self):
         # TODO error checking and other validation somewhere
         moon = eve_map.getCelestial(self.moonID)

@@ -11,6 +11,12 @@ def test_suite():
             optionflags=doctest.NORMALIZE_WHITESPACE|doctest.ELLIPSIS,
         ),
 
+        # inline
+        doctest.DocTestSuite(
+            module='mtj.eve.tracker.backend.sql',
+            optionflags=doctest.NORMALIZE_WHITESPACE|doctest.ELLIPSIS,
+        ),
+
     ])
 
 if __name__ == '__main__':

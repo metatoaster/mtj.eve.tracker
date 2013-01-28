@@ -530,3 +530,11 @@ Should not interfere with the silo calculations either::
     [(16644, 19700), (16649, 19700), (16662, 600)]
     >>> sorted(tower3.getSiloLevels(timestamp=1327512600).items())
     [(16644, 19600), (16649, 19600), (16662, 800)]
+
+Logging and replay
+------------------
+
+The logging mechanism is another key feature to this tracker.  All
+manipulations to the buffers will be logged and can be used to audit
+actions done to the pos network, and the entire set of events can be
+replayed as desired.
