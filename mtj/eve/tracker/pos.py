@@ -563,13 +563,16 @@ class TowerResourceBuffer(TimedBuffer):
     """
 
     def __init__(self, tower=None, delta=None, timestamp=None, purpose=None,
-            value=0, resourceTypeName=None, unitVolume=None, freeze=False,
+            value=0, resourceTypeName=None, unitVolume=None, freeze=None,
             *a, **kw):
 
         self.tower = tower
         self.purpose = purpose
         self.resourceTypeName = resourceTypeName
         self.unitVolume = unitVolume
+
+        if freeze is None:
+            freeze = not self.isNormalFuel()
 
         super(TowerResourceBuffer, self).__init__(
             delta=delta,

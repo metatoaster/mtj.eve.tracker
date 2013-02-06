@@ -75,13 +75,12 @@ class TowerResourceBufferTestCase(TestCase):
         self.assertEqual(fuelbay1.resourceTypeName, fuelbay.resourceTypeName)
         self.assertEqual(fuelbay1.unitVolume, fuelbay.unitVolume)
 
-        # The actual frozen state is managed in conjunction with the
-        # usage of a tower.  A buffer will faithfully deplete stront
-        # currently.
+        # The actual frozen state is determined by the purpose, and for
+        # strontium's case it will be marked as frozen if unspecified.
         strontbay = TowerResourceBuffer(self.tower, 400, 0, FUEL_REINFORCE,
               9600, "Strontium Clathrates")
         strontbay1 = strontbay.getCurrent(3600)
-        self.assertEqual(strontbay1.value, 9200)
+        self.assertEqual(strontbay1.value, 9600)
 
     def test_0200_offline(self):
         fuelbay0 = TowerResourceBuffer(self.tower, 40, 0, FUEL_NORMAL,

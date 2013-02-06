@@ -10,7 +10,7 @@ class TowerResourceBufferTestCase(TestCase):
 
     def setUp(self):
         self.fuelbay = TowerResourceBuffer(None,
-            delta=40, timestamp=0, value=28000)
+            delta=40, timestamp=0, purpose=1, value=28000)
 
     def test_0000_base(self):
         self.assertEqual(self.fuelbay.value, 28000)
