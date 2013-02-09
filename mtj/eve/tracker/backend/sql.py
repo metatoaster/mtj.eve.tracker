@@ -6,6 +6,11 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 
+import zope.interface
+
+from mtj.eve.tracker.interfaces import ITrackerBackend
+
+
 Base = declarative_base()
 
 # Backend has these tables
@@ -42,7 +47,7 @@ class Fuel(Base):
     tower = Column(Integer)
     delta = Column(Integer)
     timestamp = Column(Integer)
-    # purpose can be derived.
+    # purpose is omitted as it is derived.
     value = Column(Integer)
     # resourceTypeName can be derived.
     # unitVolume can be derived.
@@ -121,6 +126,8 @@ class SQLAlchemyBackend(object):
         >>> list(bn._conn.execute('select * from audit'))
         [(1, u'user', u'silo', 24, u'this is a test', 1359350165)]
     """
+
+    zope.interface.implements(ITrackerBackend)
 
     def __init__(self, src=None):
         if not src:

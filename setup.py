@@ -25,6 +25,7 @@ setup(name='mtj.eve.tracker',
       install_requires=[
           'setuptools',
           # -*- Extra requirements: -*-
+          'zope.component',
           'evelink',
       ],
       entry_points="""

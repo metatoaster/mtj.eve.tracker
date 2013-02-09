@@ -538,3 +538,10 @@ The logging mechanism is another key feature to this tracker.  All
 manipulations to the buffers will be logged and can be used to audit
 actions done to the pos network, and the entire set of events can be
 replayed as desired.
+
+The object that deals with the logging can be acquired using the
+zope.component library::
+
+    >>> import zope.component
+    >>> from mtj.eve.tracker.interfaces import IHistorian
+    >>> zope.component.queryUtility(IHistorian)

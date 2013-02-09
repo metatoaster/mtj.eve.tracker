@@ -1,6 +1,8 @@
 import time
 import sys
 
+import zope.component
+
 from mtj.evedb.structure import ControlTower
 from mtj.evedb.map import Map
 from mtj.evedb.market import Group
@@ -8,6 +10,7 @@ from mtj.evedb.market import Group
 from mtj.multimer.buffer import TimedBuffer
 
 from mtj.eve.tracker.evelink import Helper
+from mtj.eve.tracker.interfaces import ITrackerBackend
 
 SECONDS_PER_HOUR = 3600
 STRONTIUM_ITEMID = 16275
@@ -166,12 +169,17 @@ class Tower(object):
             raise ValueError('`%s` is not a valid bufferGroupName' %
                 bufferGroupName)
 
-        # TODO log this action
-        res_buffer = TowerResourceBuffer(self, delta, timestamp, purpose,
-            value, resourceTypeName, unitVolume)
+        args = (delta, timestamp, purpose, value, resourceTypeName, unitVolume)
+        res_buffer = TowerResourceBuffer(self, *args)
         # freeze consumption of stront
         res_buffer.freeze = not res_buffer.isNormalFuel()
         bufferGroup[bufferKey] = res_buffer
+
+        # XXX logging
+        tracker = zope.component.queryUtility(ITrackerBackend)
+        if tracker is None:
+            # XXX handle error somehow?
+            pass
 
     def verifyResources(self, values, timestamp):
         """
