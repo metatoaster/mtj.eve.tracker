@@ -39,6 +39,19 @@ class Tower(Base):
     stateTimestamp = Column(Integer)
 
 
+class TowerLog(object):
+    # See SQLAlchemyBackend.addTower
+    __tablename__ = 'tower_log'
+
+    id = Column(Integer, primary_key=True)
+    tower_id = Column(Integer)
+    # typeID should be updated in parent when it becomes available.
+    state = Column(Integer)
+    onlineTimestamp = Column(Integer)
+    standingOwnerID = Column(Integer)
+    stateTimestamp = Column(Integer)
+
+
 class Fuel(Base):
     __tablename__ = 'fuel'
 
@@ -141,3 +154,21 @@ class SQLAlchemyBackend(object):
 
     def session(self):
         return self._sessions()
+
+    def addTower(self, *a, **kw):
+        """
+        Add a tower.
+
+        Doesn't actually set a tower to some state, just append for now
+        to log all changes made to a tower.
+        """
+
+        # A better plan may be this: have a table that maps internal ID
+        # with the API one, and the timestamps and other related fields
+        # be maintained separately from it.  For now this will do for a
+        # basic demo of just the fuel tracking.
+
+        session = self.session()
+        tower = Tower(*a, **kw)
+        session.add(tower)
+        session.commit()

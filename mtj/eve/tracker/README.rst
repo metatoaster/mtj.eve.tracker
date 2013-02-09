@@ -543,5 +543,7 @@ The object that deals with the logging can be acquired using the
 zope.component library::
 
     >>> import zope.component
-    >>> from mtj.eve.tracker.interfaces import IHistorian
-    >>> zope.component.queryUtility(IHistorian)
+    >>> from mtj.eve.tracker.interfaces import ITrackerBackend
+    >>> backend = zope.component.queryUtility(ITrackerBackend)
+    >>> ITrackerBackend.providedBy(backend)
+    True

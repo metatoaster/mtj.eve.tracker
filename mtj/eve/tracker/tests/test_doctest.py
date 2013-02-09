@@ -1,6 +1,7 @@
 import unittest
 import doctest
 
+from mtj.eve.tracker.tests import base
 
 def test_suite():
     return unittest.TestSuite([
@@ -8,6 +9,7 @@ def test_suite():
         # Base
         doctest.DocFileSuite(
             'README.rst', package='mtj.eve.tracker',
+            setUp=base.setUp,
             optionflags=doctest.NORMALIZE_WHITESPACE|doctest.ELLIPSIS,
         ),
 
