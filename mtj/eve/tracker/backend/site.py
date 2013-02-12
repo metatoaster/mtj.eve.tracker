@@ -13,7 +13,9 @@ class BaseSite(object):
 
     zope.interface.implements(ISite)
 
-    def __init__(self, sitemanager):
+    def __init__(self, sitemanager=None):
+        if sitemanager is None:
+            sitemanager = BaseGlobalComponents()
         self.setSiteManager(sitemanager)
 
     def __conform__(self, interface):
@@ -25,6 +27,3 @@ class BaseSite(object):
 
     def getSiteManager(self):
         return self._sitemanager
-
-sm = BaseGlobalComponents()
-sqlite_site = BaseSite(sm)
