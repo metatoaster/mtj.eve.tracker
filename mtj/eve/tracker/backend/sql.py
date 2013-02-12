@@ -44,7 +44,7 @@ class TowerLog(object):
     __tablename__ = 'tower_log'
 
     id = Column(Integer, primary_key=True)
-    tower_id = Column(Integer)
+    towerID = Column(Integer)
     # typeID should be updated in parent when it becomes available.
     state = Column(Integer)
     onlineTimestamp = Column(Integer)
@@ -57,14 +57,28 @@ class Fuel(Base):
 
     id = Column(Integer, primary_key=True)
 
-    tower = Column(Integer)
+    # this is the _internal_ id, not the one derived from the API as the
+    # pos tracker can and should be able to be operated manually apart
+    # from the API.
+    towerID = Column(Integer)
+
+    fuelTypeID = Column(Integer)
     delta = Column(Integer)
     timestamp = Column(Integer)
     # purpose is omitted as it is derived.
     value = Column(Integer)
     # resourceTypeName can be derived.
     # unitVolume can be derived.
-    freeze = Column(Boolean)
+    # freeze is generally 
+    #freeze = Column(Boolean)
+
+    def __init__(self, towerID, fuelTypeID, delta, timestamp, value):
+
+        self.towerID = towerID
+        self.fuelTypeID = fuelTypeID
+        self.delta = delta
+        self.timestamp = timestamp
+        self.value = value
 
 
 class Silo(Base):
@@ -168,7 +182,19 @@ class SQLAlchemyBackend(object):
         # be maintained separately from it.  For now this will do for a
         # basic demo of just the fuel tracking.
 
-        session = self.session()
         tower = Tower(*a, **kw)
+        session = self.session()
         session.add(tower)
+        session.commit()
+
+    def addFuel(self, tower=None, fuelTypeID=None, delta=None, timestamp=None,
+            value=None, *a, **kw):
+        # derive towerID from the tower
+        # XXX placeholder for now as we don't have any code that will
+        # derive this for us.
+        towerID = tower.itemID
+        fuel = Fuel(towerID, fuelTypeID, delta, timestamp, value)
+
+        session = self.session()
+        session.add(fuel)
         session.commit()

@@ -41,6 +41,8 @@ class Tower(object):
         The parameters are equivalent to /corp/StarbaseList.xml.
         """
 
+        # the id is NOT set here as this attribute is backend dependent.
+
         # Hurr why can't this be done automagically from arguments...
         self.itemID = itemID
         self.typeID = typeID
@@ -169,17 +171,23 @@ class Tower(object):
             raise ValueError('`%s` is not a valid bufferGroupName' %
                 bufferGroupName)
 
-        args = (delta, timestamp, purpose, value, resourceTypeName, unitVolume)
-        res_buffer = TowerResourceBuffer(self, *args)
+        kargs = dict(delta=delta, timestamp=timestamp, purpose=purpose,
+            value=value, resourceTypeName=resourceTypeName,
+            unitVolume=unitVolume)
+        res_buffer = TowerResourceBuffer(self, **kargs)
         # freeze consumption of stront
-        res_buffer.freeze = not res_buffer.isNormalFuel()
         bufferGroup[bufferKey] = res_buffer
 
         # XXX logging
         tracker = zope.component.queryUtility(ITrackerBackend)
         if tracker is None:
             # XXX handle error somehow?
-            pass
+            return
+
+        # This need to be tracked.
+        kargs['tower'] = self
+        kargs['fuelTypeID'] = bufferKey
+        tracker.addFuel(**kargs)
 
     def verifyResources(self, values, timestamp):
         """

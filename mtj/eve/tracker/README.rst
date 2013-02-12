@@ -547,3 +547,9 @@ zope.component library::
     >>> backend = zope.component.queryUtility(ITrackerBackend)
     >>> ITrackerBackend.providedBy(backend)
     True
+
+Now let's see if we have the tower entries logged::
+
+    >>> results = list(backend._conn.execute('select * from fuel'))
+    >>> len(results)
+    21
