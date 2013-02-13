@@ -74,12 +74,6 @@ class Tower(object):
         self.fuels = {}  # fuel
         self.silos = {}  # silos
 
-        # user defined values
-        self.targetReinforceLength = None
-
-        # db values?
-        self.entryID = 0
-
     def _setDerivedValues(self):
         # TODO error checking and other validation somewhere
         moon = eve_map.getCelestial(self.moonID)
@@ -331,8 +325,7 @@ class Tower(object):
 
     def getTargetStrontiumCycles(self):
         fuel = self.fuels[STRONTIUM_ITEMID]
-        return int(self.targetReinforceLength or
-                   self.strontCapacity / (fuel.delta * fuel.unitVolume))
+        return int(self.strontCapacity / (fuel.delta * fuel.unitVolume))
 
     def getTargetStrontiumAmount(self):
         """
