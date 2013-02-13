@@ -15,3 +15,6 @@ def setUp(suite):
     # The basic memory based backend.
     backend = SQLAlchemyBackend()
     sm.registerUtility(backend, ITrackerBackend)
+
+def tearDown(suite):
+    setSite()

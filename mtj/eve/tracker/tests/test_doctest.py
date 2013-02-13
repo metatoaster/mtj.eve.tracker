@@ -9,7 +9,7 @@ def test_suite():
         # Base
         doctest.DocFileSuite(
             'README.rst', package='mtj.eve.tracker',
-            setUp=base.setUp,
+            setUp=base.setUp, tearDown=base.tearDown,
             optionflags=doctest.NORMALIZE_WHITESPACE|doctest.ELLIPSIS,
         ),
 
