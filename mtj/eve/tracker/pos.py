@@ -323,26 +323,28 @@ class Tower(object):
         return {k: f.delta * ideal_cycles for k, f in self.fuels.iteritems()
             if f.isNormalFuel()}
 
-    def getTargetStrontiumCycles(self):
+    def getTargetStrontiumCycles(self, target=None):
         fuel = self.fuels[STRONTIUM_ITEMID]
+        if target is not None:
+            return target
         return int(self.strontCapacity / (fuel.delta * fuel.unitVolume))
 
-    def getTargetStrontiumAmount(self):
+    def getTargetStrontiumAmount(self, target=None):
         """
         Get the target strontium amount as per desired reinforcement
         timing needs.
         """
 
         fuel = self.fuels[STRONTIUM_ITEMID]
-        return fuel.delta * self.getTargetStrontiumCycles()
+        return fuel.delta * self.getTargetStrontiumCycles(target)
 
-    def getTargetStrontiumDifference(self):
+    def getTargetStrontiumDifference(self, target=None):
         """
         Return the difference needed to hit the target strontium amount.
         """
 
         fuel = self.fuels[STRONTIUM_ITEMID]
-        return self.getTargetStrontiumAmount() - fuel.value
+        return self.getTargetStrontiumAmount(target) - fuel.value
 
     def getIdealFuelingAmount(self, timestamp):
         """
