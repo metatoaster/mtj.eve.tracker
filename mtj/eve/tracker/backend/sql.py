@@ -9,6 +9,7 @@ from sqlalchemy.ext.declarative import declarative_base
 import zope.interface
 
 from mtj.eve.tracker.interfaces import ITrackerBackend
+from mtj.eve.tracker import pos
 
 
 Base = declarative_base()
@@ -24,7 +25,7 @@ Base = declarative_base()
 #     For logging of audit actions, note down who did what.
 
 
-class Tower(Base):
+class Tower(Base, pos.Tower):
     __tablename__ = 'tower'
 
     id = Column(Integer, primary_key=True)
@@ -38,13 +39,18 @@ class Tower(Base):
     standingOwnerID = Column(Integer)
     stateTimestamp = Column(Integer)
 
+    def __init__(self, *a, **kw):
+        pos.Tower.__init__(self, *a, **kw)
+
 
 class TowerLog(object):
     # See SQLAlchemyBackend.addTower
     __tablename__ = 'tower_log'
 
     id = Column(Integer, primary_key=True)
+
     towerID = Column(Integer)
+    itemID = Column(Integer)
     # typeID should be updated in parent when it becomes available.
     state = Column(Integer)
     onlineTimestamp = Column(Integer)
@@ -187,14 +193,16 @@ class SQLAlchemyBackend(object):
         session.add(tower)
         session.commit()
 
+        return tower
+
     def addFuel(self, tower=None, fuelTypeID=None, delta=None, timestamp=None,
             value=None, *a, **kw):
-        # derive towerID from the tower
-        # XXX placeholder for now as we don't have any code that will
-        # derive this for us.
-        towerID = tower.itemID
+
+        towerID = tower.id
         fuel = Fuel(towerID, fuelTypeID, delta, timestamp, value)
 
         session = self.session()
         session.add(fuel)
         session.commit()
+
+        return fuel

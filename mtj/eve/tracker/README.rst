@@ -28,6 +28,18 @@ To begin, install the dummy data helper class::
     >>> import mtj.eve.tracker.pos
     >>> dummyevelink.installDummy(mtj.eve.tracker.pos)
 
+Backend
+-------
+
+Ensure that we have a valid backend available for usage.  This can be
+acquired using the Zope component framework like so::
+
+    >>> import zope.component
+    >>> from mtj.eve.tracker.interfaces import ITrackerBackend
+    >>> backend = zope.component.queryUtility(ITrackerBackend)
+    >>> ITrackerBackend.providedBy(backend)
+    True
+
 Tower Basics
 ------------
 
@@ -42,8 +54,7 @@ First initialize a tower.  This process will fetch the fuel requirements
 from evedb and the API for the empire currently controlling the system
 for the charter requirements::
 
-    >>> from mtj.eve.tracker.pos import Tower
-    >>> tower1 = Tower(1000001, 12235, 30004608, 40291202, 4,
+    >>> tower1 = backend.addTower(1, 12235, 30004608, 40291202, 4,
     ...     1325376000, 1306886400, 498125261)
     >>> tower1.initFuels()
     >>> sorted(tower1.fuels.keys())
@@ -58,7 +69,7 @@ for the charter requirements::
 As the above is a null security system, no charters are required.  We
 can try again using one in high security space::
 
-    >>> tower2 = Tower(1000002, 20066, 30004268, 40270415, 4,
+    >>> tower2 = backend.addTower(2, 20066, 30004268, 40270415, 4,
     ...     1325376000, 1306887061, 498125261)
     >>> tower2.initFuels()
     >>> sorted(tower2.fuels.keys())
@@ -68,7 +79,7 @@ can try again using one in high security space::
 
 Low security, on the other hand, shouldn't need a charter either::
 
-    >>> tower3 = Tower(1000003, 16214, 30004267, 40270327, 4,
+    >>> tower3 = backend.addTower(3, 16214, 30004267, 40270327, 4,
     ...     1325376000, 1306886400, 1018389948)
     >>> tower3.initFuels()
     >>> sorted(tower3.fuels.keys())
@@ -536,17 +547,12 @@ manipulations to the buffers will be logged and can be used to audit
 actions done to the pos network, and the entire set of events can be
 replayed as desired.
 
-The object that deals with the logging can be acquired using the
-zope.component library::
-
-    >>> import zope.component
-    >>> from mtj.eve.tracker.interfaces import ITrackerBackend
-    >>> backend = zope.component.queryUtility(ITrackerBackend)
-    >>> ITrackerBackend.providedBy(backend)
-    True
-
 Now let's see if we have the tower entries logged::
 
     >>> results = list(backend._conn.execute('select * from fuel'))
     >>> len(results)
     21
+    >>> results[0]
+    (1, 1, 4247, 40, 0, 0)
+    >>> results[20]
+    (21, 3, 16275, 400, 1327370400, 14400)
