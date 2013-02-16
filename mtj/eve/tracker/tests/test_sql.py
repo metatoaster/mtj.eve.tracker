@@ -36,10 +36,22 @@ class SqlBackendTestCase(TestCase):
         # derived values correctly set.
         self.assertEqual(tower.capacity, 140000)
         self.assertEqual(tower.strontCapacity, 50000)
-        
+
         result = list(self.backend._conn.execute('select * from tower'))
         self.assertEqual(result, [(1, 1000001, 12235, 30004608, 40291202, 4,
             1325376000, 1306886400, 498125261)])
+
+    def test_0100_fuel(self):
+        tower = self.backend.addTower(1000001, 12235, 30004608, 40291202, 4,
+            1325376000, 1306886400, 498125261)
+        fuel = {4247: 12345, 16275: 7200,}
+        tower.updateResources(fuel, 1325376000)
+
+        result = list(self.backend._conn.execute('select * from fuel'))
+        self.assertEqual(result, [
+            (1, 1, 16275, 300, 1325376000, 7200),
+            (2, 1, 4247, 30, 1325376000, 12345),
+        ])
 
 
 def test_suite():
