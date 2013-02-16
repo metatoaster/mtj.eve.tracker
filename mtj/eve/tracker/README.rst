@@ -56,7 +56,7 @@ for the charter requirements::
 
     >>> tower1 = backend.addTower(1, 12235, 30004608, 40291202, 4,
     ...     1325376000, 1306886400, 498125261)
-    >>> tower1.initFuels()
+    >>> tower1.updateResources({}, 1325376000)
     >>> sorted(tower1.fuels.keys())
     [4247, 16275]
     >>> tower1.solarSystemName
@@ -71,7 +71,7 @@ can try again using one in high security space::
 
     >>> tower2 = backend.addTower(2, 20066, 30004268, 40270415, 4,
     ...     1325376000, 1306887061, 498125261)
-    >>> tower2.initFuels()
+    >>> tower2.updateResources({}, 1325376000)
     >>> sorted(tower2.fuels.keys())
     [4246, 16275, 24592]
     >>> tower2.celestialName
@@ -81,7 +81,7 @@ Low security, on the other hand, shouldn't need a charter either::
 
     >>> tower3 = backend.addTower(3, 16214, 30004267, 40270327, 4,
     ...     1325376000, 1306886400, 1018389948)
-    >>> tower3.initFuels()
+    >>> tower3.updateResources({}, 1325376000)
     >>> sorted(tower3.fuels.keys())
     [4246, 16275]
     >>> tower3.celestialName
@@ -552,7 +552,5 @@ Now let's see if we have the tower entries logged::
     >>> results = list(backend._conn.execute('select * from fuel'))
     >>> len(results)
     21
-    >>> results[0]
-    (1, 1, 4247, 40, 0, 0)
     >>> results[20]
     (21, 3, 16275, 400, 1327370400, 14400)

@@ -109,31 +109,6 @@ class Tower(object):
         sov_info = evelink_helper.sov[self.locationID]
         return sov_info['alliance_id'] == self.allianceID
 
-    def initFuels(self):
-        all_fuels = pos_info.getControlTowerResource(self.typeID)
-        sov_info = evelink_helper.sov[self.locationID]
-
-        # Determine fuel type from systemID + factionID
-        faction_id = sov_info['faction_id']
-        security = eve_map.getSolarSystem(self.locationID)['security']
-
-        for fuel in all_fuels:
-            if fuel['factionID'] in (faction_id, None):
-                if fuel['factionID'] and security < fuel['minSecurityLevel']:
-                    # Lowsec don't need charters.
-                    continue
-
-                self.setResourceBuffer(
-                    bufferGroupName='fuels',
-                    bufferKey=fuel['resourceTypeID'],
-                    delta=fuel['quantity'],
-                    timestamp=0,  # defined later
-                    purpose=fuel['purpose'],
-                    value=0,  # defined later
-                    resourceTypeName=fuel['typeName'],
-                    unitVolume=fuel['volume'],
-                )
-
     def setResourceBuffer(self, bufferGroupName, bufferKey, delta, timestamp,
             purpose, value, resourceTypeName, unitVolume):
         """
@@ -183,6 +158,22 @@ class Tower(object):
         kargs['fuelTypeID'] = bufferKey
         tracker.addFuel(**kargs)
 
+    def initResources(self):
+        all_fuels = pos_info.getControlTowerResource(self.typeID)
+        sov_info = evelink_helper.sov[self.locationID]
+
+        # Determine fuel type from systemID + factionID
+        faction_id = sov_info['faction_id']
+        security = eve_map.getSolarSystem(self.locationID)['security']
+
+        for fuel in all_fuels:
+            if fuel['factionID'] in (faction_id, None):
+                if fuel['factionID'] and security < fuel['minSecurityLevel']:
+                    # Lowsec don't need charters.
+                    continue
+
+                self.fuels[fuel['resourceTypeID']] = None
+
     def verifyResources(self, values, timestamp):
         """
         Verify resources with the given values
@@ -197,11 +188,18 @@ class Tower(object):
         """
 
         mismatches = []
+        if not self.fuels:
+            self.initResources()
 
         for fuel_id, fuel_buffer in self.fuels.iteritems():
+            if fuel_buffer is None:
+                # initialized but no buffer, must be rectified.
+                mismatches.append(fuel_id)
+                continue
+
             verifier = values.get(fuel_id)
             if not verifier:
-                # Can't verify against unknown.
+                # Can't verify against unspecified value.
                 continue
 
             calculated = fuel_buffer.getCurrent(timestamp)
@@ -224,7 +222,16 @@ class Tower(object):
             levels are not done so an event will be forced.
         """
 
+        # flag the need to update all the fuels.
+        updateAll = not self.fuels
         mismatches = self.verifyResources(values, timestamp)
+
+        if updateAll:
+            # mismatches should be all the resources
+            newvalues = {v: 0 for v in mismatches}
+            newvalues.update(values)
+            values = newvalues
+
         # dict comprehension
         all_fuels = {v['resourceTypeID']: v for v in
             pos_info.getControlTowerResource(self.typeID)}

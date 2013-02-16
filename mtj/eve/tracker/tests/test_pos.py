@@ -103,7 +103,7 @@ class TowerSiloBufferTestCase(TestCase):
 
     def setUp(self):
         self.tower = Tower(1, 12235, 30004608, 40291202, 1, 0, 0, 0)
-        self.tower.initFuels()
+        self.tower.updateResources({}, 0)
 
     def test_0000_basic_naked(self):
         silo = TowerSiloBuffer(None, 'Technetium', 0.8, delta=100,
