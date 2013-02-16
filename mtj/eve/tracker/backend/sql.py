@@ -53,9 +53,9 @@ class TowerLog(object):
     itemID = Column(Integer)
     # typeID should be updated in parent when it becomes available.
     state = Column(Integer)
+    stateTimestamp = Column(Integer)
     onlineTimestamp = Column(Integer)
     standingOwnerID = Column(Integer)
-    stateTimestamp = Column(Integer)
 
 
 class Fuel(Base):
