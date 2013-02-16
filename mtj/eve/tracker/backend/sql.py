@@ -35,9 +35,9 @@ class Tower(Base, pos.Tower):
     locationID = Column(Integer)
     moonID = Column(Integer)
     state = Column(Integer)
+    stateTimestamp = Column(Integer)
     onlineTimestamp = Column(Integer)
     standingOwnerID = Column(Integer)
-    stateTimestamp = Column(Integer)
 
     def __init__(self, *a, **kw):
         pos.Tower.__init__(self, *a, **kw)
@@ -194,6 +194,9 @@ class SQLAlchemyBackend(object):
         session.commit()
 
         return tower
+
+    def updateTower(self, tower):
+        pass
 
     def addFuel(self, tower=None, fuelTypeID=None, delta=None, timestamp=None,
             value=None, *a, **kw):
