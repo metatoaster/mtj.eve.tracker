@@ -1,6 +1,7 @@
 import time
 
 import sqlalchemy
+from sqlalchemy import func
 from sqlalchemy import Column, Integer, String, Boolean, Float, MetaData
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -42,6 +43,37 @@ class Tower(Base, pos.Tower):
     def __init__(self, *a, **kw):
         pos.Tower.__init__(self, *a, **kw)
 
+    def _reloadResources(self, session):
+        """
+        Reload resources from database.
+        """
+
+        self.initResources()
+
+        # load pos fuel info.
+        # dict comprehension
+        all_fuels = {v['resourceTypeID']: v for v in
+            pos.pos_info.getControlTowerResource(self.typeID)}
+
+        # query for stuff
+        results = session.query(Fuel).filter(
+            Fuel.towerID == self.id).group_by(
+                Fuel.fuelTypeID).having(func.max(Fuel.id))
+
+        for result in results.all():
+            resourceTypeID = result.fuelTypeID
+            fuel = all_fuels.get(resourceTypeID)
+            timestamp = self.resourcePulseTimestamp(result.timestamp)
+            res_buffer = pos.TowerResourceBuffer(
+                delta=result.delta,
+                timestamp=timestamp,
+                purpose=fuel['purpose'],
+                value=result.value,
+                resourceTypeName=fuel['typeName'],
+                unitVolume=fuel['volume'],
+            )
+            self.fuels[resourceTypeID] = res_buffer
+
 
 class TowerLog(object):
     # See SQLAlchemyBackend.addTower
@@ -75,7 +107,7 @@ class Fuel(Base):
     value = Column(Integer)
     # resourceTypeName can be derived.
     # unitVolume can be derived.
-    # freeze is generally 
+    # freeze is derived
     #freeze = Column(Boolean)
 
     def __init__(self, towerID, fuelTypeID, delta, timestamp, value):
@@ -172,8 +204,24 @@ class SQLAlchemyBackend(object):
         Base.metadata.create_all(self._conn)
         self._sessions = sessionmaker(bind=self._conn)
 
+        self.towers = {}
+
     def session(self):
         return self._sessions()
+
+    def reinstantiate(self):
+        """
+        Recreate all the objects in the tracker from the database.
+        """
+
+        session = self.session()
+        towerq = session.query(Tower)
+        self.towers = {}
+
+        for tower in towerq.all():
+            tower._initDerived()
+            tower._reloadResources(session)
+            self.towers[tower.id] = tower 
 
     def addTower(self, *a, **kw):
         """
@@ -193,7 +241,20 @@ class SQLAlchemyBackend(object):
         session.add(tower)
         session.commit()
 
+        self.towers[tower.id] = tower
+
         return tower
+
+    def getTower(self, tower_id):
+        """
+        Return a copy of the tower at its current state.
+        """
+
+        # XXX not actually a copy yet.
+        return self.towers[tower_id]
+
+    def getTowerIds(self):
+        return self.towers.keys()
 
     def updateTower(self, tower):
         pass

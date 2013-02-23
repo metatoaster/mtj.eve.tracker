@@ -37,6 +37,12 @@ class SqlBackendTestCase(TestCase):
         self.assertEqual(tower.capacity, 140000)
         self.assertEqual(tower.strontCapacity, 50000)
 
+        # id is automatically assigned
+        self.assertEqual(tower.id, 1)
+
+        self.assertEqual(self.backend.getTowerIds(), [1])
+        self.assertEqual(self.backend.getTower(1), tower)
+
         result = list(self.backend._conn.execute('select * from tower'))
         self.assertEqual(result, [(1, 1000001, 12235, 30004608, 40291202, 4,
             1325376000, 1306886400, 498125261)])
@@ -53,6 +59,37 @@ class SqlBackendTestCase(TestCase):
             (2, 1, 4247, 30, 1325376000, 12345),
         ])
 
+        self.assertEqual(tower.getTimeRemaining(1326850000), 9200)
+
+    def test_2000_reinstantiate(self):
+        self.backend._conn.execute('insert into tower values '
+            '(1, 1000001, 12235, 30004608, 40291202, 4, 1325376000, '
+            '1306886400, 498125261)')
+        self.backend._conn.execute('insert into fuel values '
+            '(1, 1, 16275, 300, 1325376000, 7200)')
+        self.backend._conn.execute('insert into fuel values '
+            '(2, 1, 4247, 30, 1325376000, 12345)')
+
+        self.backend.reinstantiate()
+
+        # no new entries are created
+        session = self.backend.session()
+        towerq = session.query(sql.Tower)
+        fuelq = session.query(sql.Fuel)
+        self.assertEqual(towerq.count(), 1)
+        self.assertEqual(fuelq.count(), 2)
+
+        # tower properly acquired
+        tower = self.backend.getTower(1)
+        self.assertEqual(tower.id, 1)
+        self.assertEqual(tower.itemID, 1000001)
+
+        # Derived values still assigned.
+        self.assertEqual(tower.capacity, 140000)
+        self.assertEqual(tower.strontCapacity, 50000)
+
+        # Fuel values assigned
+        self.assertEqual(tower.getTimeRemaining(1326850000), 9200)
 
 def test_suite():
     suite = TestSuite()
