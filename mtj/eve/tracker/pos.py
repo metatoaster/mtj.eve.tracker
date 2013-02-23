@@ -55,8 +55,11 @@ class Tower(object):
         self.standingOwnerID = standingOwnerID
         self.stateTimestamp = stateTimestamp
 
+        self._initDerived()
+
+    def _initDerived(self):
         # derived but fixed values
-        self.resourcePulse = onlineTimestamp % SECONDS_PER_HOUR
+        self.resourcePulse = self.onlineTimestamp % SECONDS_PER_HOUR
         self.typeName = None
         self.allianceID = None
         self.celestialName = None
