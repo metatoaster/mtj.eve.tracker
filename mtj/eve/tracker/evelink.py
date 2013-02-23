@@ -23,6 +23,34 @@ class API(evelink.api.API):
         return super(API, self).__init__(*a, **kw)
 
 
+class Corp(evelink.corp.Corp):
+
+    def starbases(self):
+        """
+        Copy of the parent, except state is not converted to string,
+        and the keys are identical to the api.
+        """
+        api_result = self.api.get('corp/StarbaseList')
+
+        rowset = api_result.find('rowset')
+        results = {}
+        for row in rowset.findall('row'):
+            a = row.attrib
+            starbase = {
+                'itemID': int(a['itemID']),
+                'typeID': int(a['typeID']),
+                'locationID': int(a['locationID']),
+                'moonID': int(a['moonID']),
+                'state': int(a['state']),
+                'stateTimestamp': evelink.api.parse_ts(a['stateTimestamp']),
+                'onlineTimestamp': evelink.api.parse_ts(a['onlineTimestamp']),
+                'standingsOwnerID': int(a['standingOwnerID']),
+            }
+            results[starbase['itemID']] = starbase
+
+        return results
+
+
 class Helper(object):
     """
     API helper class

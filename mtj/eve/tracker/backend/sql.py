@@ -4,8 +4,9 @@ import sqlalchemy
 from sqlalchemy import func
 from sqlalchemy import Column, Integer, String, Boolean, Float, MetaData
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 
 import zope.interface
 
@@ -31,7 +32,7 @@ class Tower(Base, pos.Tower):
 
     id = Column(Integer, primary_key=True)
 
-    itemID = Column(Integer)
+    itemID = Column(Integer, index=True)
     typeID = Column(Integer)
     locationID = Column(Integer)
     moonID = Column(Integer)
@@ -223,7 +224,22 @@ class SQLAlchemyBackend(object):
             tower._reloadResources(session)
             self.towers[tower.id] = tower 
 
-    def addTower(self, *a, **kw):
+    def _queryTower(self, session, itemID):
+        # see if we already have this towerID registered.
+        q = session.query(Tower).filter(Tower.itemID == itemID)
+        try:
+            result = q.one()
+        except NoResultFound:
+            # normal.
+            return None
+        except MultipleResultsFound:
+            # this is abnormal, something may have tempered with the
+            # database.
+            raise
+
+        return result
+
+    def addTower(self, itemID, *a, **kw):
         """
         Add a tower.
 
@@ -236,8 +252,14 @@ class SQLAlchemyBackend(object):
         # be maintained separately from it.  For now this will do for a
         # basic demo of just the fuel tracking.
 
-        tower = Tower(*a, **kw)
         session = self.session()
+
+        if itemID:
+            result = self._queryTower(session, itemID)
+            if result:
+                return self.towers[result.id]
+
+        tower = Tower(itemID, *a, **kw)
         session.add(tower)
         session.commit()
 
