@@ -12,7 +12,7 @@ STATE_REINFORCE = 3
 STATE_ONLINE = 4
 
 
-class StructureTestCase(TestCase):
+class TowerTestCase(TestCase):
     """
     Unit tests for structures
     """
@@ -29,6 +29,13 @@ class StructureTestCase(TestCase):
 
         self.assertEqual(tower.capacity, 140000)
         self.assertEqual(tower.strontCapacity, 50000)
+
+    def test_0100_uninitialized(self):
+        tower = Tower(1000001, 12235, 30004608, 40291202, 4,
+            1325376000, 1306886400, 498125261)
+        # undefined fuels
+        self.assertEqual(tower.getOfflineTimestamp(), -1)
+        self.assertEqual(tower.getTimeRemaining(), 0)
 
     def test_1000_failure_celestial_solarsystem_mismatch(self):
         # Celestial must be located within the solar system
@@ -259,7 +266,7 @@ class TowerSiloBufferTestCase(TestCase):
 
 def test_suite():
     suite = TestSuite()
-    suite.addTest(makeSuite(StructureTestCase))
+    suite.addTest(makeSuite(TowerTestCase))
     suite.addTest(makeSuite(TowerResourceBufferTestCase))
     suite.addTest(makeSuite(TowerSiloBufferTestCase))
     return suite

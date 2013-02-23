@@ -147,7 +147,6 @@ class Tower(object):
             value=value, resourceTypeName=resourceTypeName,
             unitVolume=unitVolume)
         res_buffer = TowerResourceBuffer(self, **kargs)
-        # freeze consumption of stront
         bufferGroup[bufferKey] = res_buffer
 
         # XXX logging
@@ -377,8 +376,12 @@ class Tower(object):
         timestamp for when to deduct fuel for calculating consumption.
         """
 
-        # XXX what kind of results should this return if state is not
-        # online or reinforced?
+        if not self.fuels:
+            # Not sure if this is even the right result, it's undefined
+            # but this only really happens if things are not initialized
+            # correctly.  With a bunch of methods relying on this I am
+            # going to return a number.
+            return -1
 
         offlineTimestamps = []
         for key, fuel in self.fuels.iteritems():
