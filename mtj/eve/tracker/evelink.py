@@ -44,7 +44,7 @@ class Corp(evelink.corp.Corp):
                 'state': int(a['state']),
                 'stateTimestamp': evelink.api.parse_ts(a['stateTimestamp']),
                 'onlineTimestamp': evelink.api.parse_ts(a['onlineTimestamp']),
-                'standingsOwnerID': int(a['standingOwnerID']),
+                'standingOwnerID': int(a['standingOwnerID']),
             }
             results[starbase['itemID']] = starbase
 
