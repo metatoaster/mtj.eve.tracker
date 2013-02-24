@@ -70,7 +70,7 @@ As the above is a null security system, no charters are required.  We
 can try again using one in high security space::
 
     >>> tower2 = backend.addTower(2, 20066, 30004268, 40270415, 4,
-    ...     1325376000, 1306887061, 498125261)
+    ...     1325376661, 1306886400, 498125261)
     >>> tower2.updateResources({}, 1325376000)
     >>> sorted(tower2.fuels.keys())
     [4246, 16275, 24592]
