@@ -58,8 +58,8 @@ class Tower(object):
         self._initDerived()
 
     def _initDerived(self):
-        # derived but fixed values
-        self.resourcePulse = self.onlineTimestamp % SECONDS_PER_HOUR
+        # this can be None...
+        self.resourcePulse = (self.onlineTimestamp or 0) % SECONDS_PER_HOUR
         self.typeName = None
         self.allianceID = None
         self.celestialName = None

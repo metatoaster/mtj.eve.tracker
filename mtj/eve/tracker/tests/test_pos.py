@@ -30,6 +30,13 @@ class TowerTestCase(TestCase):
         self.assertEqual(tower.capacity, 140000)
         self.assertEqual(tower.strontCapacity, 50000)
 
+    def test_0010_none_timestamp(self):
+        # onlineTimestamp might be None.  Assume to be 0.
+        # this can be caused by API.
+        tower = Tower(1000001, 12235, 30004608, 40291202, 4,
+            1325376000, None, 498125261)
+        self.assertEqual(tower.resourcePulse, 0)
+
     def test_0100_uninitialized(self):
         tower = Tower(1000001, 12235, 30004608, 40291202, 4,
             1325376000, 1306886400, 498125261)
