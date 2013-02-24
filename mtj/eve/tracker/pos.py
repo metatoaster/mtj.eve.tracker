@@ -376,21 +376,21 @@ class Tower(object):
         timestamp for when to deduct fuel for calculating consumption.
         """
 
-        if not self.fuels:
-            # Not sure if this is even the right result, it's undefined
-            # but this only really happens if things are not initialized
-            # correctly.  With a bunch of methods relying on this I am
-            # going to return a number.
-            return -1
-
         offlineTimestamps = []
         for key, fuel in self.fuels.iteritems():
-            if not fuel.isNormalFuel():
+            if fuel is None or not fuel.isNormalFuel():
                 continue
 
             # cycles remaining == -1, or last fuel pairing == 0
             remaining = (fuel.getCyclesAvailable() + int(not fuel_pair)) 
             offlineTimestamps.append(remaining * fuel.period + fuel.timestamp)
+
+        if not offlineTimestamps:
+            # Not sure if this is even the right result, it's undefined
+            # but this only really happens if things are not initialized
+            # correctly.  With a bunch of methods relying on this I am
+            # going to return a number.
+            return -1
 
         return min(offlineTimestamps)
 

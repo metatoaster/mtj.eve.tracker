@@ -44,6 +44,14 @@ class TowerTestCase(TestCase):
         self.assertEqual(tower.getOfflineTimestamp(), -1)
         self.assertEqual(tower.getTimeRemaining(), 0)
 
+    def test_0101_partial_initialized(self):
+        tower = Tower(1000001, 12235, 30004608, 40291202, 4,
+            1325376000, 1306886400, 498125261)
+        # fuels are all None
+        tower.initResources()
+        self.assertEqual(tower.getOfflineTimestamp(), -1)
+        self.assertEqual(tower.getTimeRemaining(), 0)
+
     def test_1000_failure_celestial_solarsystem_mismatch(self):
         # Celestial must be located within the solar system
         pass
