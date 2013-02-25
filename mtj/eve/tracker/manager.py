@@ -42,32 +42,9 @@ class BaseTowerManager(object):
             # Get time right before the request.
             ts = time.time()
             details = corp.starbase_details(k)
-            # XXX details can be cached, and so ts should really be the
-            # timestamp for when the original request was made
-            # XXX pending on adding this function to the evelink fork.
-
-            # XXX I have significant uncertainty on the timestamp, as it
-            # may be fast?
+            api_time = api.last_timestamps[0]
 
             state = details['state']
-            if state == 'online':
-                # only online timestamp is sort of trustworthy, even
-                # though it might be some time in the future.
-                timestamp = details['state_ts']
-                delta = ts - timestamp
-                logger.debug('ts [%d] - state_ts [%d] = delta [%d]',
-                    ts, timestamp, delta)
-                if delta < 0:
-                    # CCP doesn't return the future calculated values
-                    # correctly, it actually reports what it was exactly
-                    # an hour ago.
-                    timestamp = timestamp - 3600
-                    logger.debug('negative delta, assume :ccp:, timestamp is:',
-                        timestamp)
-            else:
-                timestamp = ts
-                logger.debug('not online, using current time [%d]', ts)
-
-            tower.updateResources(details['fuel'], timestamp)
+            tower.updateResources(details['fuel'], api_time)
 
         logger.debug('(%d/%d) processing complete', starbases_c, starbases_c)
