@@ -255,6 +255,7 @@ class SQLAlchemyBackend(object):
         session = self.session()
 
         if itemID:
+            # XXX the check should include rest of the fields.
             result = self._queryTower(session, itemID)
             if result:
                 return self.towers[result.id]

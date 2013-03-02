@@ -43,6 +43,10 @@ class BaseTowerManager(object):
             ts = time.time()
             details = corp.starbase_details(k)
             api_time = api.last_timestamps[0]
+            state_ts = details['state_ts'] or 0
+            delta = api_time - state_ts
+            logger.debug('timestamps (%s, %s, %s) | delta %d',
+                ts, api_time, state_ts, delta)
 
             state = details['state']
             tower.updateResources(details['fuel'], api_time)
