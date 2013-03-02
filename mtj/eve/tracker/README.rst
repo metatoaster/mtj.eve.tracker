@@ -162,33 +162,31 @@ setup::
     [(4247, 12045), (16275, 7200)]
 
 For the second tower, we use the same timestamp, ten hours after the
-fuel level check::
+fuel level check.  The tower would also be on the tenth cycle, with the
+eleventh cycle of fuel already deducted::
 
     >>> sorted(tower2.getResources(timestamp=1325412000).items())
-    [(4246, 6443), (16275, 3600), (24592, 190)]
+    [(4246, 6433), (16275, 3600), (24592, 189)]
 
-However, if we elapse the time by another thirty minutes, a different
-story emerges.  Since the second tower ticks on the 11m01s mark, the
-previous update was already 48m59s out of date, so there is really in
-fact eleven cycles worth of fuel consumed at this point for the second
-tower::
+However, if we elapse the time by another one second, the first tower
+will immediately consume the fuel for the eleventh cycle::
 
-    >>> sorted(tower1.getResources(timestamp=1325413800).items())
-    [(4247, 12045), (16275, 7200)]
-    >>> sorted(tower2.getResources(timestamp=1325413800).items())
+    >>> sorted(tower1.getResources(timestamp=1325412001).items())
+    [(4247, 12015), (16275, 7200)]
+    >>> sorted(tower2.getResources(timestamp=1325412001).items())
     [(4246, 6433), (16275, 3600), (24592, 189)]
 
 Fuel consumption needs to be linked, as the moment when one fuel type
 is depleted the tower will no longer be online, so any excess fuels of
 other types will not be consumed::
 
-    >>> sorted(tower2.getResources(timestamp=1326092400).items())
+    >>> sorted(tower2.getResources(timestamp=1326088800).items())
     [(4246, 4553), (16275, 3600), (24592, 1)]
+    >>> sorted(tower2.getResources(timestamp=1326092400).items())
+    [(4246, 4543), (16275, 3600), (24592, 0)]
     >>> sorted(tower2.getResources(timestamp=1326096000).items())
     [(4246, 4543), (16275, 3600), (24592, 0)]
     >>> sorted(tower2.getResources(timestamp=1326099600).items())
-    [(4246, 4543), (16275, 3600), (24592, 0)]
-    >>> sorted(tower2.getResources(timestamp=1326103200).items())
     [(4246, 4543), (16275, 3600), (24592, 0)]
 
 Naturally there needs to be a way to know how long the POS will stay
@@ -245,9 +243,9 @@ timestamp, taking account of existing fuels::
 
     >>> tower1.getIdealFuelingAmount(timestamp=1325412000)
     {4247: 15945}
-    >>> sorted(tower2.getIdealFuelingAmount(timestamp=1326092400).items())
+    >>> sorted(tower2.getIdealFuelingAmount(timestamp=1326089461).items())
     [(4246, 2427), (24592, 697)]
-    >>> sorted(tower2.getIdealFuelingAmount(timestamp=1326096000).items())
+    >>> sorted(tower2.getIdealFuelingAmount(timestamp=1326093061).items())
     [(4246, 2437), (24592, 698)]
 
 Reinforcement fuel
@@ -313,17 +311,17 @@ this event and update the owner details::
     >>> tower1.updateSovOwner(timestamp=1326000000)
     >>> tower1.getTimeRemaining(timestamp=1326000000)
     643200
-    >>> tower1.getResources(timestamp=1326000000)[4247]
-    7155
+    >>> tower1.getResources(timestamp=1325998800)[4247]
+    7125
     >>> tower1.getReinforcementLength()
     64800
 
 Consumption should continue at the normal non-discounted rate::
 
     >>> tower1.getResources(timestamp=1326002400)[4247]
-    7115
+    7085
     >>> tower1.getResources(timestamp=1326639600)[4247]
-    35
+    5
     >>> tower1.getTimeRemaining(timestamp=1326640000)
     3200
 
@@ -336,7 +334,7 @@ time, buying an extra hour for the tower::
     True
     >>> tower1.updateSovOwner(timestamp=1326640000)
     >>> tower1.getTimeRemaining(timestamp=1326640000)
-    6800
+    3200
     >>> tower1.getReinforcementLength()
     86400
 
@@ -477,9 +475,12 @@ into reinforcement.  This will stop them from attack, but also stops
 tower modules from doing things like mining or reacting.
 
 For this tracker, if a tower was reinforced, a method is provided to
-mark this event::
+mark this event.  Note that the stateTimestamp is synchronized back down
+to the original pulse time::
 
     >>> tower3.enterReinforcement(exitAt=1327501800, timestamp=1327372200)
+    >>> tower3.stateTimestamp
+    1327500000
     >>> tower3.getState(timestamp=1327372200)
     3
 
@@ -488,7 +489,7 @@ Fortunately, someone was out there to time the tower properly to 1d12h
 been properly deducted::
 
     >>> sorted(tower3.getResources(timestamp=1327372200).items())
-    [(4246, 19880), (16275, 0)]
+    [(4246, 19840), (16275, 0)]
 
 With the reaction completely stopped::
 
@@ -497,12 +498,22 @@ With the reaction completely stopped::
     >>> sorted(tower3.getSiloLevels(timestamp=1327375800).items())
     [(16644, 19800), (16649, 19800), (16662, 400)]
 
+Normal fuel consumption should also have stopped::
+
+    >>> sorted(tower3.getResources(timestamp=1327500000).items())
+    [(4246, 19840), (16275, 0)]
+
 When the reinforcement cycle ends, tower is marked as online again::
 
-    >>> tower3.getState(timestamp=1327501799)
+    >>> tower3.getState(timestamp=1327499999)
     3
-    >>> tower3.getState(timestamp=1327501800)
+    >>> tower3.getState(timestamp=1327500000)
     4
+
+Normal fuel consumption should resume::
+
+    >>> sorted(tower3.getResources(timestamp=1327500001).items())
+    [(4246, 19800), (16275, 0)]
 
 However, the silos need to be manually marked as online again, to not
 give the impression that things are mining when they are really not::
@@ -527,10 +538,10 @@ See that the values are accumulating as expected::
 Oh yeah, should probably add strontium back into the bay::
 
     >>> sorted(tower3.getResources(timestamp=1327509000).items())
-    [(4246, 18360), (16275, 0)]
+    [(4246, 19720), (16275, 0)]
     >>> tower3.exitReinforcement(strontium=14400, timestamp=1327372200)
     >>> sorted(tower3.getResources(timestamp=1327509000).items())
-    [(4246, 18360), (16275, 14400)]
+    [(4246, 19720), (16275, 14400)]
 
 Should not interfere with the silo calculations either::
 
@@ -551,6 +562,6 @@ Now let's see if we have the tower entries logged::
 
     >>> results = list(backend._conn.execute('select * from fuel'))
     >>> len(results)
-    21
-    >>> results[20]
-    (21, 3, 16275, 400, 1327370400, 14400)
+    22
+    >>> results[21]
+    (22, 3, 16275, 400, 1327370400, 14400)

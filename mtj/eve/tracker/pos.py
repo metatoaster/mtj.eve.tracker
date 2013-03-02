@@ -436,10 +436,19 @@ class Tower(object):
         return remaining
 
     def enterReinforcement(self, exitAt, timestamp=None):
+        """
+        Helper method to trigger a reinforcement.  API update method can
+        bypass this completely.
+        """
+
         if timestamp is None:
             timestamp = int(time.time())
 
-        self.updateResources({STRONTIUM_ITEMID: 0}, timestamp, force=True)
+        exitAt = self.resourcePulseTimestamp(exitAt)
+        resources = self.getResources(timestamp)
+        resources[STRONTIUM_ITEMID] = 0
+
+        self.updateResources(resources, exitAt, force=True)
         siloLevels = self.getSiloLevels(timestamp)
         for k, v in siloLevels.iteritems():
             self.updateSiloBuffer(k, value=v, timestamp=timestamp,
@@ -586,9 +595,9 @@ class TowerResourceBuffer(TimedBuffer):
     The base tower bay.
     """
 
-    def __init__(self, tower=None, delta=None, timestamp=None, purpose=None,
-            value=0, resourceTypeName=None, unitVolume=None, freeze=None,
-            *a, **kw):
+    def __init__(self, tower=None, delta=None, timestamp=None, expiry=None,
+            purpose=None, value=0, resourceTypeName=None, unitVolume=None,
+            freeze=None, *a, **kw):
 
         self.tower = tower
         self.purpose = purpose
@@ -598,11 +607,16 @@ class TowerResourceBuffer(TimedBuffer):
         if freeze is None:
             freeze = not self.isNormalFuel()
 
+        if expiry is None:
+            expiry = timestamp
+
         super(TowerResourceBuffer, self).__init__(
             delta=delta,
             # one hour
             period=3600,
             timestamp=timestamp,
+            # immediately expired right after.
+            expiry=expiry,
             # full consumption
             delta_min=1,
             # depletes
