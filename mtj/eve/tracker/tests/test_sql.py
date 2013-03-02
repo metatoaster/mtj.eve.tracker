@@ -59,7 +59,7 @@ class SqlBackendTestCase(TestCase):
             (2, 1, 4247, 30, 1325376000, 12345),
         ])
 
-        self.assertEqual(tower.getTimeRemaining(1326850000), 9200)
+        self.assertEqual(tower.getTimeRemaining(1326850000), 5600)
 
     def test_0200_double_add(self):
         tower = self.backend.addTower(1000001, 12235, 30004608, 40291202, 4,
@@ -102,7 +102,7 @@ class SqlBackendTestCase(TestCase):
         self.assertEqual(tower.strontCapacity, 50000)
 
         # Fuel values assigned
-        self.assertEqual(tower.getTimeRemaining(1326850000), 9200)
+        self.assertEqual(tower.getTimeRemaining(1326850000), 5600)
 
     def test_2001_reinstantiate(self):
         self.backend._conn.execute('insert into tower values '

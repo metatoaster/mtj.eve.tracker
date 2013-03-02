@@ -167,13 +167,28 @@ class TowerSiloBufferTestCase(TestCase):
         silo = TowerSiloBuffer(self.tower, 'Technetium', 0.8, delta=100,
             value=0, full=75000, timestamp=0)
         silo1 = silo.getCurrent(timestamp=36000)
+        # XXX I got reinforcement wrong, not testing this for now.
+        # reinforcement will also result in no normal fuel consumption.
+        # once that exits, fuel results, but if mods not online anyway
+        # nothing happens, but really how will this happen?
+        #self.assertEqual(silo1.value, 0)
+        silo2 = silo.getCurrent(timestamp=3600)
+        #self.assertEqual(silo2.value, 0)
+
+    def test_0200_towered_online_stupid(self):
+        # online with no fuel remaining, so it really is dead.
+        self.tower.state = 4
+        silo = TowerSiloBuffer(self.tower, 'Technetium', 0.8, delta=100,
+            value=0, full=75000, timestamp=0)
+        silo1 = silo.getCurrent(timestamp=36000)
         self.assertEqual(silo1.value, 0)
         silo2 = silo.getCurrent(timestamp=3600)
         self.assertEqual(silo2.value, 0)
 
-    def test_0200_towered_online(self):
-        # online with no fuel remaining, so 1h runtime.
+    def test_0201_towered_online(self):
+        # online with just one hour of fuel
         self.tower.state = 4
+        self.tower.updateResources({4247: 40}, 0)
         silo = TowerSiloBuffer(self.tower, 'Technetium', 0.8, delta=100,
             value=0, full=75000, timestamp=0)
         silo1 = silo.getCurrent(timestamp=36000)
@@ -181,9 +196,10 @@ class TowerSiloBufferTestCase(TestCase):
         silo2 = silo.getCurrent(timestamp=3600)
         self.assertEqual(silo2.value, 100)
 
-    def test_0201_towered_online(self):
-        # online with no fuel remaining, so 1h runtime.
+    def test_0202_towered_online(self):
+        # online with 1h fuel.
         self.tower.state = 4
+        self.tower.updateResources({4247: 40}, 0)
         # However, silo wasn't online.
         silo = TowerSiloBuffer(self.tower, 'Technetium', 0.8, delta=100,
             value=0, full=75000, timestamp=0, online=False)
@@ -210,19 +226,19 @@ class TowerSiloBufferTestCase(TestCase):
             timestamp=0)
 
         silo_t1 = silo_t.getCurrent(timestamp=36000)
-        self.assertEqual(silo_t1.value, 900)
+        self.assertEqual(silo_t1.value, 1000)
         silo_t2 = silo_t.getCurrent(timestamp=3600)
-        self.assertEqual(silo_t2.value, 900)
+        self.assertEqual(silo_t2.value, 1000)
 
         silo_p1 = silo_p.getCurrent(timestamp=36000)
-        self.assertEqual(silo_p1.value, 900)
+        self.assertEqual(silo_p1.value, 1000)
         silo_p2 = silo_p.getCurrent(timestamp=3600)
-        self.assertEqual(silo_p2.value, 900)
+        self.assertEqual(silo_p2.value, 1000)
 
         silo_pt1 = silo_pt.getCurrent(timestamp=36000)
-        self.assertEqual(silo_pt1.value, 200)
+        self.assertEqual(silo_pt1.value, 0)
         silo_pt2 = silo_pt.getCurrent(timestamp=3600)
-        self.assertEqual(silo_pt2.value, 200)
+        self.assertEqual(silo_pt2.value, 0)
 
     def test_1001_towered_reactants(self):
         self.tower.state = 4

@@ -192,29 +192,29 @@ other types will not be consumed::
 Naturally there needs to be a way to know how long the POS will stay
 online till::
 
-    >>> tower1.getTimeRemaining(timestamp=1326855600)
+    >>> tower1.getTimeRemaining(timestamp=1326852000)
     3600
-    >>> tower1.getTimeRemaining(timestamp=1326859200)
+    >>> tower1.getTimeRemaining(timestamp=1326855600)
     0
-    >>> tower2.getTimeRemaining(timestamp=1326092400)
+    >>> tower2.getTimeRemaining(timestamp=1326088800)
     4261
-    >>> tower2.getTimeRemaining(timestamp=1326096000)
+    >>> tower2.getTimeRemaining(timestamp=1326092400)
     661
-    >>> tower2.getTimeRemaining(timestamp=1326099600)
+    >>> tower2.getTimeRemaining(timestamp=1326096000)
     0
 
 There is also a getState method that will derive the expected current
 state from the fuel levels::
 
+    >>> tower1.getState(timestamp=1326852000)
+    4
     >>> tower1.getState(timestamp=1326855600)
     4
-    >>> tower1.getState(timestamp=1326859200)
-    4
-    >>> tower1.getState(timestamp=1326859201)
+    >>> tower1.getState(timestamp=1326855601)
     1
-    >>> tower2.getState(timestamp=1326096000)
+    >>> tower2.getState(timestamp=1326092400)
     4
-    >>> tower2.getState(timestamp=1326099600)
+    >>> tower2.getState(timestamp=1326096000)
     1
 
 
@@ -305,12 +305,12 @@ ownership state is reverted to unclaimed.  Provide the timestamp for
 this event and update the owner details::
 
     >>> tower1.getTimeRemaining(timestamp=1326000000)
-    859200
+    855600
     >>> tower1.getReinforcementLength()
     86400
     >>> tower1.updateSovOwner(timestamp=1326000000)
     >>> tower1.getTimeRemaining(timestamp=1326000000)
-    643200
+    639600
     >>> tower1.getResources(timestamp=1325998800)[4247]
     7125
     >>> tower1.getReinforcementLength()
@@ -320,10 +320,14 @@ Consumption should continue at the normal non-discounted rate::
 
     >>> tower1.getResources(timestamp=1326002400)[4247]
     7085
-    >>> tower1.getResources(timestamp=1326639600)[4247]
+    >>> tower1.getResources(timestamp=1326636000)[4247]
+    45
+    >>> tower1.getResources(timestamp=1326636001)[4247]
     5
-    >>> tower1.getTimeRemaining(timestamp=1326640000)
-    3200
+    >>> tower1.getTimeRemaining(timestamp=1326636000)
+    3600
+    >>> tower1.getTimeRemaining(timestamp=1326636001)
+    3599
 
 After some time someone remembers to pay the sovereignty bill (or fix
 the TCU or whatever) and brought the sovereignty status back up just in
@@ -332,8 +336,8 @@ time, buying an extra hour for the tower::
     >>> mtj.eve.tracker.pos.evelink_helper.sov_index = 0
     >>> tower1.querySovStatus()
     True
-    >>> tower1.updateSovOwner(timestamp=1326640000)
-    >>> tower1.getTimeRemaining(timestamp=1326640000)
+    >>> tower1.updateSovOwner(timestamp=1326632800)
+    >>> tower1.getTimeRemaining(timestamp=1326632800)
     3200
     >>> tower1.getReinforcementLength()
     86400
@@ -399,21 +403,23 @@ silo before losing too many products, so they go and do that::
 However, directors being lazy with stocking fuels means they don't want
 that tech moon anyway::
 
-    >>> sorted(tower1.getSiloLevels(timestamp=1329998400).items())
-    [(16649, 18200)]
-    >>> sorted(tower1.getResources(timestamp=1329998400).items())
-    [(4247, 10), (16275, 7200)]
+    >>> sorted(tower1.getSiloLevels(timestamp=1329994800).items())
+    [(16649, 18100)]
+    >>> sorted(tower1.getResources(timestamp=1329994800).items())
+    [(4247, 40), (16275, 7200)]
+    >>> tower1.getState(timestamp=1329994800)
+    4
+    >>> tower1.getOfflineTimestamp()
+    1329998400
+
     >>> tower1.getState(timestamp=1329998400)
     4
 
-    >>> tower1.getState(timestamp=1330002000)
-    4
-
-    >>> sorted(tower1.getSiloLevels(timestamp=1330005600).items())
-    [(16649, 18300)]
-    >>> sorted(tower1.getResources(timestamp=1330005600).items())
+    >>> sorted(tower1.getSiloLevels(timestamp=1330002000).items())
+    [(16649, 18200)]
+    >>> sorted(tower1.getResources(timestamp=1330002000).items())
     [(4247, 10), (16275, 7200)]
-    >>> tower1.getState(timestamp=1330005600)
+    >>> tower1.getState(timestamp=1330002000)
     1
 
 Now that tower is no longer online.  Welp.  So because of that someone

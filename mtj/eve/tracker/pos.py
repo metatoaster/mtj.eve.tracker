@@ -308,7 +308,7 @@ class Tower(object):
         """
 
         # everything after offline time will not be defined.
-        timestamp = min(timestamp, self.getOfflineTimestamp(fuel_pair=True))
+        timestamp = min(timestamp, self.getOfflineTimestamp())
 
         # dict comprehension
         return {key: fuel.getCurrent(timestamp=timestamp).value
@@ -366,14 +366,11 @@ class Tower(object):
         # dict comprehension
         return {k: v - current.get(k) for k, v in ratio.iteritems()}
 
-    def getOfflineTimestamp(self, fuel_pair=False):
+    def getOfflineTimestamp(self):
         """
         Figure out from all the fuels when will the pos go offline,
-        which is the moment when remaining cycles is less than zero
-        (or -1).
-
-        However, for fuel pairing calculation, provide the final
-        timestamp for when to deduct fuel for calculating consumption.
+        which is the timestamp when no more fuel deduction can be made
+        to any of the normal fuels.
         """
 
         offlineTimestamps = []
@@ -381,9 +378,8 @@ class Tower(object):
             if fuel is None or not fuel.isNormalFuel():
                 continue
 
-            # cycles remaining == -1, or last fuel pairing == 0
-            remaining = (fuel.getCyclesAvailable() + int(not fuel_pair)) 
-            offlineTimestamps.append(remaining * fuel.period + fuel.timestamp)
+            offlineTimestamps.append(fuel.getCyclesPossible() * fuel.period 
+                + fuel.expiry)
 
         if not offlineTimestamps:
             # Not sure if this is even the right result, it's undefined
