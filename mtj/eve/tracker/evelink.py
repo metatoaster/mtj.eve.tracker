@@ -9,11 +9,15 @@ from __future__ import absolute_import
 
 import itertools
 
+import zope.interface
 import evelink
+
+from mtj.eve.tracker.interfaces import IAPIHelper
 
 Map = evelink.map.Map()
 EVE = evelink.eve.EVE()
 Server = evelink.server.Server()
+
 
 class API(evelink.api.API):
     def __init__(self, *a, **kw):
@@ -62,6 +66,8 @@ class Helper(object):
     _alliances = None
     _corporations = None
     _sov = None
+
+    zope.interface.implements(IAPIHelper)
 
     def __init__(self):
         pass

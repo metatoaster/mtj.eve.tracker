@@ -9,8 +9,7 @@ from mtj.evedb.market import Group
 
 from mtj.multimer.buffer import TimedBuffer
 
-from mtj.eve.tracker.evelink import Helper
-from mtj.eve.tracker.interfaces import ITrackerBackend
+from mtj.eve.tracker.interfaces import IAPIHelper, ITrackerBackend
 
 SECONDS_PER_HOUR = 3600
 STRONTIUM_ITEMID = 16275
@@ -22,7 +21,6 @@ STATE_ONLINE = 4
 pos_info = ControlTower()
 eve_map = Map()
 item_info = Group()
-evelink_helper = Helper()
 
 
 class Tower(object):
@@ -99,6 +97,7 @@ class Tower(object):
         Return the alliance ID of the standing owner of this tower.
         """
 
+        evelink_helper = zope.component.getUtility(IAPIHelper)
         if evelink_helper.alliances.get(self.standingOwnerID):
             return self.standingOwnerID
         else:
@@ -109,6 +108,7 @@ class Tower(object):
         # of the system, so if the discount is dependent on this
         # index, it will be impossible to reliably determine whether
         # the discount is indeed applied.
+        evelink_helper = zope.component.getUtility(IAPIHelper)
         sov_info = evelink_helper.sov[self.locationID]
         return sov_info['alliance_id'] == self.allianceID
 
@@ -161,6 +161,7 @@ class Tower(object):
         tracker.addFuel(**kargs)
 
     def initResources(self):
+        evelink_helper = zope.component.getUtility(IAPIHelper)
         all_fuels = pos_info.getControlTowerResource(self.typeID)
         sov_info = evelink_helper.sov[self.locationID]
 

@@ -24,9 +24,6 @@ management classes.
 
 To begin, install the dummy data helper class::
 
-    >>> from mtj.eve.tracker.tests import dummyevelink
-    >>> import mtj.eve.tracker.pos
-    >>> dummyevelink.installDummy(mtj.eve.tracker.pos)
 
 Backend
 -------
@@ -35,7 +32,7 @@ Ensure that we have a valid backend available for usage.  This can be
 acquired using the Zope component framework like so::
 
     >>> import zope.component
-    >>> from mtj.eve.tracker.interfaces import ITrackerBackend
+    >>> from mtj.eve.tracker.interfaces import IAPIHelper, ITrackerBackend
     >>> backend = zope.component.queryUtility(ITrackerBackend)
     >>> ITrackerBackend.providedBy(backend)
     True
@@ -296,7 +293,8 @@ wrapper to provide the desired values::
 
     >>> tower1.querySovStatus()
     True
-    >>> mtj.eve.tracker.pos.evelink_helper.sov_index = 1
+    >>> evelink_helper = zope.component.getUtility(IAPIHelper)
+    >>> evelink_helper.sov_index = 1
     >>> tower1.querySovStatus()
     False
 
@@ -333,7 +331,7 @@ After some time someone remembers to pay the sovereignty bill (or fix
 the TCU or whatever) and brought the sovereignty status back up just in
 time, buying an extra hour for the tower::
 
-    >>> mtj.eve.tracker.pos.evelink_helper.sov_index = 0
+    >>> evelink_helper.sov_index = 0
     >>> tower1.querySovStatus()
     True
     >>> tower1.updateSovOwner(timestamp=1326632800)

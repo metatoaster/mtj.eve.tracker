@@ -1,6 +1,8 @@
 from unittest import TestCase, TestSuite, makeSuite
 
 from mtj.eve.tracker.pos import Tower, TowerResourceBuffer, TowerSiloBuffer
+from mtj.eve.tracker.tests.base import installTestSite, registerHelper
+from mtj.eve.tracker.tests.base import tearDown
 
 FUEL_NORMAL = 1
 FUEL_REINFORCE = 4
@@ -18,10 +20,11 @@ class TowerTestCase(TestCase):
     """
 
     def setUp(self):
-        pass
+        installTestSite()
+        registerHelper()
 
     def tearDown(self):
-        pass
+        tearDown(self)
 
     def test_0000_base_tower(self):
         tower = Tower(1000001, 12235, 30004608, 40291202, 4,
@@ -140,8 +143,13 @@ class TowerSiloBufferTestCase(TestCase):
     """
 
     def setUp(self):
+        installTestSite()
+        registerHelper()
         self.tower = Tower(1, 12235, 30004608, 40291202, 1, 0, 0, 0)
         self.tower.updateResources({}, 0)
+
+    def tearDown(self):
+        tearDown(self)
 
     def test_0000_basic_naked(self):
         silo = TowerSiloBuffer(None, 'Technetium', 0.8, delta=100,

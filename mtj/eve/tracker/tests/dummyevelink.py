@@ -1,6 +1,9 @@
 from __future__ import absolute_import
 
 import itertools
+import zope.interface
+
+from mtj.eve.tracker.interfaces import IAPIHelper
 
 
 class DummyHelper(object):
@@ -9,6 +12,8 @@ class DummyHelper(object):
 
     Provides access to the dummy data below this class definition.
     """
+
+    zope.interface.implements(IAPIHelper)
 
     # the data indexes for the dynamic data tests.
     alliances_index = 0
@@ -33,19 +38,6 @@ class DummyHelper(object):
     @property
     def sov(self):
         return dummy_sov[self.sov_index]
-
-def installDummy(module):
-    if not hasattr(module, '_real_evelink_helper'):
-        old_helper = getattr(module, 'evelink_helper', None)
-        setattr(module, '_real_evelink_helper', old_helper)
-    setattr(module, 'evelink_helper', DummyHelper())
-
-def uninstallDummy(module):
-    if hasattr(module, '_real_evelink_helper'):
-        old_helper = getattr(module, '_real_evelink_helper', None)
-        setattr(module, 'evelink_helper', old_helper)
-        delattr(module, '_real_evelink_helper')
-
 
 dummy_alliances = [
     {
