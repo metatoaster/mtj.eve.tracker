@@ -1,9 +1,45 @@
 from __future__ import absolute_import
 
+import time
 import itertools
 import zope.interface
+from evelink.api import APIError
 
 from mtj.eve.tracker.interfaces import IAPIHelper
+
+
+class DummyCorp(object):
+    """
+    Dummy Corp data provider.
+    """
+
+    starbases_index = 0
+    starbase_details_index = 0
+
+    def __init__(self, api=None):
+        self.api = api
+        if api is None:
+            self.api = type('DummyAPI', (object,), {})()
+
+    def starbases(self):
+        results = dummy_starbases[self.starbases_index]
+        # XXX "set" api timestamp
+        self.api.last_timestamps = results['_timestamps']
+        return results['results']
+
+    def starbase_details(self, itemID):
+        results = dummy_starbase_details[self.starbase_details_index]
+        all_details = results['results']
+        result = all_details.get(itemID, None)
+        if result:
+            self.api.last_timestamps = results['_timestamps']
+            return result
+        # pretend this is a bad itemID, as there can be condition where
+        # the starbases list is returned from cache (because :ccp:) and
+        # the actual starbase could have been taken down and repackaged
+        # (or even destroyed).
+        ts = time.time()
+        raise APIError(114, 'Invalid itemID provided.', (ts, ts))
 
 
 class DummyHelper(object):
@@ -154,4 +190,36 @@ dummy_sov = [
         30004751: {'alliance_id': 498125261, 'corp_id': 1018389948,
                   'faction_id': None, 'id': 30004751, 'name': 'K-6K16'},
     },
+]
+
+dummy_starbases = [
+    {
+        '_timestamps': (1362792986, 1362793351),
+        'results': {
+            507862: {
+                'itemID': 507862,
+                'typeID': 20064,
+                'standingOwnerID': 498125261,
+                'stateTimestamp': 1362793009,
+                'state': 4,
+                'onlineTimestamp': 1317198658,
+                'locationID': 30004608,
+                'moonID': 40291202,
+            },
+        },
+    }
+]
+
+dummy_starbase_details = [
+    {
+        '_timestamps': (1362792986, 1362793351),
+        'results': {
+            507862: {
+                u'online_ts': 1317197424,
+                u'state': u'online',
+                u'state_ts': 1362793009,
+                u'fuel': {u'16275': 2250, u'4312': 4027},
+            },
+        },
+    }
 ]

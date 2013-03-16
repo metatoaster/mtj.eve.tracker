@@ -14,23 +14,27 @@ class BaseTowerManager(object):
     A class that gathers the loose bits of functions.
     """
 
-    def __init__(self):
-        self.backend = zope.component.queryUtility(ITrackerBackend)
+    def __init__(self, backend):
+        self._setBackend(backend)
+        # TODO setup evelink cache here too?
+
+    def _setBackend(self, backend):
         if not ITrackerBackend.providedBy(self.backend):
-            raise TypeError('No appropriate backend is registered')
+            raise TypeError('provided backend is not of the correct type')
+        self.backend = backend
 
-        # XXX set up evelink cache
-        self.logger = logger
-
-    def importWithApi(self, api):
+    def importWithApi(self, corp):
         """
-        Takes a fully prepared evelink API object (cache + keys) to
+        Takes a fully prepared evelink corp API object (cache + keys) to
         instantiate towers.
+
+        corp
+            - the corp API object.
         """
 
-        corp = evelink.Corp(api)
         starbases = corp.starbases()
         starbases_c = len(starbases)
+
         logger.debug('%d starbases returned', starbases_c)
 
         for c, item in enumerate(starbases.iteritems()):
@@ -42,7 +46,7 @@ class BaseTowerManager(object):
             # Get time right before the request.
             ts = time.time()
             details = corp.starbase_details(k)
-            api_time = api.last_timestamps[0]
+            api_time = corp.api.last_timestamps[0]
             state_ts = details['state_ts'] or 0
             delta = api_time - state_ts
             logger.debug('timestamps (%s, %s, %s) | delta %d',
@@ -56,3 +60,18 @@ class BaseTowerManager(object):
             tower.updateResources(details['fuel'], max(state_ts, api_time))
 
         logger.debug('(%d/%d) processing complete', starbases_c, starbases_c)
+
+
+class DefaultTowerManager(BaseTowerManager):
+    """
+    Default tower manager that acquires whatever default backend that is
+    currently registered if one is not provided.
+    """
+
+    def __init__(self, backend=None):
+        if not backend:
+            self.backend = zope.component.queryUtility(ITrackerBackend)
+            if not ITrackerBackend.providedBy(self.backend):
+                raise TypeError('No appropriate backend is registered.')
+        else:
+            self._setBackend(backend)
