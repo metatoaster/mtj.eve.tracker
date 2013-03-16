@@ -207,7 +207,7 @@ dummy_starbases = [
                 'moonID': 40291202,
             },
         },
-    }
+    },
 ]
 
 dummy_starbase_details = [
@@ -218,8 +218,20 @@ dummy_starbase_details = [
                 u'online_ts': 1317197424,
                 u'state': u'online',
                 u'state_ts': 1362793009,
-                u'fuel': {u'16275': 2250, u'4312': 4027},
+                u'fuel': {16275: 2250, 4312: 4027},
             },
         },
-    }
+    },
+
+    {
+        '_timestamps': (1362829863, 1362830462),
+        'results': {
+            507862: {
+                u'online_ts': 1317197424,
+                u'state': u'online',
+                u'state_ts': 1362829009,
+                u'fuel': {16275: 2250, 4312: 3939},
+            },
+        },
+    },
 ]
