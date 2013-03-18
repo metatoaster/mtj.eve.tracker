@@ -55,6 +55,13 @@ class TowerTestCase(TestCase):
         self.assertEqual(tower.getOfflineTimestamp(), -1)
         self.assertEqual(tower.getTimeRemaining(), 0)
 
+    def test_0200_pulse_time(self):
+        tower = Tower(1000001, 12235, 30004608, 40291202, 4,
+            1325376000, 1306886400, 498125261)
+        tower.initResources()
+        self.assertEqual(tower.resourcePulseTimestamp(1325376000), 1325376000)
+        self.assertEqual(tower.resourcePulseTimestamp(1325376001), 1325379600)
+
 
 class TowerResourceBufferTestCase(TestCase):
     """

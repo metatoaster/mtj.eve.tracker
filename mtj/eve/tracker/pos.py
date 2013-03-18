@@ -295,8 +295,8 @@ class Tower(object):
         values.
         """
 
-        return ((timestamp - timestamp % SECONDS_PER_HOUR -
-            int((timestamp % SECONDS_PER_HOUR) < self.resourcePulse) *
+        return ((timestamp - timestamp % SECONDS_PER_HOUR +
+            int((timestamp % SECONDS_PER_HOUR) > self.resourcePulse) *
                 SECONDS_PER_HOUR) + self.resourcePulse)
 
     def getResources(self, timestamp):
