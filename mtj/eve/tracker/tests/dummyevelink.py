@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import time
+import json
 import itertools
 import zope.interface
 from evelink.api import APIError
@@ -21,16 +22,22 @@ class DummyCorp(object):
         if api is None:
             self.api = type('DummyAPI', (object,), {})()
 
+    def _dummy_starbases(self):
+        return dummy_starbases[self.starbases_index]
+
     def starbases(self):
-        results = dummy_starbases[self.starbases_index]
+        results = self._dummy_starbases()
         # XXX "set" api timestamp
         self.api.last_timestamps = results['last_timestamps']
         return results['results']
 
+    def _dummy_starbase_details(self):
+        return dummy_starbase_details[self.starbase_details_index]
+
     def starbase_details(self, itemID):
-        results = dummy_starbase_details[self.starbase_details_index]
-        all_details = results['results']
-        result = all_details.get(itemID, None)
+        all_results = self._dummy_starbase_details()
+        results = all_results.get(itemID, None)
+        result = results['results']
         if result:
             self.api.last_timestamps = results['last_timestamps']
             return result
@@ -43,6 +50,57 @@ class DummyCorp(object):
             "current_time": ts,
             "cached_until": ts,
         })
+
+
+class JsonDummyCorp(DummyCorp):
+    """
+    A dummy that uses a JSON encoded string as data source.
+
+    This data source can be generated from live data using a valid API
+    object using the dumps staticmethod, like so::
+
+        from mtj.eve.tracker import evelink
+        api = evelink.API(api_key=('123', 'someverifiercode'))
+        corp = evelink.Corp(api)
+        result_jstr = JsonDummyCorp.dumps(corp)
+    """
+
+    def loads(self, s):
+        result = json.loads(s)
+
+        # force certain ids back into int as json assume all keys are
+        # strings.
+        result['starbases']['results'] = {int(k): v
+            for k, v in result['starbases']['results'].iteritems()}
+
+        for k, v in result['starbase_details'].items():
+            v['results']['fuel'] = {int(f): l
+                for f, l in v['results']['fuel'].iteritems()}
+
+        result['starbase_details'] = {int(k): v
+            for k, v in result['starbase_details'].iteritems()}
+
+        self._values = result
+
+    def _dummy_starbases(self):
+        return self._values['starbases']
+
+    def _dummy_starbase_details(self):
+        return self._values['starbase_details']
+
+    @staticmethod
+    def dumps(corp):
+        corp_dump = {
+            'starbases': {
+                'results': corp.starbases(),
+                'last_timestamps': corp.api.last_timestamps,
+            },
+            'starbase_details': {i: {
+                'results': corp.starbase_details(i),
+                'last_timestamps': corp.api.last_timestamps,
+            } for i in corp.starbases().keys()},
+        }
+        return json.dumps(corp_dump)
 
 
 class DummyHelper(object):
@@ -216,27 +274,31 @@ dummy_starbases = [
 
 dummy_starbase_details = [
     {
-        'last_timestamps': {
-            'current_time': 1362792986, 'cached_until': 1362793351},
-        'results': {
-            507862: {
+        507862: {
+            'results': {
                 u'online_ts': 1317197424,
                 u'state': u'online',
                 u'state_ts': 1362793009,
                 u'fuel': {16275: 2250, 4312: 4027},
             },
+            'last_timestamps': {
+                'current_time': 1362792986,
+                'cached_until': 1362793351,
+            },
         },
     },
 
     {
-        'last_timestamps': {
-            'current_time': 1362829863, 'cached_until': 1362830462},
-        'results': {
-            507862: {
+        507862: {
+            'results': {
                 u'online_ts': 1317197424,
                 u'state': u'online',
                 u'state_ts': 1362829009,
                 u'fuel': {16275: 2250, 4312: 3939},
+            },
+            'last_timestamps': {
+                'current_time': 1362829863,
+                'cached_until': 1362830462,
             },
         },
     },
