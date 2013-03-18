@@ -40,7 +40,7 @@ class BaseTowerManager(object):
         for c, item in enumerate(starbases.iteritems()):
             k, v = item
             logger.debug('(%d/%d) starbases processed.', c, starbases_c)
-            logger.debug('processing itemID: %d', k)
+            logger.debug('processing itemID: %s', k)
             tower = self.backend.addTower(**v)
 
             # Get time right before the request.
