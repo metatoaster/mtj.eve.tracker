@@ -24,7 +24,7 @@ class DummyCorp(object):
     def starbases(self):
         results = dummy_starbases[self.starbases_index]
         # XXX "set" api timestamp
-        self.api.last_timestamps = results['_timestamps']
+        self.api.last_timestamps = results['last_timestamps']
         return results['results']
 
     def starbase_details(self, itemID):
@@ -32,14 +32,17 @@ class DummyCorp(object):
         all_details = results['results']
         result = all_details.get(itemID, None)
         if result:
-            self.api.last_timestamps = results['_timestamps']
+            self.api.last_timestamps = results['last_timestamps']
             return result
         # pretend this is a bad itemID, as there can be condition where
         # the starbases list is returned from cache (because :ccp:) and
         # the actual starbase could have been taken down and repackaged
         # (or even destroyed).
         ts = time.time()
-        raise APIError(114, 'Invalid itemID provided.', (ts, ts))
+        raise APIError(114, 'Invalid itemID provided.', {
+            "current_time": ts,
+            "cached_until": ts,
+        })
 
 
 class DummyHelper(object):
@@ -194,7 +197,8 @@ dummy_sov = [
 
 dummy_starbases = [
     {
-        '_timestamps': (1362792986, 1362793351),
+        'last_timestamps': {
+            'current_time': 1362792986, 'cached_until': 1362793351},
         'results': {
             507862: {
                 'itemID': 507862,
@@ -212,7 +216,8 @@ dummy_starbases = [
 
 dummy_starbase_details = [
     {
-        '_timestamps': (1362792986, 1362793351),
+        'last_timestamps': {
+            'current_time': 1362792986, 'cached_until': 1362793351},
         'results': {
             507862: {
                 u'online_ts': 1317197424,
@@ -224,7 +229,8 @@ dummy_starbase_details = [
     },
 
     {
-        '_timestamps': (1362829863, 1362830462),
+        'last_timestamps': {
+            'current_time': 1362829863, 'cached_until': 1362830462},
         'results': {
             507862: {
                 u'online_ts': 1317197424,

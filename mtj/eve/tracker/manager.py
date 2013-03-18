@@ -46,7 +46,7 @@ class BaseTowerManager(object):
             # Get time right before the request.
             ts = time.time()
             details = corp.starbase_details(k)
-            api_time = corp.api.last_timestamps[0]
+            api_time = corp.api.last_timestamps['current_time']
             state_ts = details['state_ts'] or 0
             delta = api_time - state_ts
             logger.debug('timestamps (%s, %s, %s) | delta %d',
