@@ -55,10 +55,6 @@ class TowerTestCase(TestCase):
         self.assertEqual(tower.getOfflineTimestamp(), -1)
         self.assertEqual(tower.getTimeRemaining(), 0)
 
-    def test_1000_failure_celestial_solarsystem_mismatch(self):
-        # Celestial must be located within the solar system
-        pass
-
 
 class TowerResourceBufferTestCase(TestCase):
     """
