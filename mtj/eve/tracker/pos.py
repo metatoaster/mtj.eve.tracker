@@ -57,6 +57,7 @@ class Tower(object):
 
     def _initDerived(self):
         # this can be None...
+        # XXX this is duplicated elsewhere.
         self.resourcePulse = (self.stateTimestamp or 0) % SECONDS_PER_HOUR
         self.typeName = None
         self.allianceID = None
@@ -299,6 +300,19 @@ class Tower(object):
             int((timestamp % SECONDS_PER_HOUR) > self.resourcePulse) *
                 SECONDS_PER_HOUR) + self.resourcePulse)
 
+    def siloPulseTimestamp(self, timestamp):
+        """
+        Calculate the silo pulse with the given timestamp.
+
+        This goes the opposite direction because the current assumption
+        is that this is a secondary effect and API doesn't report the
+        real values associated with this.  Yes it is a pure guess.
+        """
+
+        return ((timestamp - timestamp % SECONDS_PER_HOUR -
+            int((timestamp % SECONDS_PER_HOUR) < self.resourcePulse) *
+                SECONDS_PER_HOUR) + self.resourcePulse)
+
     def getResources(self, timestamp):
         """
         Get the current resource levels
@@ -441,9 +455,14 @@ class Tower(object):
         if timestamp is None:
             timestamp = int(time.time())
 
-        exitAt = self.resourcePulseTimestamp(exitAt)
         resources = self.getResources(timestamp)
         resources[STRONTIUM_ITEMID] = 0
+
+        # the exit stamp is the new stateTimestamp as per the API, and
+        # so new pulse need to be calculated.
+        # XXX duplicated, update to use method when created.
+        self.stateTimestamp = exitAt
+        self.resourcePulse = (self.stateTimestamp or 0) % SECONDS_PER_HOUR
 
         self.updateResources(resources, exitAt, force=True)
         siloLevels = self.getSiloLevels(timestamp)
@@ -485,7 +504,8 @@ class Tower(object):
     def setSiloBuffer(self, typeID, typeName, unitVolume, products, reactants,
             online, delta, value, full, timestamp=None):
 
-        timestamp = self.resourcePulseTimestamp(timestamp)
+        # TODO figure out how this actually accumulates.
+        timestamp = self.siloPulseTimestamp(timestamp)
         silo = TowerSiloBuffer(self, typeName=typeName, unitVolume=unitVolume,
             products=products, reactants=reactants, online=online, delta=delta,
             value=value, full=full, timestamp=timestamp)

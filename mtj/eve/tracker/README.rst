@@ -108,6 +108,18 @@ updated, like so::
 
     >>> tower1.updateResources(fuel1, 1325376000)
 
+One other thing to note is that the timestamps are assumed to follow the
+quirks of the API, which is the values returned are valid until the
+stateTimestamp, except for the case where the stateTimestamp is in the
+past, where the resource values are valid for now.  This necessitate
+adjustments and the interal timestamp calculations are assisted using the
+resourcePulseTimestamp method.  As the provided timestamp for the above
+updateResource call divides into the stateTimestamp, it should have no
+issues::
+
+    >>> tower1.resourcePulseTimestamp(1325376000)
+    1325376000
+
 Apply the fuel update to the highsec tower also.  Note that fuel types
 not previously initialized will not be added::
 
@@ -120,6 +132,12 @@ not previously initialized will not be added::
     >>> tower2.updateResources(fuel2, 1325376000)
     >>> sorted(tower2.fuels.keys())
     [4246, 16275, 24592]
+
+However, this timestamp is assumed to bump to right before the expected
+stateTimestamp::
+
+    >>> tower2.resourcePulseTimestamp(1325376000)
+    1325376661
 
 Day-to-day fuel calculation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -152,38 +170,50 @@ no need for charters::
     >>> tower3.fuels.get(24592) is None
     True
 
+Fuel is immediately deducted after the valid period, i.e. the
+stateTimestamp that was used to set the fuel level::
+
+    >>> sorted(tower1.getResources(timestamp=1325376001).items())
+    [(4247, 12315), (16275, 7200)]
+
 Now let's see if we can get the fuel levels ten hours after the initial
 setup::
 
     >>> sorted(tower1.getResources(timestamp=1325412000).items())
     [(4247, 12045), (16275, 7200)]
 
+Try out the same on the second tower, and see that the stateTimestamp
+also result in the expected outcome::
+
+    >>> sorted(tower2.getResources(timestamp=1325376662).items())
+    [(4246, 6533), (16275, 3600), (24592, 199)]
+
 For the second tower, we use the same timestamp, ten hours after the
-fuel level check.  The tower would also be on the tenth cycle, with the
-eleventh cycle of fuel already deducted::
+fuel level check.  The tower would also be on the tenth cycle::
 
     >>> sorted(tower2.getResources(timestamp=1325412000).items())
-    [(4246, 6433), (16275, 3600), (24592, 189)]
+    [(4246, 6443), (16275, 3600), (24592, 190)]
 
-However, if we elapse the time by another one second, the first tower
-will immediately consume the fuel for the eleventh cycle::
+Naturally, if we elapse the time by another one second, the first tower
+will immediately consume the fuel for the eleventh cycle as demonstrated
+before, with the second tower maintaining the same fuel levels.::
 
     >>> sorted(tower1.getResources(timestamp=1325412001).items())
     [(4247, 12015), (16275, 7200)]
     >>> sorted(tower2.getResources(timestamp=1325412001).items())
-    [(4246, 6433), (16275, 3600), (24592, 189)]
+    [(4246, 6443), (16275, 3600), (24592, 190)]
 
 Fuel consumption needs to be linked, as the moment when one fuel type
 is depleted the tower will no longer be online, so any excess fuels of
 other types will not be consumed::
 
-    >>> sorted(tower2.getResources(timestamp=1326088800).items())
-    [(4246, 4553), (16275, 3600), (24592, 1)]
     >>> sorted(tower2.getResources(timestamp=1326092400).items())
-    [(4246, 4543), (16275, 3600), (24592, 0)]
+    [(4246, 4553), (16275, 3600), (24592, 1)]
     >>> sorted(tower2.getResources(timestamp=1326096000).items())
     [(4246, 4543), (16275, 3600), (24592, 0)]
     >>> sorted(tower2.getResources(timestamp=1326099600).items())
+    [(4246, 4543), (16275, 3600), (24592, 0)]
+    >>> sorted(tower2.getResources(timestamp=1326103200).items())
     [(4246, 4543), (16275, 3600), (24592, 0)]
 
 Naturally there needs to be a way to know how long the POS will stay
@@ -193,11 +223,11 @@ online till::
     3600
     >>> tower1.getTimeRemaining(timestamp=1326855600)
     0
-    >>> tower2.getTimeRemaining(timestamp=1326088800)
-    4261
     >>> tower2.getTimeRemaining(timestamp=1326092400)
-    661
+    4261
     >>> tower2.getTimeRemaining(timestamp=1326096000)
+    661
+    >>> tower2.getTimeRemaining(timestamp=1326099600)
     0
 
 There is also a getState method that will derive the expected current
@@ -209,9 +239,9 @@ state from the fuel levels::
     4
     >>> tower1.getState(timestamp=1326855601)
     1
-    >>> tower2.getState(timestamp=1326092400)
-    4
     >>> tower2.getState(timestamp=1326096000)
+    4
+    >>> tower2.getState(timestamp=1326099600)
     1
 
 
@@ -240,9 +270,9 @@ timestamp, taking account of existing fuels::
 
     >>> tower1.getIdealFuelingAmount(timestamp=1325412000)
     {4247: 15945}
-    >>> sorted(tower2.getIdealFuelingAmount(timestamp=1326089461).items())
-    [(4246, 2427), (24592, 697)]
     >>> sorted(tower2.getIdealFuelingAmount(timestamp=1326093061).items())
+    [(4246, 2427), (24592, 697)]
+    >>> sorted(tower2.getIdealFuelingAmount(timestamp=1326096661).items())
     [(4246, 2437), (24592, 698)]
 
 Reinforcement fuel
@@ -299,32 +329,39 @@ wrapper to provide the desired values::
     False
 
 Now the owner of tower1 no longer gain sovereignty bonuses as the
-ownership state is reverted to unclaimed.  Provide the timestamp for
-this event and update the owner details::
+ownership state is reverted to unclaimed.  First verify the current
+levels and what the levels would have been::
 
     >>> tower1.getTimeRemaining(timestamp=1326000000)
     855600
     >>> tower1.getReinforcementLength()
     86400
+    >>> tower1.getResources(timestamp=1326000000)[4247]
+    7125
+    >>> tower1.getResources(timestamp=1326002401)[4247]
+    7095
+
+Now provide the timestamp for this event and update the owner details::
+
     >>> tower1.updateSovOwner(timestamp=1326000000)
     >>> tower1.getTimeRemaining(timestamp=1326000000)
-    639600
-    >>> tower1.getResources(timestamp=1325998800)[4247]
+    643200
+    >>> tower1.getResources(timestamp=1326000000)[4247]
     7125
     >>> tower1.getReinforcementLength()
     64800
 
 Consumption should continue at the normal non-discounted rate::
 
-    >>> tower1.getResources(timestamp=1326002400)[4247]
+    >>> tower1.getResources(timestamp=1326002401)[4247]
     7085
-    >>> tower1.getResources(timestamp=1326636000)[4247]
+    >>> tower1.getResources(timestamp=1326639600)[4247]
     45
-    >>> tower1.getResources(timestamp=1326636001)[4247]
+    >>> tower1.getResources(timestamp=1326639601)[4247]
     5
-    >>> tower1.getTimeRemaining(timestamp=1326636000)
+    >>> tower1.getTimeRemaining(timestamp=1326639600)
     3600
-    >>> tower1.getTimeRemaining(timestamp=1326636001)
+    >>> tower1.getTimeRemaining(timestamp=1326639601)
     3599
 
 After some time someone remembers to pay the sovereignty bill (or fix
@@ -334,8 +371,8 @@ time, buying an extra hour for the tower::
     >>> evelink_helper.sov_index = 0
     >>> tower1.querySovStatus()
     True
-    >>> tower1.updateSovOwner(timestamp=1326632800)
-    >>> tower1.getTimeRemaining(timestamp=1326632800)
+    >>> tower1.updateSovOwner(timestamp=1326640000)
+    >>> tower1.getTimeRemaining(timestamp=1326640000)
     3200
     >>> tower1.getReinforcementLength()
     86400
@@ -375,9 +412,9 @@ filled out::
 As time progresses the fuel depletes and silo accumulates with that
 delicious, delicious Technetium, so check it out::
 
-    >>> sorted(tower1.getSiloLevels(timestamp=1326643200).items())
+    >>> sorted(tower1.getSiloLevels(timestamp=1326643201).items())
     [(16649, 100)]
-    >>> sorted(tower1.getResources(timestamp=1326643200).items())
+    >>> sorted(tower1.getResources(timestamp=1326643201).items())
     [(4247, 27970), (16275, 7200)]
 
 Note how the silo tick time is assumed to be in sync with the pose fuel
@@ -385,9 +422,9 @@ cycle time.
 
 Now run it to full and see that it won't overflow the allocated space::
 
-    >>> sorted(tower1.getSiloLevels(timestamp=1329343200).items())
+    >>> sorted(tower1.getSiloLevels(timestamp=1329343201).items())
     [(16649, 75000)]
-    >>> sorted(tower1.getResources(timestamp=1329343200).items())
+    >>> sorted(tower1.getResources(timestamp=1329343201).items())
     [(4247, 5470), (16275, 7200)]
 
 As usual, the logistics director neglected to source the required fuel
@@ -401,30 +438,30 @@ silo before losing too many products, so they go and do that::
 However, directors being lazy with stocking fuels means they don't want
 that tech moon anyway::
 
-    >>> sorted(tower1.getSiloLevels(timestamp=1329994800).items())
+    >>> sorted(tower1.getSiloLevels(timestamp=1329994801).items())
     [(16649, 18100)]
-    >>> sorted(tower1.getResources(timestamp=1329994800).items())
+    >>> sorted(tower1.getResources(timestamp=1329994801).items())
     [(4247, 40), (16275, 7200)]
-    >>> tower1.getState(timestamp=1329994800)
+    >>> tower1.getState(timestamp=1329994801)
     4
     >>> tower1.getOfflineTimestamp()
-    1329998400
+    1330002000
 
-    >>> tower1.getState(timestamp=1329998400)
+    >>> tower1.getState(timestamp=1329998401)
     4
 
-    >>> sorted(tower1.getSiloLevels(timestamp=1330002000).items())
-    [(16649, 18200)]
-    >>> sorted(tower1.getResources(timestamp=1330002000).items())
+    >>> sorted(tower1.getSiloLevels(timestamp=1330002001).items())
+    [(16649, 18300)]
+    >>> sorted(tower1.getResources(timestamp=1330002001).items())
     [(4247, 10), (16275, 7200)]
-    >>> tower1.getState(timestamp=1330002000)
+    >>> tower1.getState(timestamp=1330002001)
     1
 
 Now that tower is no longer online.  Welp.  So because of that someone
 went and took down that silo::
 
     >>> tower1.delSiloBuffer(16649)
-    >>> sorted(tower1.getSiloLevels(timestamp=1330005600).items())
+    >>> sorted(tower1.getSiloLevels(timestamp=1330005601).items())
     []
 
 Silo reactions
@@ -479,12 +516,18 @@ into reinforcement.  This will stop them from attack, but also stops
 tower modules from doing things like mining or reacting.
 
 For this tracker, if a tower was reinforced, a method is provided to
-mark this event.  Note that the stateTimestamp is synchronized back down
-to the original pulse time::
+mark this event.  This changes the stateTimestamp because reinforcement
+mechanics seem to override everything::
 
+    >>> tower3.getResources(timestamp=1327372200)[4246]
+    19880
     >>> tower3.enterReinforcement(exitAt=1327501800, timestamp=1327372200)
+    >>> tower3.getResources(timestamp=1327372200)[4246]
+    19880
+    >>> tower3.getResources(timestamp=1327501800)[4246]
+    19880
     >>> tower3.stateTimestamp
-    1327500000
+    1327501800
     >>> tower3.getState(timestamp=1327372200)
     3
 
@@ -493,7 +536,7 @@ Fortunately, someone was out there to time the tower properly to 1d12h
 been properly deducted::
 
     >>> sorted(tower3.getResources(timestamp=1327372200).items())
-    [(4246, 19840), (16275, 0)]
+    [(4246, 19880), (16275, 0)]
 
 With the reaction completely stopped::
 
@@ -502,22 +545,23 @@ With the reaction completely stopped::
     >>> sorted(tower3.getSiloLevels(timestamp=1327375800).items())
     [(16644, 19800), (16649, 19800), (16662, 400)]
 
-Normal fuel consumption should also have stopped::
+Normal fuel consumption should also have stopped, even at the point of
+time when the tower is supposed to exit reinforcement::
 
-    >>> sorted(tower3.getResources(timestamp=1327500000).items())
-    [(4246, 19840), (16275, 0)]
+    >>> sorted(tower3.getResources(timestamp=1327501800).items())
+    [(4246, 19880), (16275, 0)]
 
 When the reinforcement cycle ends, tower is marked as online again::
 
-    >>> tower3.getState(timestamp=1327499999)
+    >>> tower3.getState(timestamp=1327501799)
     3
-    >>> tower3.getState(timestamp=1327500000)
+    >>> tower3.getState(timestamp=1327501800)
     4
 
 Normal fuel consumption should resume::
 
-    >>> sorted(tower3.getResources(timestamp=1327500001).items())
-    [(4246, 19800), (16275, 0)]
+    >>> sorted(tower3.getResources(timestamp=1327501801).items())
+    [(4246, 19840), (16275, 0)]
 
 However, the silos need to be manually marked as online again, to not
 give the impression that things are mining when they are really not::
@@ -542,10 +586,10 @@ See that the values are accumulating as expected::
 Oh yeah, should probably add strontium back into the bay::
 
     >>> sorted(tower3.getResources(timestamp=1327509000).items())
-    [(4246, 19720), (16275, 0)]
+    [(4246, 19800), (16275, 0)]
     >>> tower3.exitReinforcement(strontium=14400, timestamp=1327372200)
     >>> sorted(tower3.getResources(timestamp=1327509000).items())
-    [(4246, 19720), (16275, 14400)]
+    [(4246, 19800), (16275, 14400)]
 
 Should not interfere with the silo calculations either::
 
@@ -568,4 +612,4 @@ Now let's see if we have the tower entries logged::
     >>> len(results)
     22
     >>> results[21]
-    (22, 3, 16275, 400, 1327370400, 14400)
+    (22, 3, 16275, 400, 1327372200, 14400)

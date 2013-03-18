@@ -63,13 +63,12 @@ class DefaultManagerTestCase(TestCase):
         current_time = corp.api.last_timestamps['current_time']
         state_ts = tower.fuels[4312].timestamp
 
-        # state_ts in the past.
-        self.assertEqual(state_ts, 1362829009)
+        # as current time is now ahead stateTimestamp, it should have
+        # been bumped.
+        self.assertEqual(state_ts, 1362832609)
         self.assertEqual(tower.fuels[4312].value, 3939)
-        # TODO verify the uncertainty with regards to stateTimestamp
-        # that live in the past, whether it really is the current value
-        # as it is now or otherwise.
-        self.assertEqual(tower.getResources(current_time)[4312], 3931)
+        # it's accurate for the current_time.
+        self.assertEqual(tower.getResources(current_time)[4312], 3939)
         self.assertEqual(tower.getResources(state_ts)[4312], 3939)
         self.assertEqual(tower.getResources(state_ts + 1)[4312], 3931)
 
