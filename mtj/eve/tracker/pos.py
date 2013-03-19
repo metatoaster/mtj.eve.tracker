@@ -285,7 +285,7 @@ class Tower(object):
             # Set the new sov value and then update
             self.sov = sov
             # force update
-            self.updateResources(values, timestamp, True)
+            self.updateResources(values, timestamp, force=True)
 
     def resourcePulseTimestamp(self, timestamp):
         """
