@@ -37,23 +37,27 @@ class DefaultManagerTestCase(TestCase):
         self.manager.importWithApi(corp)
         tower = self.backend.towers[1]
         current_time = corp.api.last_timestamps['current_time']
-        state_ts = tower.fuels[4312].timestamp
+        fuel_ts = tower.fuels[4312].timestamp
 
-        # state_ts is in the future.
-        self.assertEqual(state_ts, 1362793009)
+        # fuel timestamp and stateTimestamps are in the future.
+        self.assertEqual(fuel_ts, 1362793009)
+        self.assertEqual(tower.stateTimestamp, 1362793009)
+
         self.assertEqual(tower.fuels[4312].value, 4027)
         self.assertEqual(tower.getResources(current_time)[4312], 4027)
-        self.assertEqual(tower.getResources(state_ts)[4312], 4027)
-        self.assertEqual(tower.getResources(state_ts + 1)[4312], 4019)
+        self.assertEqual(tower.getResources(fuel_ts)[4312], 4027)
+        self.assertEqual(tower.getResources(fuel_ts + 1)[4312], 4019)
         self.assertEqual(tower.getOfflineTimestamp(), 1364603809)
 
         corp.starbase_details_index = 1
         self.manager.importWithApi(corp)
-        state_ts = tower.stateTimestamp
 
         # As everything is consistent with previous fuel values, raw
         # value is unchanged.
         self.assertEqual(tower.fuels[4312].value, 4027)
+        # Likewise with the stateTimestamp, no updated fuel values, no
+        # changes.
+        self.assertEqual(tower.stateTimestamp, 1362793009)
 
     def test_1001_time_keeping_fuel_details(self):
         corp = DummyCorp()
@@ -61,16 +65,16 @@ class DefaultManagerTestCase(TestCase):
         self.manager.importWithApi(corp)
         tower = self.backend.towers[1]
         current_time = corp.api.last_timestamps['current_time']
-        state_ts = tower.fuels[4312].timestamp
 
-        # as current time is now ahead stateTimestamp, it should have
-        # been bumped.
-        self.assertEqual(state_ts, 1362832609)
+        fuel_ts = tower.fuels[4312].timestamp
+
+        # the stateTimestamp is bumped as it's a new one.
+        self.assertEqual(tower.stateTimestamp, 1362829009)
         self.assertEqual(tower.fuels[4312].value, 3939)
         # it's accurate for the current_time.
         self.assertEqual(tower.getResources(current_time)[4312], 3939)
-        self.assertEqual(tower.getResources(state_ts)[4312], 3939)
-        self.assertEqual(tower.getResources(state_ts + 1)[4312], 3931)
+        self.assertEqual(tower.getResources(fuel_ts)[4312], 3939)
+        self.assertEqual(tower.getResources(fuel_ts + 1)[4312], 3931)
 
 
 def test_suite():

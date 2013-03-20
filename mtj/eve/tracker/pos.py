@@ -57,8 +57,7 @@ class Tower(object):
 
     def _initDerived(self):
         # this can be None...
-        # XXX this is duplicated elsewhere.
-        self.resourcePulse = (self.stateTimestamp or 0) % SECONDS_PER_HOUR
+        self.resourcePulse = 0
         self.typeName = None
         self.allianceID = None
         self.celestialName = None
@@ -78,6 +77,7 @@ class Tower(object):
 
     def _setDerivedValues(self):
         # TODO error checking and other validation somewhere
+        self.setStateTimestamp(self.stateTimestamp)
         moon = eve_map.getCelestial(self.moonID)
         solar_system = eve_map.getSolarSystem(self.locationID)
         pos = pos_info.getControlTower(self.typeID)
@@ -92,6 +92,45 @@ class Tower(object):
         # initialization.
         self.allianceID = self.queryAllianceID()
         self.sov = self.querySovStatus()
+
+    def setStateTimestamp(self, stateTimestamp, reason=None):
+        """
+        Method to update stateTimestamp.
+
+        Users that need to update the stateTimestamp SHOULD use this
+        method to ensure consistency as the management of resourcePulse
+        time is also done here.
+
+        Parameters:
+
+        stateTimestamp
+            the new stateTimestamp
+        reason
+            the update reason.
+
+        Return values:
+
+        None
+            if stateTimestamp is unchanged.
+        True
+            stateTimestamp has changed and updated in this class.
+        False
+            stateTimestamp has changed but the value was not persisted.
+        """
+
+        self.resourcePulse = stateTimestamp % SECONDS_PER_HOUR
+        if stateTimestamp == self.stateTimestamp:
+            # This condition will be satisfied if called as it's done in
+            # _setDerivedValues.  We don't want to trigger db writes.
+            return None
+
+        self.stateTimestamp = stateTimestamp
+
+        # XXX logging
+        tracker = zope.component.queryUtility(ITrackerBackend)
+        if tracker is None:
+            return False
+        return tracker.updateTower(self)
 
     def queryAllianceID(self):
         """
@@ -212,7 +251,8 @@ class Tower(object):
 
         return mismatches
 
-    def updateResources(self, values, timestamp, force=False):
+    def updateResources(self, values, timestamp, stateTimestamp=None,
+            force=False):
         """
         Updates resource levels.
 
@@ -221,10 +261,27 @@ class Tower(object):
             fuel id as key and value as the amount to be assigned.
         timestamp
             The timestamp that the values are current to.
+        stateTimestamp
+            If this is done via the API, pass in this too.  Since
+            accurate time keeping can be difficult for CCP, there are
+            magic involved when handling this argument, especially when
+            the creators of this class think they (know how to) care
+            about timing consistencies.
         force
             Optional argument.  If supplied, validation against existing
             levels are not done so an event will be forced.
+
+        Possible return values
+            List of typeIDs of resources updated.
         """
+
+        def updateStateTimestamp(stateTimestamp):
+            if stateTimestamp is None or not mismatches:
+                # naturally, if fuel values are consistent just let any
+                # possible difference slide.
+                return
+
+            state_ts_result = self.setStateTimestamp(stateTimestamp)
 
         # flag the need to update all the fuels.
         updateAll = not self.fuels
@@ -239,6 +296,14 @@ class Tower(object):
         # dict comprehension
         all_fuels = {v['resourceTypeID']: v for v in
             pos_info.getControlTowerResource(self.typeID)}
+
+        updateStateTimestamp(stateTimestamp)
+        if stateTimestamp > timestamp:
+            # assume all fuel values specified at future timestamps are
+            # accurate (i.e. processed).
+            timestamp = stateTimestamp
+
+            # otherwise resourcePulseTimestamp will handle it.
 
         updated = []
 
@@ -465,9 +530,7 @@ class Tower(object):
 
         # the exit stamp is the new stateTimestamp as per the API, and
         # so new pulse need to be calculated.
-        # XXX duplicated, update to use method when created.
-        self.stateTimestamp = exitAt
-        self.resourcePulse = (self.stateTimestamp or 0) % SECONDS_PER_HOUR
+        self.setStateTimestamp(exitAt)
 
         self.updateResources(resources, exitAt, force=True)
         siloLevels = self.getSiloLevels(timestamp)

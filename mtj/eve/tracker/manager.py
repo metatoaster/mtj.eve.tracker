@@ -53,11 +53,10 @@ class BaseTowerManager(object):
                 ts, api_time, state_ts, delta)
 
             state = details['state']
-            # future state_ts is accurate accounted for.
-            # state_ts in the past may mean the pos isn't "processed",
-            # but fuel reported is still correct to the time polled 
-            # regardless of that.
-            tower.updateResources(details['fuel'], max(state_ts, api_time))
+
+            # supply the new stateTimestamp.
+            tower.updateResources(details['fuel'], api_time,
+                stateTimestamp=state_ts)
 
         logger.debug('(%d/%d) processing complete', starbases_c, starbases_c)
 
