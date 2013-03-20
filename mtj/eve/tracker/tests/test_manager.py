@@ -76,6 +76,10 @@ class DefaultManagerTestCase(TestCase):
         self.assertEqual(tower.getResources(fuel_ts)[4312], 3939)
         self.assertEqual(tower.getResources(fuel_ts + 1)[4312], 3931)
 
+        # verify persistence by reinstantiating all objects.
+        self.backend.reinstantiate()
+        self.assertEqual(self.backend.towers[1].stateTimestamp, 1362829009)
+
 
 def test_suite():
     suite = TestSuite()

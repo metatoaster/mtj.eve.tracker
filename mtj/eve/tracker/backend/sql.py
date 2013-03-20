@@ -287,7 +287,19 @@ class SQLAlchemyBackend(object):
         return self.towers.keys()
 
     def updateTower(self, tower):
-        pass
+        """
+        Update this tower.
+
+        Returns True if updated, False otherwise.
+        """
+
+        # TODO proper error/exception handling.
+        session = self.session()
+        session.add(tower)
+        session.commit()
+        session.expunge(tower)
+
+        return True
 
     def addFuel(self, tower=None, fuelTypeID=None, delta=None, timestamp=None,
             value=None, *a, **kw):

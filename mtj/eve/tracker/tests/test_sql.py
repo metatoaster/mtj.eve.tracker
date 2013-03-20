@@ -74,6 +74,14 @@ class SqlBackendTestCase(TestCase):
 
         # TODO test for log entries when set is implemented.
 
+    def test_0300_tower_update(self):
+        tower = self.backend.addTower(1000001, 12235, 30004608, 40291202, 4,
+            1325376000, 1306886400, 498125261)
+        tower.setStateTimestamp(1325379601)
+        self.backend.updateTower(tower)
+        self.backend.reinstantiate()
+        self.assertEqual(self.backend.towers[1].stateTimestamp, 1325379601)
+
     def test_2000_reinstantiate(self):
         self.backend._conn.execute('insert into tower values '
             '(1, 1000001, 12235, 30004608, 40291202, 4, 1325376000, '
