@@ -203,7 +203,10 @@ class SQLAlchemyBackend(object):
         self._metadata = MetaData()
         self._metadata.reflect(bind=self._conn)
         Base.metadata.create_all(self._conn)
-        self._sessions = sessionmaker(bind=self._conn)
+        self._sessions = sessionmaker(
+            bind=self._conn,
+            expire_on_commit=False,
+        )
 
         self.towers = {}
 
@@ -223,6 +226,9 @@ class SQLAlchemyBackend(object):
             tower._initDerived()
             tower._reloadResources(session)
             self.towers[tower.id] = tower 
+
+        # detatch all objects loaded with this session.
+        session.expunge_all()
 
     def _queryTower(self, session, itemID):
         # see if we already have this towerID registered.
@@ -265,6 +271,7 @@ class SQLAlchemyBackend(object):
         session.commit()
 
         self.towers[tower.id] = tower
+        session.expunge(tower)
 
         return tower
 
