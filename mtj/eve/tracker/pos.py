@@ -230,17 +230,19 @@ class Tower(object):
         updateAll = not self.fuels
         mismatches = self.verifyResources(values, timestamp)
 
+        update_values = {}
         if updateAll:
             # mismatches should be all the resources
-            newvalues = {v: 0 for v in mismatches}
-            newvalues.update(values)
-            values = newvalues
+            update_values = {v: 0 for v in mismatches}
+        update_values.update(values)
 
         # dict comprehension
         all_fuels = {v['resourceTypeID']: v for v in
             pos_info.getControlTowerResource(self.typeID)}
 
-        for resourceTypeID, value in values.iteritems():
+        updated = []
+
+        for resourceTypeID, value in update_values.iteritems():
             if resourceTypeID not in mismatches and not force:
                 continue
 
@@ -262,6 +264,9 @@ class Tower(object):
                 resourceTypeName=fuel['typeName'],
                 unitVolume=fuel['volume'],
             )
+            updated.append(resourceTypeID)
+
+        return updated
 
     def updateSovOwner(self, timestamp, standingOwnerID=None):
         """

@@ -53,7 +53,8 @@ for the charter requirements::
 
     >>> tower1 = backend.addTower(1, 12235, 30004608, 40291202, 4,
     ...     1325376000, 1306886400, 498125261)
-    >>> tower1.updateResources({}, 1325376000)
+    >>> sorted(tower1.updateResources({}, 1325376000))
+    [4247, 16275]
     >>> sorted(tower1.fuels.keys())
     [4247, 16275]
     >>> tower1.solarSystemName
@@ -68,8 +69,7 @@ can try again using one in high security space::
 
     >>> tower2 = backend.addTower(2, 20066, 30004268, 40270415, 4,
     ...     1325376661, 1306886400, 498125261)
-    >>> tower2.updateResources({}, 1325376000)
-    >>> sorted(tower2.fuels.keys())
+    >>> sorted(tower2.updateResources({}, 1325376000))
     [4246, 16275, 24592]
     >>> tower2.celestialName
     u'Shenda VIII - Moon 8'
@@ -78,8 +78,7 @@ Low security, on the other hand, shouldn't need a charter either::
 
     >>> tower3 = backend.addTower(3, 16214, 30004267, 40270327, 4,
     ...     1325376000, 1306886400, 1018389948)
-    >>> tower3.updateResources({}, 1325376000)
-    >>> sorted(tower3.fuels.keys())
+    >>> sorted(tower3.updateResources({}, 1325376000))
     [4246, 16275]
     >>> tower3.celestialName
     u'Nema X - Moon 10'
@@ -106,7 +105,8 @@ The return values are the fuel types that does not match the expected
 value given the input.  This means the fuel levels will need to be
 updated, like so::
 
-    >>> tower1.updateResources(fuel1, 1325376000)
+    >>> sorted(tower1.updateResources(fuel1, 1325376000))
+    [4247, 16275]
 
 One other thing to note is that the timestamps are assumed to follow the
 quirks of the API, which is the values returned are valid until the
@@ -129,7 +129,8 @@ not previously initialized will not be added::
     ...     16275: 3600,
     ...     24592: 200,
     ... }
-    >>> tower2.updateResources(fuel2, 1325376000)
+    >>> sorted(tower2.updateResources(fuel2, 1325376000))
+    [4246, 16275, 24592]
     >>> sorted(tower2.fuels.keys())
     [4246, 16275, 24592]
 
@@ -398,6 +399,7 @@ rather than per silo to ease management.
 Add a silo to tower1, and while at it, refuel it to full first::
 
     >>> tower1.updateResources({4247: 28000}, 1326641400)
+    [4247]
     >>> silo_t = tower1.addSiloBuffer(16649, delta=100,
     ...     value=0, full=75000, timestamp=1326641400)
 
@@ -470,7 +472,8 @@ Silo reactions
 For reactions, we will use another tower.  First fuel the silo to full
 and add the buffers::
 
-    >>> tower3.updateResources({4246: 28000, 16275: 4800}, 1326641400)
+    >>> sorted(tower3.updateResources({4246: 28000, 16275: 4800}, 1326641400))
+    [4246, 16275]
     >>> silo_p = tower3.addSiloBuffer(16644, products=(16662,), delta=100,
     ...     value=20000, full=20000, timestamp=1326641400)
     >>> silo_t = tower3.addSiloBuffer(16649, products=(16662,), delta=100,
