@@ -118,7 +118,13 @@ class Tower(object):
             stateTimestamp has changed but the value was not persisted.
         """
 
-        self.resourcePulse = stateTimestamp % SECONDS_PER_HOUR
+        if stateTimestamp is None:
+            # This can happen when API says so when querying for a long
+            # offline pos.  Just assume this to be 0.
+            self.resourcePulse = 0
+        else:
+            self.resourcePulse = stateTimestamp % SECONDS_PER_HOUR
+
         if stateTimestamp == self.stateTimestamp:
             # This condition will be satisfied if called as it's done in
             # _setDerivedValues.  We don't want to trigger db writes.

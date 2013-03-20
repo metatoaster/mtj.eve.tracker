@@ -38,6 +38,9 @@ class TowerTestCase(TestCase):
         # this can be caused by API.
         tower = Tower(1000001, 12235, 30004608, 40291202, 4,
             1325376000, None, 498125261)
+        tower.setStateTimestamp(None)
+        self.assertEqual(tower.resourcePulse, 0)
+        tower.initResources()
         self.assertEqual(tower.resourcePulse, 0)
 
     def test_0100_uninitialized(self):

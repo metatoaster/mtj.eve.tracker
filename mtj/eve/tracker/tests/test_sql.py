@@ -152,6 +152,23 @@ class SqlBackendTestCase(TestCase):
             24592: 34,
         })
 
+    def test_2002_reinstantiate_null_state_ts(self):
+        self.backend._conn.execute('insert into tower values '
+            '(1, 1000001, 12235, 30004608, 40291202, 4, 1325376661, '
+            '1306886400, 498125261)')
+        self.backend._conn.execute('insert into tower values '
+            '(2, 1000002, 20066, 30004268, 40270415, 1, null, '
+            '1306942573, 498125261)')
+
+        self.backend.reinstantiate()
+
+        tower1 = self.backend.getTower(1)
+        self.assertEqual(tower1.stateTimestamp, 1325376661)
+        self.assertEqual(tower1.resourcePulse, 661)
+        tower2 = self.backend.getTower(2)
+        self.assertEqual(tower2.stateTimestamp, None)
+        self.assertEqual(tower2.resourcePulse, 0)
+
 def test_suite():
     suite = TestSuite()
     suite.addTest(makeSuite(SqlBackendTestCase))
