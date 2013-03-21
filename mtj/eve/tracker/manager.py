@@ -39,12 +39,12 @@ class BaseTowerManager(object):
         starbases = corp.starbases()
         starbases_c = len(starbases)
 
-        logger.debug('%d starbases returned', starbases_c)
+        logger.info('%d starbases returned', starbases_c)
 
         for c, item in enumerate(starbases.iteritems()):
             k, v = item
-            logger.debug('(%d/%d) starbases processed.', c, starbases_c)
-            logger.debug('processing itemID: %s', k)
+            logger.info('(%d/%d) starbases processed.', c, starbases_c)
+            logger.info('processing itemID: %s', k)
             tower = self.backend.addTower(**v)
 
             # Get time right before the request.
@@ -59,16 +59,16 @@ class BaseTowerManager(object):
             api_time = corp.api.last_timestamps['current_time']
             state_ts = details['state_ts'] or 0
             delta = api_time - state_ts
-            logger.debug('timestamps (%s, %s, %s) | delta %d',
-                ts, api_time, state_ts, delta)
-
             state = details['state']
+
+            logger.info('timestamps (%s, %s, %s) | delta %d',
+                ts, api_time, state_ts, delta)
 
             # supply the new stateTimestamp.
             tower.updateResources(details['fuel'], api_time,
                 stateTimestamp=state_ts)
 
-        logger.debug('(%d/%d) processing complete', starbases_c, starbases_c)
+        logger.info('(%d/%d) processing complete', starbases_c, starbases_c)
 
 
 class DefaultTowerManager(BaseTowerManager):
