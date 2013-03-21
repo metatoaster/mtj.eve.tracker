@@ -78,6 +78,8 @@ class Tower(object):
 
     def _setDerivedValues(self):
         # TODO error checking and other validation somewhere
+        # It's done using self to avoid logging while also updating
+        # `resourcePulse`
         self.setStateTimestamp(self.stateTimestamp)
         moon = eve_map.getCelestial(self.moonID)
         solar_system = eve_map.getSolarSystem(self.locationID)
@@ -175,10 +177,11 @@ class Tower(object):
         res_buffer = TowerResourceBuffer(self, **kargs)
         bufferGroup[bufferKey] = res_buffer
 
-        # XXX logging
+        # TODO logging
         tracker = zope.component.queryUtility(ITrackerBackend)
         if tracker is None:
-            # XXX handle error somehow?
+            # Assume this is running in standalone mode.
+            # TODO warning
             return
 
         # This need to be tracked.
@@ -555,7 +558,7 @@ class Tower(object):
         raise NotImplementedError()
 
     def delSiloBuffer(self, typeID):
-        # XXX logging
+        # TODO logging
         self.silos.pop(typeID, None)
 
     def setSiloBuffer(self, typeID, typeName, unitVolume, products, reactants,
@@ -567,7 +570,7 @@ class Tower(object):
             products=products, reactants=reactants, online=online, delta=delta,
             value=value, full=full, timestamp=timestamp)
         self.silos[typeID] = silo
-        # XXX logging
+        # TODO logging
 
         # some values can be None, read directly from silo to reconfirm
         # for logging purposes
