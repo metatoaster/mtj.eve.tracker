@@ -37,8 +37,8 @@ class DummyCorp(object):
     def starbase_details(self, itemID):
         all_results = self._dummy_starbase_details()
         results = all_results.get(itemID, None)
-        result = results['results']
-        if result:
+        if results:
+            result = results['results']
             self.api.last_timestamps = results['last_timestamps']
             return result
         # pretend this is a bad itemID, as there can be condition where
@@ -46,10 +46,7 @@ class DummyCorp(object):
         # the actual starbase could have been taken down and repackaged
         # (or even destroyed).
         ts = time.time()
-        raise APIError(114, 'Invalid itemID provided.', {
-            "current_time": ts,
-            "cached_until": ts,
-        })
+        raise APIError(114, 'Invalid itemID provided.')
 
 
 class JsonDummyCorp(DummyCorp):
@@ -254,6 +251,7 @@ dummy_sov = [
 ]
 
 dummy_starbases = [
+
     {
         'last_timestamps': {
             'current_time': 1362792986, 'cached_until': 1362793351},
@@ -270,6 +268,37 @@ dummy_starbases = [
             },
         },
     },
+
+    {
+        'last_timestamps': {
+            'current_time': 1362792986, 'cached_until': 1362793351},
+        'results': {
+
+            507862: {
+                'itemID': 507862,
+                'typeID': 20064,
+                'standingOwnerID': 498125261,
+                'stateTimestamp': 1362793009,
+                'state': 4,
+                'onlineTimestamp': 1317198658,
+                'locationID': 30004608,
+                'moonID': 40291202,
+            },
+
+            507863: {
+                'itemID': 507863,
+                'typeID': 20062,
+                'standingOwnerID': 498125261,
+                'stateTimestamp': None,
+                'state': 1,
+                'onlineTimestamp': None,
+                'locationID': 30002904,
+                'moonID': 40184218,
+            },
+
+        },
+    },
+
 ]
 
 dummy_starbase_details = [
