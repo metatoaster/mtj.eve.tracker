@@ -8,10 +8,10 @@ from mtj.eve.tracker.backend.sql import SQLAlchemyBackend
 from mtj.eve.tracker.tests.dummyevelink import DummyHelper
 
 
-def setUp(suite):
+def setUp(suite, backend=None, helper=None):
     installTestSite()
-    registerBackend()
-    registerHelper()
+    registerBackend(backend)
+    registerHelper(helper)
 
 def tearDown(suite):
     setSite()
@@ -22,14 +22,16 @@ def installTestSite():
     setHooks()
     setSite(site)
 
-def registerBackend():
+def registerBackend(backend=None):
     # The basic memory based backend.
-    backend = SQLAlchemyBackend()
+    if backend is None:
+        backend = SQLAlchemyBackend()
     sm = getSiteManager()
     sm.registerUtility(backend, ITrackerBackend)
 
-def registerHelper():
+def registerHelper(helper=None):
     # set up the helper
-    helper = DummyHelper()
+    if helper is None:
+        helper = DummyHelper()
     sm = getSiteManager()
     sm.registerUtility(helper, IAPIHelper)
