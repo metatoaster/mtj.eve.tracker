@@ -9,6 +9,7 @@ from mtj.evedb.market import Group
 
 from mtj.multimer.buffer import TimedBuffer
 
+from mtj.eve.tracker.backend import monitor
 from mtj.eve.tracker.interfaces import IAPIHelper, ITrackerBackend
 
 SECONDS_PER_HOUR = 3600
@@ -93,7 +94,8 @@ class Tower(object):
         self.allianceID = self.queryAllianceID()
         self.sov = self.querySovStatus()
 
-    def setStateTimestamp(self, stateTimestamp, reason=None):
+    @monitor.towerUpdates('stateTimestamp')
+    def setStateTimestamp(self, stateTimestamp):
         """
         Method to update stateTimestamp.
 
@@ -105,17 +107,6 @@ class Tower(object):
 
         stateTimestamp
             the new stateTimestamp
-        reason
-            the update reason.
-
-        Return values:
-
-        None
-            if stateTimestamp is unchanged.
-        True
-            stateTimestamp has changed and updated in this class.
-        False
-            stateTimestamp has changed but the value was not persisted.
         """
 
         if stateTimestamp is None:
@@ -125,18 +116,7 @@ class Tower(object):
         else:
             self.resourcePulse = stateTimestamp % SECONDS_PER_HOUR
 
-        if stateTimestamp == self.stateTimestamp:
-            # This condition will be satisfied if called as it's done in
-            # _setDerivedValues.  We don't want to trigger db writes.
-            return None
-
         self.stateTimestamp = stateTimestamp
-
-        # XXX logging
-        tracker = zope.component.queryUtility(ITrackerBackend)
-        if tracker is None:
-            return False
-        return tracker.updateTower(self)
 
     def queryAllianceID(self):
         """
