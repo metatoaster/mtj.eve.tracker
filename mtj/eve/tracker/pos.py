@@ -502,6 +502,7 @@ class Tower(object):
         remaining = fuel.getCyclesPossible() * fuel.period
         return remaining
 
+    @monitor.towerUpdates('state')
     def enterReinforcement(self, exitAt, timestamp=None):
         """
         Helper method to trigger a reinforcement.  API update method can
@@ -524,9 +525,11 @@ class Tower(object):
             self.updateSiloBuffer(k, value=v, timestamp=timestamp,
                 online=False)
 
+        # Finally set the state here, to not interfere with the above
+        # calculations.
         self.state = STATE_REINFORCED
-        self.stateTimestamp = exitAt
 
+    @monitor.towerUpdates('state')
     def exitReinforcement(self, strontium, timestamp=None):
         """
         Used to verify reinforcement is completed, with new strontium
