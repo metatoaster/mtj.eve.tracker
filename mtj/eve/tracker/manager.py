@@ -1,5 +1,9 @@
+from __future__ import absolute_import
+
 import time
 import logging
+
+from evelink.api import APIError
 
 import zope.component
 
@@ -44,8 +48,14 @@ class BaseTowerManager(object):
             tower = self.backend.addTower(**v)
 
             # Get time right before the request.
-            ts = time.time()
-            details = corp.starbase_details(k)
+            try:
+                ts = time.time()
+                details = corp.starbase_details(k)
+            except APIError as e:
+                logger.warning('Fail to retrieve corp/StarbaseDetail for %s; '
+                    'corp/StarbaseList may be out of date', k)
+                continue
+
             api_time = corp.api.last_timestamps['current_time']
             state_ts = details['state_ts'] or 0
             delta = api_time - state_ts

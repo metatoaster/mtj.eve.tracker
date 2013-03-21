@@ -32,6 +32,19 @@ class DefaultManagerTestCase(TestCase):
         self.assertEqual(tower.celestialName, u'6VDT-H III - Moon 1')
         self.assertEqual(tower.itemID, 507862)
 
+    def test_0010_missing_details(self):
+        corp = DummyCorp()
+        corp.starbases_index = 1
+        self.manager.importWithApi(corp)
+        self.assertEqual(len(self.backend.towers.items()), 2)
+
+        # Still imported anyway.
+        tower = self.backend.towers[2]
+        self.assertEqual(tower.celestialName, u'VFK-IV II - Moon 1')
+        self.assertEqual(tower.itemID, 507863)
+        # but not receiving fuel values.
+        self.assertEqual(len(tower.fuels), 0)
+
     def test_1000_time_keeping_fuel_details(self):
         corp = DummyCorp()
         self.manager.importWithApi(corp)
