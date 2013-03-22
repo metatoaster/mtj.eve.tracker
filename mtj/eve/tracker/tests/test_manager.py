@@ -26,8 +26,8 @@ class DefaultManagerTestCase(TestCase):
     def test_0000_base_tower_manager(self):
         corp = DummyCorp()
         self.manager.importWithApi(corp)
-        self.assertEqual(len(self.backend.towers.items()), 1)
-        tower = self.backend.towers[1]
+        self.assertEqual(len(self.backend.getTowerIds()), 1)
+        tower = self.backend.getTower(1)
 
         self.assertEqual(tower.celestialName, u'6VDT-H III - Moon 1')
         self.assertEqual(tower.itemID, 507862)
@@ -36,10 +36,10 @@ class DefaultManagerTestCase(TestCase):
         corp = DummyCorp()
         corp.starbases_index = 1
         self.manager.importWithApi(corp)
-        self.assertEqual(len(self.backend.towers.items()), 2)
+        self.assertEqual(len(self.backend.getTowerIds()), 2)
 
         # Still imported anyway.
-        tower = self.backend.towers[2]
+        tower = self.backend.getTower(2)
         self.assertEqual(tower.celestialName, u'VFK-IV II - Moon 1')
         self.assertEqual(tower.itemID, 507863)
         # but not receiving fuel values.
@@ -48,7 +48,7 @@ class DefaultManagerTestCase(TestCase):
     def test_1000_time_keeping_fuel_details(self):
         corp = DummyCorp()
         self.manager.importWithApi(corp)
-        tower = self.backend.towers[1]
+        tower = self.backend.getTower(1)
         current_time = corp.api.last_timestamps['current_time']
         fuel_ts = tower.fuels[4312].timestamp
 
@@ -76,7 +76,7 @@ class DefaultManagerTestCase(TestCase):
         corp = DummyCorp()
         corp.starbase_details_index = 1
         self.manager.importWithApi(corp)
-        tower = self.backend.towers[1]
+        tower = self.backend.getTower(1)
         current_time = corp.api.last_timestamps['current_time']
 
         fuel_ts = tower.fuels[4312].timestamp
@@ -91,7 +91,7 @@ class DefaultManagerTestCase(TestCase):
 
         # verify persistence by reinstantiating all objects.
         self.backend.reinstantiate()
-        self.assertEqual(self.backend.towers[1].stateTimestamp, 1362829009)
+        self.assertEqual(self.backend.getTower(1).stateTimestamp, 1362829009)
 
 
 def test_suite():

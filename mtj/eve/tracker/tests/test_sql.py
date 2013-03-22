@@ -80,7 +80,7 @@ class SqlBackendTestCase(TestCase):
         tower.setStateTimestamp(1325379601)
         self.backend.updateTower(tower)
         self.backend.reinstantiate()
-        self.assertEqual(self.backend.towers[1].stateTimestamp, 1325379601)
+        self.assertEqual(self.backend.getTower(1).stateTimestamp, 1325379601)
 
     def test_2000_reinstantiate(self):
         self.backend._conn.execute('insert into tower values '

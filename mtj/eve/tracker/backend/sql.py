@@ -208,7 +208,7 @@ class SQLAlchemyBackend(object):
             expire_on_commit=False,
         )
 
-        self.towers = {}
+        self._towers = {}
 
     def session(self):
         return self._sessions()
@@ -220,12 +220,12 @@ class SQLAlchemyBackend(object):
 
         session = self.session()
         towerq = session.query(Tower)
-        self.towers = {}
+        self._towers = {}
 
         for tower in towerq.all():
             tower._initDerived()
             tower._reloadResources(session)
-            self.towers[tower.id] = tower 
+            self._towers[tower.id] = tower
 
         # detatch all objects loaded with this session.
         session.expunge_all()
@@ -264,13 +264,13 @@ class SQLAlchemyBackend(object):
             # XXX the check should include rest of the fields.
             result = self._queryTower(session, itemID)
             if result:
-                return self.towers[result.id]
+                return self._towers[result.id]
 
         tower = Tower(itemID, *a, **kw)
         session.add(tower)
         session.commit()
 
-        self.towers[tower.id] = tower
+        self._towers[tower.id] = tower
         session.expunge(tower)
 
         return tower
@@ -281,10 +281,10 @@ class SQLAlchemyBackend(object):
         """
 
         # XXX not actually a copy yet.
-        return self.towers[tower_id]
+        return self._towers[tower_id]
 
     def getTowerIds(self):
-        return self.towers.keys()
+        return self._towers.keys()
 
     def updateTower(self, tower):
         """
