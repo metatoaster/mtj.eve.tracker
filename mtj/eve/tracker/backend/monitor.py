@@ -47,3 +47,26 @@ def towerUpdates(*attributes):
         return wrapper
 
     return decorator
+
+def towerResourceBuffer(f):
+    """
+    Decorator for Tower.setResourceBuffer.
+
+    Reasoning to move that here is to keep the backend interaction to
+    this one module.
+    """
+
+    @functools.wraps(f)
+    def wrapper(inst, *a, **kw):
+        result = f(inst, *a, **kw)
+
+        tracker = zope.component.queryUtility(ITrackerBackend)
+        if tracker is None:
+            # Assume this is running in standalone mode.
+            logger.warning('unable to acquire `ITrackerBackend` utility '
+                'for tower update.')
+            return
+
+        tracker.addFuel(**result)
+
+    return wrapper

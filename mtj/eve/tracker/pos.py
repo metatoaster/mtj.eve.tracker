@@ -1,3 +1,4 @@
+import logging
 import time
 import sys
 
@@ -11,6 +12,8 @@ from mtj.multimer.buffer import TimedBuffer
 
 from mtj.eve.tracker.backend import monitor
 from mtj.eve.tracker.interfaces import IAPIHelper, ITrackerBackend
+
+logger = logging.getLogger('mtj.eve.tracker.pos')
 
 SECONDS_PER_HOUR = 3600
 STRONTIUM_ITEMID = 16275
@@ -140,6 +143,7 @@ class Tower(object):
         sov_info = evelink_helper.sov[self.locationID]
         return sov_info['alliance_id'] == self.allianceID
 
+    @monitor.towerResourceBuffer
     def setResourceBuffer(self, bufferGroupName, bufferKey, delta, timestamp,
             purpose, value, resourceTypeName, unitVolume):
         """
@@ -174,20 +178,11 @@ class Tower(object):
         kargs = dict(delta=delta, timestamp=timestamp, purpose=purpose,
             value=value, resourceTypeName=resourceTypeName,
             unitVolume=unitVolume)
-        res_buffer = TowerResourceBuffer(self, **kargs)
-        bufferGroup[bufferKey] = res_buffer
-
-        # TODO logging
-        tracker = zope.component.queryUtility(ITrackerBackend)
-        if tracker is None:
-            # Assume this is running in standalone mode.
-            # TODO warning
-            return
-
-        # This need to be tracked.
         kargs['tower'] = self
         kargs['fuelTypeID'] = bufferKey
-        tracker.addFuel(**kargs)
+        res_buffer = TowerResourceBuffer(**kargs)
+        bufferGroup[bufferKey] = res_buffer
+        return kargs
 
     def initResources(self):
         evelink_helper = zope.component.getUtility(IAPIHelper)
@@ -558,22 +553,22 @@ class Tower(object):
         raise NotImplementedError()
 
     def delSiloBuffer(self, typeID):
-        # TODO logging
-        self.silos.pop(typeID, None)
+        result = self.silos.pop(typeID, None)
+        if result:
+            logger.debug('silo of typeID[%s] removed from tower[%s]',
+                typeID, self.itemID)
 
     def setSiloBuffer(self, typeID, typeName, unitVolume, products, reactants,
             online, delta, value, full, timestamp=None):
 
-        # TODO figure out how this actually accumulates.
         timestamp = self.siloPulseTimestamp(timestamp)
         silo = TowerSiloBuffer(self, typeName=typeName, unitVolume=unitVolume,
             products=products, reactants=reactants, online=online, delta=delta,
             value=value, full=full, timestamp=timestamp)
         self.silos[typeID] = silo
-        # TODO logging
 
         # some values can be None, read directly from silo to reconfirm
-        # for logging purposes
+        # for logging, audit and persistence purposes.
 
         timestamp = silo.timestamp
         return silo
