@@ -41,6 +41,19 @@ class JsonDummyCorpTestCase(TestCase):
         self.assertEqual(dummy_corp.starbase_details(507862),
             json_corp.starbase_details(507862))
 
+    def test_0000_base(self):
+        dummy_corp = DummyCorp()
+        dummy_corp.starbases_index = 1
+        result = JsonDummyCorp.dumps(dummy_corp)
+        json_corp = JsonDummyCorp()
+        json_corp.loads(result)
+        self.assertEqual(dummy_corp.starbases(), json_corp.starbases())
+        self.assertEqual(sorted(json_corp.starbases().keys()),
+            [507862, 507863])
+        self.assertEqual(dummy_corp.starbase_details(507862),
+            json_corp.starbase_details(507862))
+        self.assertRaises(APIError, dummy_corp.starbase_details, 507863)
+
 
 def test_suite():
     suite = TestSuite()

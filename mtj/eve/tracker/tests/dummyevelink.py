@@ -87,16 +87,25 @@ class JsonDummyCorp(DummyCorp):
 
     @staticmethod
     def dumps(corp):
+        starbases = corp.starbases()
         corp_dump = {
             'starbases': {
-                'results': corp.starbases(),
+                'results': starbases,
                 'last_timestamps': corp.api.last_timestamps,
             },
-            'starbase_details': {i: {
-                'results': corp.starbase_details(i),
-                'last_timestamps': corp.api.last_timestamps,
-            } for i in corp.starbases().keys()},
+            'starbase_details': {},
         }
+        sbd = {}
+        for i in starbases.keys():
+            try:
+                sd = {
+                    'results': corp.starbase_details(i),
+                    'last_timestamps': corp.api.last_timestamps,
+                }
+            except APIError, e:
+                continue
+            sbd[i] = sd
+        corp_dump['starbase_details'] = sbd
         return json.dumps(corp_dump)
 
 
