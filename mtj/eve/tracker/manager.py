@@ -56,6 +56,7 @@ class BaseTowerManager(object):
                     'corp/StarbaseList may be out of date', k)
                 continue
 
+            # Determine relevant fields.
             api_time = corp.api.last_timestamps['current_time']
             state_ts = details['state_ts'] or 0
             delta = api_time - state_ts
@@ -71,6 +72,9 @@ class BaseTowerManager(object):
             # This is done after the resources to not interfere with the
             # resource verification.
             tower.setState(state)
+
+            # finally log down this tower as having updated with api.
+            self.backend.setTowerApi(tower.id, corp.api.api_key, api_time)
 
         logger.info('(%d/%d) processing complete', starbases_c, starbases_c)
 

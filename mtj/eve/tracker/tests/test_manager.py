@@ -32,6 +32,11 @@ class DefaultManagerTestCase(TestCase):
         self.assertEqual(tower.celestialName, u'6VDT-H III - Moon 1')
         self.assertEqual(tower.itemID, 507862)
 
+        tower_apis = self.backend.getTowerApis()
+        self.assertEqual(len(tower_apis), 1)
+        self.assertEqual(tower_apis[0].api_key, 1)
+        self.assertEqual(tower_apis[0].currentTime, 1362792986)
+
     def test_0010_missing_details(self):
         corp = DummyCorp()
         corp.starbases_index = 1
@@ -45,6 +50,11 @@ class DefaultManagerTestCase(TestCase):
         # but not receiving fuel values.
         self.assertEqual(len(tower.fuels), 0)
 
+        tower_apis = self.backend.getTowerApis()
+        # Only details are counted.
+        self.assertEqual(len(tower_apis), 1)
+        self.assertEqual(tower_apis[0].currentTime, 1362792986)
+
     def test_0100_states(self):
         corp = DummyCorp()
         self.manager.importWithApi(corp)
@@ -54,6 +64,9 @@ class DefaultManagerTestCase(TestCase):
 
         # no updates
         self.assertEqual(len(self.backend.getTowerLog(1)), 0)
+
+        tower_apis = self.backend.getTowerApis()
+        self.assertEqual(tower_apis[0].currentTime, 1362829863)
 
         corp.starbases_index = 2
         corp.starbase_details_index = 2
@@ -65,6 +78,13 @@ class DefaultManagerTestCase(TestCase):
         self.assertEqual(tower_log_1[0].stateTimestamp, 1362901009)
         self.assertEqual(tower_log_1[0].state, 4)
         self.assertEqual(tower_log_1[1].state, 3)
+
+        tower_apis = self.backend.getTowerApis()
+        self.assertEqual(len(tower_apis), 2)
+        self.assertEqual(tower_apis[0].currentTime, 1362865863)
+        self.assertEqual(tower_apis[1].currentTime, 1362865863)
+
+        # TODO add some TowerLog checks here?
 
     def test_1000_time_keeping_fuel_details(self):
         corp = DummyCorp()

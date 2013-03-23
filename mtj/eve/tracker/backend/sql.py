@@ -110,6 +110,28 @@ class TowerLog(Base):
         self.timestamp = time.time()
 
 
+class TowerApi(Base):
+    """
+    For tracking API and Tower relationships.
+    """
+
+    __tablename__ = 'tower_api'
+
+    tower_id = Column(Integer, primary_key=True)
+    # Assuming to be integer.  If this requires nuking it's trivial to
+    # regenerate this whole table.
+    api_key = Column(Integer, index=True)
+    currentTime = Column(Integer)
+    timestamp = Column(Integer)
+
+    def __init__(self, tower_id, api_key, currentTime):
+
+        self.tower_id = tower_id
+        self.api_key = api_key
+        self.currentTime = currentTime
+        self.timestamp = time.time()
+
+
 class Fuel(Base):
     __tablename__ = 'fuel'
 
@@ -348,3 +370,24 @@ class SQLAlchemyBackend(object):
         session.commit()
 
         return fuel
+
+    def setTowerApi(self, tower_id, api_key, currentTime):
+        """
+        Sets the tower API.
+        """
+
+        # don't trigger autoincrement.
+        assert tower_id is not None
+
+        tower_api = TowerApi(tower_id, api_key, currentTime)
+        session = self.session()
+        session.merge(tower_api)
+        session.commit()
+
+    def getTowerApis(self, api_key=None):
+        # TODO implement filters.
+        session = self.session()
+        q = session.query(TowerApi)
+        result = q.all()
+        session.expunge_all()
+        return result
