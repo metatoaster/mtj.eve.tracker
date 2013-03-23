@@ -1,8 +1,12 @@
+from __future__ import absolute_import
+
 import logging
 import time
 import sys
 
 import zope.component
+
+from evelink.constants import Corp as corp_const
 
 from mtj.evedb.structure import ControlTower
 from mtj.evedb.map import Map
@@ -259,12 +263,17 @@ class Tower(object):
             List of typeIDs of resources updated.
         """
 
+        # TODO maybe look into reconciling the setState method in here.
+
         def updateStateTimestamp(stateTimestamp):
             if stateTimestamp is None or not mismatches:
                 # naturally, if fuel values are consistent just let any
                 # possible difference slide.
                 return
 
+            # TODO if we do setState here, reuse the method BUT ensure
+            # the monitor decorator can see that values are being
+            # monitored.
             state_ts_result = self.setStateTimestamp(stateTimestamp)
 
         # flag the need to update all the fuels.
@@ -499,6 +508,16 @@ class Tower(object):
             return 0
         remaining = fuel.getCyclesPossible() * fuel.period
         return remaining
+
+    @monitor.towerUpdates('state')
+    def setState(self, state):
+        if isinstance(state, basestring):
+            # TODO evaluate whether to allow this evelink specific
+            # constant access here.
+            state = corp_const.pos_states.index(state)
+        elif not isinstance(state, int):
+            raise TypeError('state must be an int')
+        self.state = state
 
     @monitor.towerUpdates('state')
     def enterReinforcement(self, exitAt, timestamp=None):

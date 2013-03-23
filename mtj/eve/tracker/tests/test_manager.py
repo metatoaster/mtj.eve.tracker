@@ -45,6 +45,27 @@ class DefaultManagerTestCase(TestCase):
         # but not receiving fuel values.
         self.assertEqual(len(tower.fuels), 0)
 
+    def test_0100_states(self):
+        corp = DummyCorp()
+        self.manager.importWithApi(corp)
+
+        corp.starbase_details_index = 1
+        self.manager.importWithApi(corp)
+
+        # no updates
+        self.assertEqual(len(self.backend.getTowerLog(1)), 0)
+
+        corp.starbases_index = 2
+        corp.starbase_details_index = 2
+        self.manager.importWithApi(corp)
+
+        # two updates (currently, until state + stateTimestamp is unified)
+        tower_log_1 = self.backend.getTowerLog(1)
+        self.assertEqual(len(tower_log_1), 2)
+        self.assertEqual(tower_log_1[0].stateTimestamp, 1362901009)
+        self.assertEqual(tower_log_1[0].state, 4)
+        self.assertEqual(tower_log_1[1].state, 3)
+
     def test_1000_time_keeping_fuel_details(self):
         corp = DummyCorp()
         self.manager.importWithApi(corp)

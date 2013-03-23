@@ -68,6 +68,10 @@ class BaseTowerManager(object):
             tower.updateResources(details['fuel'], api_time,
                 stateTimestamp=state_ts)
 
+            # This is done after the resources to not interfere with the
+            # resource verification.
+            tower.setState(state)
+
         logger.info('(%d/%d) processing complete', starbases_c, starbases_c)
 
 

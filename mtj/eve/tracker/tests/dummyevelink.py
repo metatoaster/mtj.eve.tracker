@@ -308,6 +308,36 @@ dummy_starbases = [
         },
     },
 
+    {
+        'last_timestamps': {
+            'current_time': 1362828986, 'cached_until': 1362829351},
+        'results': {
+
+            507862: {
+                'itemID': 507862,
+                'typeID': 20064,
+                'standingOwnerID': 498125261,
+                'stateTimestamp': 1362901009,
+                'state': 3,
+                'onlineTimestamp': 1317198658,
+                'locationID': 30004608,
+                'moonID': 40291202,
+            },
+
+            507863: {
+                'itemID': 507863,
+                'typeID': 20062,
+                'standingOwnerID': 498125261,
+                'stateTimestamp': 1362829986,
+                'state': 4,
+                'onlineTimestamp': 1362109986,
+                'locationID': 30002904,
+                'moonID': 40184218,
+            },
+
+        },
+    },
+
 ]
 
 dummy_starbase_details = [
@@ -339,5 +369,34 @@ dummy_starbase_details = [
                 'cached_until': 1362830462,
             },
         },
+    },
+
+    {
+        507862: {
+            'results': {
+                u'online_ts': 1317197424,
+                u'state': u'reinforced',
+                u'state_ts': 1362901009,
+                u'fuel': {4312: 3939},
+            },
+            'last_timestamps': {
+                'current_time': 1362865863,
+                'cached_until': 1362866462,
+            },
+        },
+
+        507863: {
+            'results': {
+                u'online_ts': 1362109986,
+                u'state': u'online',
+                u'state_ts': 1362868609,
+                u'fuel': {16275: 1000, 4051: 3939},
+            },
+            'last_timestamps': {
+                'current_time': 1362865863,
+                'cached_until': 1362866462,
+            },
+        },
+
     },
 ]
