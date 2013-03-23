@@ -74,7 +74,7 @@ class BaseTowerManager(object):
             tower.setState(state)
 
             # finally log down this tower as having updated with api.
-            self.backend.setTowerApi(tower.id, corp.api.api_key, api_time)
+            self.backend.setTowerApi(tower.id, corp.api.api_key[0], api_time)
 
         logger.info('(%d/%d) processing complete', starbases_c, starbases_c)
 

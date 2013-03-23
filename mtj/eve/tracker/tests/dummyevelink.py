@@ -20,7 +20,8 @@ class DummyCorp(object):
     def __init__(self, api=None):
         self.api = api
         if api is None:
-            self.api = type('DummyAPI', (object,), {'api_key': 1})()
+            self.api = type('DummyAPI', (object,), {
+                'api_key': (1, 'vcode')})()
 
     def _dummy_starbases(self):
         return dummy_starbases[self.starbases_index]

@@ -84,8 +84,6 @@ class DefaultManagerTestCase(TestCase):
         self.assertEqual(tower_apis[0].currentTime, 1362865863)
         self.assertEqual(tower_apis[1].currentTime, 1362865863)
 
-        # TODO add some TowerLog checks here?
-
     def test_1000_time_keeping_fuel_details(self):
         corp = DummyCorp()
         self.manager.importWithApi(corp)
