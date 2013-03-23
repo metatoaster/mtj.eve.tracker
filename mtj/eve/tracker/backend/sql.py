@@ -58,7 +58,7 @@ class Tower(Base, pos.Tower):
 
         # query for stuff
         results = session.query(Fuel).filter(
-            Fuel.towerID == self.id).group_by(
+            Fuel.tower_id == self.id).group_by(
                 Fuel.fuelTypeID).having(func.max(Fuel.id))
 
         for result in results.all():
@@ -99,7 +99,7 @@ class Fuel(Base):
     # this is the _internal_ id, not the one derived from the API as the
     # pos tracker can and should be able to be operated manually apart
     # from the API.
-    towerID = Column(Integer)
+    tower_id = Column(Integer)
 
     fuelTypeID = Column(Integer)
     delta = Column(Integer)
@@ -111,9 +111,9 @@ class Fuel(Base):
     # freeze is derived
     #freeze = Column(Boolean)
 
-    def __init__(self, towerID, fuelTypeID, delta, timestamp, value):
+    def __init__(self, tower_id, fuelTypeID, delta, timestamp, value):
 
-        self.towerID = towerID
+        self.tower_id = tower_id
         self.fuelTypeID = fuelTypeID
         self.delta = delta
         self.timestamp = timestamp
@@ -231,7 +231,7 @@ class SQLAlchemyBackend(object):
         session.expunge_all()
 
     def _queryTower(self, session, itemID):
-        # see if we already have this towerID registered.
+        # see if we already have this tower_id registered.
         q = session.query(Tower).filter(Tower.itemID == itemID)
         try:
             result = q.one()
@@ -304,8 +304,8 @@ class SQLAlchemyBackend(object):
     def addFuel(self, tower=None, fuelTypeID=None, delta=None, timestamp=None,
             value=None, *a, **kw):
 
-        towerID = tower.id
-        fuel = Fuel(towerID, fuelTypeID, delta, timestamp, value)
+        tower_id = tower.id
+        fuel = Fuel(tower_id, fuelTypeID, delta, timestamp, value)
 
         session = self.session()
         session.add(fuel)
