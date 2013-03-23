@@ -77,10 +77,46 @@ class SqlBackendTestCase(TestCase):
     def test_0300_tower_update(self):
         tower = self.backend.addTower(1000001, 12235, 30004608, 40291202, 4,
             1325376000, 1306886400, 498125261)
-        tower.setStateTimestamp(1325379601)
+        tower.stateTimestamp = 1325379601
+        tower.onlineTimestamp = 1325379601
+        tower.state = 3
         self.backend.updateTower(tower)
         self.backend.reinstantiate()
         self.assertEqual(self.backend.getTower(1).stateTimestamp, 1325379601)
+        self.assertEqual(len(self.backend.getTowerLog(1)), 1)
+        self.assertEqual(self.backend.getTowerLog(1)[0].stateTimestamp,
+            1325379601)
+        self.assertEqual(self.backend.getTowerLog(1)[0].onlineTimestamp,
+            1325379601)
+        self.assertEqual(self.backend.getTowerLog(1)[0].state, 3)
+
+    def test_0301_tower_update(self):
+        tower = self.backend.addTower(1000001, 12235, 30004608, 40291202, 4,
+            1325376000, 1306886400, 498125261)
+        # this will call updateTower.
+        tower.setStateTimestamp(1325379601)
+        self.backend.reinstantiate()
+        self.assertEqual(self.backend.getTower(1).stateTimestamp, 1325379601)
+        self.assertEqual(len(self.backend.getTowerLog(1)), 1)
+        self.assertEqual(self.backend.getTowerLog(1)[0].stateTimestamp,
+            1325379601)
+
+    def test_0302_tower_update_state_ts_dupe(self):
+        tower = self.backend.addTower(1000001, 12235, 30004608, 40291202, 4,
+            1325376000, 1306886400, 498125261)
+        # this will call updateTower.
+        tower.setStateTimestamp(1325379601)
+        # this one is not logged, same value as previous.
+        tower.setStateTimestamp(1325379601)
+        # this one will be.
+        tower.setStateTimestamp(1325379602)
+        self.backend.reinstantiate()
+        self.assertEqual(self.backend.getTower(1).stateTimestamp, 1325379602)
+        self.assertEqual(len(self.backend.getTowerLog(1)), 2)
+        self.assertEqual(self.backend.getTowerLog(1)[0].stateTimestamp,
+            1325379601)
+        self.assertEqual(self.backend.getTowerLog(1)[1].stateTimestamp,
+            1325379602)
 
     def test_2000_reinstantiate(self):
         self.backend._conn.execute('insert into tower values '
@@ -97,8 +133,10 @@ class SqlBackendTestCase(TestCase):
         session = self.backend.session()
         towerq = session.query(sql.Tower)
         fuelq = session.query(sql.Fuel)
+        tower_logq = session.query(sql.TowerLog)
         self.assertEqual(towerq.count(), 1)
         self.assertEqual(fuelq.count(), 2)
+        self.assertEqual(tower_logq.count(), 0)
 
         # tower properly acquired
         tower = self.backend.getTower(1)

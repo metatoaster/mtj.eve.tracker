@@ -76,19 +76,38 @@ class Tower(Base, pos.Tower):
             self.fuels[resourceTypeID] = res_buffer
 
 
-class TowerLog(object):
+class TowerLog(Base):
     # See SQLAlchemyBackend.addTower
     __tablename__ = 'tower_log'
 
     id = Column(Integer, primary_key=True)
 
-    towerID = Column(Integer)
+    tower_id = Column(Integer, index=True)
+
     itemID = Column(Integer)
-    # typeID should be updated in parent when it becomes available.
+    typeID = Column(Integer)
+    locationID = Column(Integer)
+    moonID = Column(Integer)
     state = Column(Integer)
     stateTimestamp = Column(Integer)
     onlineTimestamp = Column(Integer)
     standingOwnerID = Column(Integer)
+
+    timestamp = Column(Integer)
+
+    def __init__(self, tower_id, itemID, typeID, locationID, moonID, state,
+            stateTimestamp, onlineTimestamp, standingOwnerID):
+
+        self.tower_id = tower_id
+        self.itemID = itemID
+        self.typeID = typeID
+        self.locationID = locationID
+        self.moonID = moonID
+        self.state = state
+        self.stateTimestamp = stateTimestamp
+        self.onlineTimestamp = onlineTimestamp
+        self.standingOwnerID = standingOwnerID
+        self.timestamp = time.time()
 
 
 class Fuel(Base):
@@ -286,6 +305,17 @@ class SQLAlchemyBackend(object):
     def getTowerIds(self):
         return self._towers.keys()
 
+    def getTowerLog(self, tower_id):
+        """
+        Return the tower logs for tower_id
+        """
+
+        session = self.session()
+        q = session.query(TowerLog).filter(TowerLog.tower_id == tower_id)
+        result = q.all()
+        session.expunge_all()
+        return result
+
     def updateTower(self, tower):
         """
         Update this tower.
@@ -295,7 +325,13 @@ class SQLAlchemyBackend(object):
 
         # TODO proper error/exception handling.
         session = self.session()
+
         session.add(tower)
+
+        tower_attrs = [getattr(tower, c) for c in tower.__table__.c.keys()]
+        tower_log = TowerLog(*tower_attrs)
+        session.add(tower_log)
+
         session.commit()
         session.expunge(tower)
 
