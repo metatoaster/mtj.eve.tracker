@@ -107,7 +107,7 @@ class TowerLog(Base):
         self.stateTimestamp = stateTimestamp
         self.onlineTimestamp = onlineTimestamp
         self.standingOwnerID = standingOwnerID
-        self.timestamp = time.time()
+        self.timestamp = int(time.time())
 
 
 class TowerApi(Base):
@@ -117,6 +117,10 @@ class TowerApi(Base):
 
     __tablename__ = 'tower_api'
 
+    # Not using itemID because it can be reused for a different tower.
+    # tower_id is unique within the context of our tracker which is what
+    # this tracker cares about.
+    # Might be useful to have both, actually.
     tower_id = Column(Integer, primary_key=True)
     # Assuming to be integer.  If this requires nuking it's trivial to
     # regenerate this whole table.
@@ -129,7 +133,9 @@ class TowerApi(Base):
         self.tower_id = tower_id
         self.api_key = api_key
         self.currentTime = currentTime
-        self.timestamp = time.time()
+        # this may seem to duplicate above, but is useful to verify
+        # the staleness of the data's currentTime.
+        self.timestamp = int(time.time())
 
 
 class Fuel(Base):
