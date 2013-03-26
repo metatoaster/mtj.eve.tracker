@@ -2,7 +2,7 @@ import time
 
 import sqlalchemy
 from sqlalchemy import func
-from sqlalchemy import Column, Integer, String, Boolean, Float, MetaData
+from sqlalchemy import Column, Integer, String, Boolean, Float, MetaData, Text
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -199,25 +199,61 @@ class Silo(Base):
 #    reactant = Column(Integer)
 
 
+class Category(Base):
+    """
+    Generic category system table.
+    """
+
+    __tablename__ = 'category'
+
+    # type
+    table = Column(String(255), primary_key=True)
+    name = Column(String(255), primary_key=True)
+    description = Column(Text)
+
+    def __init__(self, table, name, description):
+        self.table = table
+        self.name = name
+        self.description = description
+
+
 class Audit(Base):
+    """
+    Auditing entries.
+
+    This serves to annotate data entries present in this instance.
+
+    Going for the lazy/naive approach of using natural keys (i.e.
+    strings) for tracking who did what and what other notes might be.
+
+    For fuels and silos, the person who did the task may annotate the
+    relevant row with an audit entry as one is generated for every
+    change.
+
+    Other annotations for other tables like towers and names could mean
+    naming a tower, or noting a tower as something to be tear down.
+    """
+
     __tablename__ = 'audit'
 
     id = Column(Integer, primary_key=True)
 
     user = Column(String(255))
-    table = Column(String(255))
     rowid = Column(Integer)
-    reason = Column(String(255))
+    reason = Column(Text)
+    category_table = Column(String(255))
+    category_name = Column(Integer)
     timestamp = Column(Integer)
 
-    def __init__(self, user, table, rowid, reason, timestamp=None):
+    def __init__(self, user, rowid, reason, table, name='', timestamp=None):
         if timestamp is None:
             timestamp = int(time.time())
 
         self.user = user
-        self.table = table
         self.rowid = rowid
         self.reason = reason
+        self.category_table = table
+        self.category_name = name
         self.timestamp = timestamp
 
 
@@ -233,11 +269,11 @@ class SQLAlchemyBackend(object):
         >>> from mtj.eve.tracker.backend.sql import Audit
         >>> bn = SQLAlchemyBackend()
         >>> session = bn.session()
-        >>> audit = Audit('user', 'silo', 24, 'this is a test', 1359350165)
+        >>> audit = Audit('dj', 24, 'skimmed 100 tech', 'silo', '', 1359350165)
         >>> session.add(audit)
         >>> session.commit()
         >>> list(bn._conn.execute('select * from audit'))
-        [(1, u'user', u'silo', 24, u'this is a test', 1359350165)]
+        [(1, u'dj', 24, u'skimmed 100 tech', u'silo', u'', 1359350165)]
     """
 
     zope.interface.implements(ITrackerBackend)
