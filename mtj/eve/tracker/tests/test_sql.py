@@ -207,6 +207,16 @@ class SqlBackendTestCase(TestCase):
         self.assertEqual(tower2.stateTimestamp, None)
         self.assertEqual(tower2.resourcePulse, 0)
 
+    def test_3000_add_audit(self):
+        tower = self.backend.addTower(1000001, 12235, 30004608, 40291202, 4,
+            1325376000, 1306886400, 498125261)
+        self.backend.addAudit(tower, "DJ's personal tech moon", 'label', 'DJ',
+            1364479379)
+
+        result = list(self.backend._conn.execute('select * from audit'))
+        self.assertEqual(result[0], (1, u'tower', 1,
+            u"DJ's personal tech moon", u'label', u'DJ', 1364479379))
+
 def test_suite():
     suite = TestSuite()
     suite.addTest(makeSuite(SqlBackendTestCase))

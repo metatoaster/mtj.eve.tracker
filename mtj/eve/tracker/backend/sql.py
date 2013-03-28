@@ -238,21 +238,21 @@ class Audit(Base):
 
     id = Column(Integer, primary_key=True)
 
-    user = Column(String(255))
+    table = Column(String(255))
     rowid = Column(Integer)
     reason = Column(Text)
-    category_table = Column(String(255))
-    category_name = Column(Integer)
+    user = Column(String(255))
+    category_name = Column(String(255))
     timestamp = Column(Integer)
 
-    def __init__(self, user, rowid, reason, table, name='', timestamp=None):
+    def __init__(self, table, rowid, reason, user, name='', timestamp=None):
         if timestamp is None:
             timestamp = int(time.time())
 
-        self.user = user
+        self.table = table
         self.rowid = rowid
         self.reason = reason
-        self.category_table = table
+        self.user = user
         self.category_name = name
         self.timestamp = timestamp
 
@@ -269,11 +269,11 @@ class SQLAlchemyBackend(object):
         >>> from mtj.eve.tracker.backend.sql import Audit
         >>> bn = SQLAlchemyBackend()
         >>> session = bn.session()
-        >>> audit = Audit('dj', 24, 'skimmed 100 tech', 'silo', '', 1359350165)
+        >>> audit = Audit('silo', 24, 'skimmed 100 tech', 'dj', '', 1359350165)
         >>> session.add(audit)
         >>> session.commit()
         >>> list(bn._conn.execute('select * from audit'))
-        [(1, u'dj', 24, u'skimmed 100 tech', u'silo', u'', 1359350165)]
+        [(1, u'silo', 24, u'skimmed 100 tech', u'dj', u'', 1359350165)]
     """
 
     zope.interface.implements(ITrackerBackend)
@@ -433,3 +433,17 @@ class SQLAlchemyBackend(object):
         result = q.all()
         session.expunge_all()
         return result
+
+    def addAudit(self, obj, reason, category, user, timestamp=None):
+        """
+        Add an audit entry for the object.
+        """
+
+        table = obj.__table__.name
+        rowid = obj.id
+
+        audit = Audit(table, rowid, reason, category, user, timestamp)
+
+        session = self.session()
+        session.add(audit)
+        session.commit()
