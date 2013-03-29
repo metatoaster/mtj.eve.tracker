@@ -42,7 +42,7 @@ class BaseTowerManager(object):
         # TODO setup evelink cache here too?
 
     def _setBackend(self, backend):
-        if not ITrackerBackend.providedBy(self.backend):
+        if not ITrackerBackend.providedBy(backend):
             raise TypeError('provided backend is not of the correct type')
         self.backend = backend
 
@@ -111,3 +111,39 @@ class DefaultTowerManager(BaseTowerManager):
                 raise TypeError('No appropriate backend is registered.')
         else:
             self._setBackend(backend)
+
+
+class TowerManager(BaseTowerManager):
+    """
+    The main tower manager.
+
+    Requires explicit backend, and provides
+    """
+
+    def __init__(self, backend=None):
+        if not ITrackerBackend.providedBy(backend):
+            raise TypeError('inappropriate backend is provided.')
+
+        self._setBackend(backend)
+        self._api_keys = {}
+
+    def addApiKey(self, api_id, vcode):
+        self._api_keys[api_id] = vcode
+
+    def importAll(self):
+        keyman = zope.component.queryAdapter(self.backend, IAPIKeyManager)
+
+        if keyman is None:
+            keyman = zope.component.queryUtility(IAPIKeyManager)
+
+        if not keyman:
+            logger.warning('No key manager is present')
+            return
+
+        corps = keyman.getAllWith(Corp)
+        for corp in corps:
+            try:
+                self.importWithApi(corp)
+            except:
+                # well crap.
+                logger.exception('Import failed with uncatched exception')
