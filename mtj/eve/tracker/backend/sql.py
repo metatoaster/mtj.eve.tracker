@@ -293,6 +293,16 @@ class SQLAlchemyBackend(object):
 
         self._towers = {}
 
+        self._addDefaultData()
+
+    def _addDefaultData(self):
+        session = self.session()
+        session.merge(Category('tower', 'label', 'Label for the tower.'))
+        session.merge(Category('tower', 'notice', 'A notice.'))
+        session.merge(Category('fuel', 'fueled', 'A claim for fueling.'))
+        session.merge(Category('silo', 'emptied', 'A claim for emptying'))
+        session.commit()
+
     def session(self):
         return self._sessions()
 

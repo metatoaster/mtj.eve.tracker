@@ -29,6 +29,10 @@ class SqlBackendTestCase(TestCase):
     def tearDown(self):
         tearDown(self)
 
+    def test_init(self):
+        result = list(self.backend._conn.execute('select * from category'))
+        self.assertEqual(len(result), 4)
+
     def test_0000_tower(self):
         tower = self.backend.addTower(1000001, 12235, 30004608, 40291202, 4,
             1325376000, 1306886400, 498125261)
