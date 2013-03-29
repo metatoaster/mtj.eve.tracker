@@ -30,7 +30,7 @@ class BaseTowerManager(object):
             raise TypeError('provided backend is not of the correct type')
         self.backend = backend
 
-    def importWithApi(self, corp):
+    def importWithCorp(self, corp):
         """
         Takes a fully prepared evelink corp API object (cache + keys) to
         instantiate towers.

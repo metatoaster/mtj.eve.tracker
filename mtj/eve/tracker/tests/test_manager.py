@@ -25,7 +25,7 @@ class DefaultManagerTestCase(TestCase):
 
     def test_0000_base_tower_manager(self):
         corp = DummyCorp()
-        self.manager.importWithApi(corp)
+        self.manager.importWithCorp(corp)
         self.assertEqual(len(self.backend.getTowerIds()), 1)
         tower = self.backend.getTower(1)
 
@@ -40,7 +40,7 @@ class DefaultManagerTestCase(TestCase):
     def test_0010_missing_details(self):
         corp = DummyCorp()
         corp.starbases_index = 1
-        self.manager.importWithApi(corp)
+        self.manager.importWithCorp(corp)
         self.assertEqual(len(self.backend.getTowerIds()), 2)
 
         # Still imported anyway.
@@ -57,10 +57,10 @@ class DefaultManagerTestCase(TestCase):
 
     def test_0100_states(self):
         corp = DummyCorp()
-        self.manager.importWithApi(corp)
+        self.manager.importWithCorp(corp)
 
         corp.starbase_details_index = 1
-        self.manager.importWithApi(corp)
+        self.manager.importWithCorp(corp)
 
         # no updates
         self.assertEqual(len(self.backend.getTowerLog(1)), 0)
@@ -70,7 +70,7 @@ class DefaultManagerTestCase(TestCase):
 
         corp.starbases_index = 2
         corp.starbase_details_index = 2
-        self.manager.importWithApi(corp)
+        self.manager.importWithCorp(corp)
 
         # two updates (currently, until state + stateTimestamp is unified)
         tower_log_1 = self.backend.getTowerLog(1)
@@ -86,7 +86,7 @@ class DefaultManagerTestCase(TestCase):
 
     def test_1000_time_keeping_fuel_details(self):
         corp = DummyCorp()
-        self.manager.importWithApi(corp)
+        self.manager.importWithCorp(corp)
         tower = self.backend.getTower(1)
         current_time = corp.api.last_timestamps['current_time']
         fuel_ts = tower.fuels[4312].timestamp
@@ -102,7 +102,7 @@ class DefaultManagerTestCase(TestCase):
         self.assertEqual(tower.getOfflineTimestamp(), 1364603809)
 
         corp.starbase_details_index = 1
-        self.manager.importWithApi(corp)
+        self.manager.importWithCorp(corp)
 
         # As everything is consistent with previous fuel values, raw
         # value is unchanged.
@@ -114,7 +114,7 @@ class DefaultManagerTestCase(TestCase):
     def test_1001_time_keeping_fuel_details(self):
         corp = DummyCorp()
         corp.starbase_details_index = 1
-        self.manager.importWithApi(corp)
+        self.manager.importWithCorp(corp)
         tower = self.backend.getTower(1)
         current_time = corp.api.last_timestamps['current_time']
 
