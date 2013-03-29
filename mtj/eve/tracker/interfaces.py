@@ -24,3 +24,12 @@ class ITrackerBackend(zope.interface.Interface):
     """
     Interface for the pos tracker backend.
     """
+
+
+class ITowerManager(zope.interface.Interface):
+    """
+    Interface for the tower manager.
+
+    Implementation of this class deals with linking various bits of data
+    together, such as the EVE API.
+    """

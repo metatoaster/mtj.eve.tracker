@@ -6,8 +6,9 @@ import logging
 from evelink.api import APIError
 
 import zope.component
+import zope.interface
 
-from mtj.eve.tracker.interfaces import ITrackerBackend
+from mtj.eve.tracker.interfaces import ITrackerBackend, ITowerManager
 from mtj.eve.tracker import evelink
 
 logger = logging.getLogger('mtj.eve.pos.manager')
@@ -17,6 +18,8 @@ class BaseTowerManager(object):
     """
     A class that gathers the loose bits of functions.
     """
+
+    zope.interface.implements(ITowerManager)
 
     def __init__(self, backend):
         self._setBackend(backend)
