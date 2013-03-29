@@ -1,6 +1,12 @@
 import zope.interface
 
 
+class IEvelinkCache(zope.interface.Interface):
+    """
+    Interface for our evelink cache utility.
+    """
+
+
 class IAPIHelper(zope.interface.Interface):
     """
     Interface for the API helper.

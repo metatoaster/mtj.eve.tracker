@@ -10,20 +10,17 @@ from __future__ import absolute_import
 import itertools
 
 import zope.interface
+import zope.component
 import evelink
+from evelink.cache.sqlite import SqliteCache
 
-from mtj.eve.tracker.interfaces import IAPIHelper
-
-Map = evelink.map.Map()
-EVE = evelink.eve.EVE()
-Server = evelink.server.Server()
+from mtj.eve.tracker.interfaces import IAPIHelper, IEvelinkCache
 
 
 class API(evelink.api.API):
     def __init__(self, *a, **kw):
         if len(a) < 2 and not 'cache' in kw:
-            from mtj.eve.tracker.cache import EvelinkCache
-            kw['cache'] = EvelinkCache._cache
+            kw['cache'] = zope.component.queryUtility(IEvelinkCache)
         return super(API, self).__init__(*a, **kw)
 
 
@@ -55,6 +52,34 @@ class Corp(evelink.corp.Corp):
         return results
 
 
+class UtilityAPICache(evelink.api.APICache):
+    """
+    Provide them with the ability to make use of the registered cache
+    utility it is available.
+    """
+
+    def _get_cache(self):
+        cache_util = zope.component.queryUtility(IEvelinkCache)
+        if cache_util:
+            return cache_util
+        return super(UtilityAPICache, self)
+
+    def get(self, *a, **kw):
+        return self._get_cache().get(*a, **kw)
+
+    def put(self, *a, **kw):
+        return self._get_cache().put(*a, **kw)
+
+
+class EvelinkSqliteCache(SqliteCache):
+    """
+    For a zope component registered cache class extending from the
+    default sqlite cache.
+    """
+
+    zope.interface.implements(IEvelinkCache)
+
+
 class Helper(object):
     """
     API helper class
@@ -63,37 +88,49 @@ class Helper(object):
     the pos tracker.
     """
 
+    zope.interface.implements(IAPIHelper)
+
     _alliances = None
     _corporations = None
     _sov = None
 
-    zope.interface.implements(IAPIHelper)
+    api_cache = None
 
     def __init__(self):
-        pass
+        cache = zope.component.queryUtility(
+            IEvelinkCache, default=UtilityAPICache())
+        api = API(cache=cache)
+        self.map = evelink.map.Map(api=api)
+        self.eve = evelink.eve.EVE(api=api)
 
     def refresh(self):
-        Helper._alliances = None
-        Helper._corporations = None
-        Helper._sov = None
+        """
+        Clears the cached results within the helper
+
+        The next call will obviously get from the API.
+        """
+
+        self._alliances = None
+        self._corporations = None
+        self._sov = None
 
     @property
     def alliances(self):
-        if not Helper._alliances:
-            Helper._alliances = EVE.alliances()
-        return Helper._alliances
+        if not self._alliances:
+            self._alliances = self.eve.alliances()
+        return self._alliances
 
     @property
     def corporations(self):
-        if not Helper._corporations:
-            Helper._corporations = dict(itertools.chain(*[
+        if not self._corporations:
+            self._corporations = dict(itertools.chain(*[
                     [(j, i[0]) for j in i[1]['member_corps']]
                 for i in self.alliances.iteritems()]))
 
-        return Helper._corporations
+        return self._corporations
 
     @property
     def sov(self):
-        if not Helper._sov:
-            Helper._sov, Helper._sov_timestamp = Map.sov_by_system()
-        return Helper._sov
+        if not self._sov:
+            self._sov, self._sov_timestamp = self.map.sov_by_system()
+        return self._sov

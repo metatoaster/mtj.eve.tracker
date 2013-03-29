@@ -1,43 +1,90 @@
 from unittest import TestCase, TestSuite, makeSuite
 
+import zope.component
+from zope.component.hooks import getSiteManager
+
 from evelink.api import APICache
 
-from mtj.eve.tracker import cache
-from mtj.eve.tracker.evelink import Map, EVE, Server, API
+from mtj.eve.tracker.interfaces import IEvelinkCache
+from mtj.eve.tracker.evelink import Helper, API, EvelinkSqliteCache
+
+from .base import installTestSite, tearDown
 
 
 class CacheTestCase(TestCase):
     """
-    Unit tests for the basic structures.
+    Test for the additional cache supports.
     """
 
     def setUp(self):
-        pass
+        installTestSite()
 
-    def test_0000_cache_patched(self):
-        cache.set_evelink_cache(':memory:')
-        self.assertEqual(Map.api, cache.EvelinkCache._api)
-        self.assertEqual(EVE.api, cache.EvelinkCache._api)
-        self.assertEqual(Server.api, cache.EvelinkCache._api)
+    def tearDown(self):
+        tearDown(self)
 
-    def test_0001_cache_api(self):
-        cache.set_evelink_cache(':memory:')
+    def test_0000_cache_no_register(self):
+        """
+        No cache registed.
+        """
+
         api = API()
-        self.assertEqual(api.cache, cache.EvelinkCache._cache)
+        # Default cache has this attribute.
+        self.assertTrue(isinstance(api.cache.cache, dict))
+        self.assertFalse(hasattr(api.cache, 'connection'))
 
-    def test_0100_uncache_patched(self):
-        cache.unset_evelink_cache()
-        self.assertNotEqual(Map.api, cache.EvelinkCache._api)
-        self.assertNotEqual(EVE.api, cache.EvelinkCache._api)
-        self.assertNotEqual(Server.api, cache.EvelinkCache._api)
+        helper = Helper()
+        # By default these are equal.
+        self.assertEqual(helper.eve.api, helper.map.api)
+        self.assertEqual(helper.eve.api.cache, helper.map.api.cache)
 
-    def test_0101_uncache_api(self):
-        cache.unset_evelink_cache()
+        # Just to demonstrate expected default behavior.
+        helper.eve.api.cache.put('dummy', 'test_value', 100)
+        self.assertEqual(helper.eve.api.cache.cache['dummy'][0], 'test_value')
+
+    def test_0001_cache_post_register(self):
+        """
+        Cache registered after helper.
+        """
+
+        helper = Helper()
+
+        cache = EvelinkSqliteCache(':memory:')
+        getSiteManager().registerUtility(cache, IEvelinkCache)
+
+        # The API cache in the instances for the helper is still same.
+        self.assertNotEqual(helper.eve.api.cache, cache)
+
+        # Try this again.
+        helper.eve.api.cache.put('dummy', 'test_value', 100)
+
+        # As the cache utility is registered, data would not be here.
+        self.assertEqual(helper.eve.api.cache.cache, {})
+
+        # the cached data will however be present here.
+        self.assertEqual(cache.get('dummy'), 'test_value')
+
         api = API()
-        self.assertNotEqual(api.cache, cache.EvelinkCache._cache)
-        self.assertTrue(isinstance(api.cache, APICache))
+        self.assertEqual(api.cache, cache)
+        self.assertTrue(hasattr(api.cache, 'connection'))
 
-    # include failure test cases (like bad path)
+    def test_0002_cache_pre_register(self):
+        """
+        Cache registered before helper.
+        """
+
+        cache = EvelinkSqliteCache(':memory:')
+        getSiteManager().registerUtility(cache, IEvelinkCache)
+
+        helper = Helper()
+
+        # Now the cache is right away an instance of the sqlite cache
+        # rather than the dynamic class.  This may or may not be
+        # desirable
+        self.assertEqual(helper.eve.api.cache, cache)
+
+        api = API()
+        self.assertEqual(api.cache, cache)
+        self.assertTrue(hasattr(api.cache, 'connection'))
 
 
 def test_suite():
