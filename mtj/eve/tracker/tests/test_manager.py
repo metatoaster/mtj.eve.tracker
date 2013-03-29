@@ -4,15 +4,41 @@ import zope.component
 
 from mtj.eve.tracker.interfaces import ITrackerBackend
 from mtj.eve.tracker.pos import Tower
-from mtj.eve.tracker.manager import DefaultTowerManager
+from mtj.eve.tracker.manager import APIKeyManager, DefaultTowerManager
 
 from .base import setUp, tearDown
 from .dummyevelink import DummyCorp
 
 
+class APIKeyManagerTestCase(TestCase):
+    """
+    Unit tests for the key manager.
+    """
+
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+
+    def test_0000_base(self):
+        keyman = APIKeyManager()
+        keyman.api_keys = {
+            '1': 'test1',
+            '2': 'test2',
+            '3': 'test3',
+        }
+
+        results = keyman.getAllWith(DummyCorp)
+        self.assertEqual(len(results), 3)
+        self.assertTrue(isinstance(results[0], DummyCorp))
+        self.assertEqual(results[0].api.api_key, ('1', 'test1'))
+        self.assertEqual(results[2].api.api_key, ('2', 'test2'))
+
+
 class DefaultManagerTestCase(TestCase):
     """
-    Unit tests for structures
+    Unit tests for default tower manager
     """
 
     def setUp(self):
@@ -135,5 +161,6 @@ class DefaultManagerTestCase(TestCase):
 
 def test_suite():
     suite = TestSuite()
+    suite.addTest(makeSuite(APIKeyManagerTestCase))
     suite.addTest(makeSuite(DefaultManagerTestCase))
     return suite

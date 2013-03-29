@@ -9,9 +9,25 @@ import zope.component
 import zope.interface
 
 from mtj.eve.tracker.interfaces import ITrackerBackend, ITowerManager
+from mtj.eve.tracker.interfaces import IAPIKeyManager
 from mtj.eve.tracker import evelink
 
 logger = logging.getLogger('mtj.eve.pos.manager')
+
+
+class APIKeyManager(object):
+    """
+    Base class for managing API keys.
+    """
+
+    zope.interface.implements(IAPIKeyManager)
+
+    def __init__(self, api_keys={}):
+        self.api_keys = api_keys
+
+    def getAllWith(self, cls):
+        return [cls(api=evelink.API(api_key=(id_, vcode))) for id_, vcode in
+            self.api_keys.iteritems()]
 
 
 class BaseTowerManager(object):

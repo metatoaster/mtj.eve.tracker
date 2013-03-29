@@ -13,6 +13,12 @@ class IAPIHelper(zope.interface.Interface):
     """
 
 
+class IAPIKeyManager(zope.interface.Interface):
+    """
+    Interface for the API key manager.
+    """
+
+
 class IHistorian(zope.interface.Interface):
     """
     The historian tracks transactions made and provides methods that

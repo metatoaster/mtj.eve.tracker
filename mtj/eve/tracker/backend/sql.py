@@ -10,8 +10,9 @@ from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 
 import zope.interface
 
-from mtj.eve.tracker.interfaces import ITrackerBackend
+from mtj.eve.tracker.interfaces import ITrackerBackend, IAPIKeyManager
 from mtj.eve.tracker import pos
+from mtj.eve.tracker import evelink
 
 
 Base = declarative_base()
@@ -257,6 +258,18 @@ class Audit(Base):
         self.timestamp = timestamp
 
 
+class APIKey(Base):
+
+    __tablename__ = 'api_key'
+
+    key = Column(String(255), primary_key=True)
+    vcode = Column(String(255))
+
+    def __init__(self, key, vcode):
+        self.key = key
+        self.vcode = vcode
+
+
 class SQLAlchemyBackend(object):
     """
     SQLAlchemy based backend.
@@ -457,3 +470,28 @@ class SQLAlchemyBackend(object):
         session = self.session()
         session.add(audit)
         session.commit()
+
+    def getApiKeys(self):
+        """
+        Return all the API keys.
+        """
+
+        session = self.session()
+        q = session.query(APIKey)
+        result = q.all()
+        session.expunge_all()
+        return result
+
+
+class SQLAPIKeyManager(object):
+
+    zope.interface.implements(IAPIKeyManager)
+
+    def __init__(self, backend):
+        self.backend = backend
+
+    def getAllWith(self, cls):
+        api_keys = self.backend.getApiKeys()
+        return [cls(api=evelink.API(api_key=(api_key.key, api_key.vcode)))
+            for api_key in api_keys]
+
