@@ -15,7 +15,7 @@ from mtj.eve.tracker.backend.site import BaseSite
 from mtj.eve.tracker.backend.sql import SQLAlchemyBackend, SQLAPIKeyManager
 from mtj.eve.tracker.manager import TowerManager, APIKeyManager
 
-logger = logging.getLogger('mtj.eve.tracker.ctl')
+logger = logging.getLogger('mtj.eve.tracker.runner')
 
 
 class BaseRunner(object):
