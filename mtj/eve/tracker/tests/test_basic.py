@@ -2,6 +2,8 @@ from unittest import TestCase, TestSuite, makeSuite
 
 from mtj.eve.tracker.pos import TowerResourceBuffer
 
+from mtj.evedb.tests.base import init_test_db
+
 
 class TowerResourceBufferTestCase(TestCase):
     """
@@ -9,6 +11,7 @@ class TowerResourceBufferTestCase(TestCase):
     """
 
     def setUp(self):
+        init_test_db()
         self.fuelbay = TowerResourceBuffer(None,
             delta=40, timestamp=0, purpose=1, value=28000)
 

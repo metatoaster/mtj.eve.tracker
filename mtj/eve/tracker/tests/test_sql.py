@@ -5,6 +5,7 @@ import zope.component
 from mtj.eve.tracker.backend import sql
 from mtj.eve.tracker.interfaces import ITrackerBackend
 
+from mtj.evedb.tests.base import init_test_db
 from .base import setUp, tearDown
 
 FUEL_NORMAL = 1
@@ -24,6 +25,7 @@ class SqlBackendTestCase(TestCase):
 
     def setUp(self):
         setUp(self)
+        init_test_db()
         self.backend = zope.component.getUtility(ITrackerBackend)
 
     def tearDown(self):

@@ -8,6 +8,7 @@ from evelink.api import APICache
 from mtj.eve.tracker.interfaces import IEvelinkCache
 from mtj.eve.tracker.evelink import Helper, API, EvelinkSqliteCache
 
+from mtj.evedb.tests.base import init_test_db
 from .base import installTestSite, tearDown
 
 
@@ -18,6 +19,7 @@ class CacheTestCase(TestCase):
 
     def setUp(self):
         installTestSite()
+        init_test_db()
 
     def tearDown(self):
         tearDown(self)

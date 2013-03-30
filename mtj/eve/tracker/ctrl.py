@@ -21,6 +21,7 @@ class Options(object):
         },
         'data': {
             'evelink_cache': ':memory:',
+            'evedb_url': None,
             'backend_url': 'sqlite:///:memory:',
         },
         'api': {
@@ -38,6 +39,7 @@ class Options(object):
         },
         'data': {
             'evelink_cache': basestring,
+            'evedb_url': basestring,
             'backend_url': basestring,
         },
         'api': {

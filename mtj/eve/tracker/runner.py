@@ -9,6 +9,8 @@ import logging
 import zope.component
 from zope.component.hooks import setSite, setHooks
 
+from mtj.evedb.core import init_db, Db
+
 from mtj.eve.tracker import evelink
 from mtj.eve.tracker import interfaces
 from mtj.eve.tracker.backend.site import BaseSite
@@ -26,6 +28,7 @@ class BaseRunner(object):
     def __init__(self):
         self.site = BaseSite()
         self.sitemanager = self.site.getSiteManager()
+        self.has_db = False
         setHooks()
 
     def initialize(self, config):
@@ -42,6 +45,7 @@ class BaseRunner(object):
         # data
         s_paths = config.get('data', {})
         evelink_cache = s_paths.get('evelink_cache', ':memory:')
+        evedb_url = s_paths.get('evedb_url', None)
         backend_url = s_paths.get('backend_url', 'sqlite:///:memory:')
 
         # api
@@ -65,6 +69,24 @@ class BaseRunner(object):
 
         if log_path is None:
             logger.info('Logging to stdout')
+
+        # initialize the evedb
+        if evedb_url:
+            try:
+                init_db(evedb_url)
+            except:
+                logger.exception('Fail to initialize evedb with the provided '
+                                 'data.evedb_url [%s].', evedb_url)
+            db = Db()
+            self.has_db = db.hasTables('dgmTypeAttributes',
+                'invControlTowerResources', 'invTypes', 'mapDenormalize',
+                'mapSolarSystems')
+        else:
+            logger.critical('No data.evedb_url provided')
+
+        if self.has_db is False:
+            logger.critical('Incomplete or no evedb is present, pos tracker '
+                            'WILL fail.')
 
         # register the utilities
 

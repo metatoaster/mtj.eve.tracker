@@ -5,10 +5,12 @@ from mtj.eve.tracker.interfaces import IAPIHelper, ITrackerBackend
 from mtj.eve.tracker.backend.site import BaseSite
 from mtj.eve.tracker.backend.sql import SQLAlchemyBackend
 
+from mtj.evedb.tests.base import init_test_db
 from mtj.eve.tracker.tests.dummyevelink import DummyHelper
 
 
 def setUp(suite, backend=None, helper=None):
+    init_test_db()
     installTestSite()
     registerBackend(backend)
     registerHelper(helper)
