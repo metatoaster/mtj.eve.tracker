@@ -1,4 +1,5 @@
 import time
+import logging
 
 import sqlalchemy
 from sqlalchemy import func
@@ -16,6 +17,8 @@ from mtj.eve.tracker import evelink
 
 
 Base = declarative_base()
+
+logger = logging.getLogger('mtj.eve.tracker.backend.sql')
 
 # Backend has these tables
 # tower
@@ -324,16 +327,24 @@ class SQLAlchemyBackend(object):
         Recreate all the objects in the tracker from the database.
         """
 
+        logger.info('Reinstantiation requested.')
         session = self.session()
         towerq = session.query(Tower)
         self._towers = {}
 
-        for tower in towerq.all():
+        towers = towerq.all()
+        count = len(towers)
+
+        logger.info('%d towers to reinstantiate.', count)
+
+        for c, tower in enumerate(towers):
+            logger.debug('(%d/%d) towers reinstantiated.', c, count)
             tower._initDerived()
             tower._reloadResources(session)
             self._towers[tower.id] = tower
 
         # detatch all objects loaded with this session.
+        logger.info('(%d/%d) towers reinstantiated.', count, count)
         session.expunge_all()
 
     def _queryTower(self, session, itemID):
