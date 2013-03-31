@@ -31,8 +31,11 @@ class BaseRunner(object):
         self.has_db = False
         setHooks()
 
-    def initialize(self, config):
-        setSite(self.site)
+    def configure(self, config):
+        """
+        Verify and set the base environment using the config.  No data
+        loading or API calls should be made.
+        """
 
         # Logging related settings.
         s_logging = config.get('logging', {})
@@ -52,8 +55,6 @@ class BaseRunner(object):
         s_api = config.get('api', {})
         api_src = s_api.get('source', 'config')
         api_keys = s_api.get('api_keys', [])
-
-        sitemanager = self.sitemanager
 
         # set up the logging.
 
@@ -88,7 +89,13 @@ class BaseRunner(object):
             logger.critical('Incomplete or no evedb is present, pos tracker '
                             'WILL fail.')
 
-        # register the utilities
+        self._registerSite(evelink_cache, backend_url, api_src, api_keys)
+
+    def _registerSite(self, evelink_cache, backend_url, api_src, api_keys):
+        # set the site and then register the utilities
+
+        setSite(self.site)
+        sitemanager = self.sitemanager
 
         # first the cache as others will depend on this.
         cache = evelink.EvelinkSqliteCache(evelink_cache)
@@ -103,17 +110,27 @@ class BaseRunner(object):
         tower_manager = TowerManager(backend)
         sitemanager.registerUtility(tower_manager, interfaces.ITowerManager)
 
+        # default key manager, always registered.
         key_manager = APIKeyManager(api_keys=api_keys)
         sitemanager.registerUtility(key_manager, interfaces.IAPIKeyManager)
 
         if api_src == 'backend':
+            # alternatively provide the adapter for the key manager if
+            # configured as such. 
             sitemanager.registerAdapter(SQLAPIKeyManager,
                 required=(interfaces.ITrackerBackend,),
                 provided=interfaces.IAPIKeyManager,
             )
 
-    def start(self):
+    def initialize(self):
+        """
+        Load various core data into the tracker.
+        """
+
+        manager = zope.component.queryUtility(interfaces.ITowerManager)
+        if manager is None:
+            raise TypeError('No manager is registered.  Site not registered?')
+
         logger.info('BaseRunner starting up')
         logger.info('Instantiating towers from database.')
-        manager = zope.component.queryUtility(interfaces.ITowerManager)
         manager.backend.reinstantiate()
