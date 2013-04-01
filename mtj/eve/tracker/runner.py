@@ -37,6 +37,8 @@ class BaseRunner(object):
         loading or API calls should be made.
         """
 
+        self.config = config
+
         # Logging related settings.
         s_logging = config.get('logging', {})
         log_level = s_logging.get('level', 'WARNING')
@@ -134,3 +136,6 @@ class BaseRunner(object):
         logger.info('BaseRunner starting up')
         logger.info('Instantiating towers from database.')
         manager.backend.reinstantiate()
+
+    def run(self):
+        raise NotImplementedError

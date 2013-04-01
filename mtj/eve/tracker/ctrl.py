@@ -87,25 +87,38 @@ class Options(object):
 
 class TrackerCmd(cmd.Cmd):
 
-    def __init__(self, options, runner=None):
-        self.options = options
+    def __init__(self, options, runner_factory=None):
+        if isinstance(options, Options):
+            self.options = options
+        else:
+            # Assume this is a dict.
+            self.options = Options()
+            self.options.update(options)
+
         self.prompt = 'mtj.tracker.ctrl> '
         cmd.Cmd.__init__(self)
 
         if runner is None:
             runner = BaseRunner()
 
-        self.runner = runner
+        self.runner_factory = runner_factory
 
-    def run_as_daemon(self, arg):
-        print 'daemon mode not implemented yet.'
+    def run(self, config):
+        """
+        Run this thing.
+        """
+
+        runner = self.runner_factory()
+        runner.configure(config=config)
+        runner.initialize()
+        runner.run()
 
     def do_start(self, arg):
         """
         start the daemon (not implemented).
         """
 
-        return self.run_as_daemon(arg)
+        print "daemon mode not implemented."
 
     def do_stop(self, arg):
         """
@@ -119,14 +132,36 @@ class TrackerCmd(cmd.Cmd):
         run this in the foreground.
         """
 
-        options.update({'logging': {'level': 'INFO'}})
+        # local foreground options.
+        options = Options()
+        options.update(self.options.config)
+        options.update({'logging': {'level': 'INFO', 'path': '',}})
+
+        self.run(options.config)
 
     def do_debug(self, arg):
         """
-        start the python debugger.
+        start the python debugger with the environment instantiated.
         """
 
-        console = code.InteractiveConsole(locals=locals())
+        # local foreground options.
+        options = Options()
+        options.update(self.options.config)
+        options.update({'logging': {'level': 'INFO', 'path': '',}})
+
+        runner = BaseRunner()
+        runner.configure(config=options.config)
+        runner.initialize()
+
+        import zope.component
+        from mtj.eve.tracker import interfaces
+        manager = zope.component.getUtility(interfaces.ITowerManager)
+        backend = zope.component.getUtility(interfaces.ITrackerBackend)
+
+        console = code.InteractiveConsole(locals={
+            b'backend': backend,
+            b'manager': manager,
+        })
         result = console.interact('')
 
     def do_read_config(self, arg):
@@ -170,10 +205,12 @@ class TrackerCmd(cmd.Cmd):
             td = tempfile.TemporaryFile()
             self.options.dump_config(td)
             td.seek(0)
-            fd = open(arg, 'w')
-            fd.write(td.read())
-            fd.close()
-            td.close()
+            try:
+                fd = open(arg, 'w')
+                fd.write(td.read())
+                fd.close()
+            finally:
+                td.close()
         except IOError:
             print 'cannot write config to file `%s`' % arg
         except TypeError as e:
