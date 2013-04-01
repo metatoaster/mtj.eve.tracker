@@ -7,7 +7,7 @@ import json
 import os
 import tempfile
 
-from mtj.eve.tracker.runner import BaseRunner
+from mtj.eve.tracker.runner import BaseRunner, FlaskRunner
 
 
 class Options(object):
@@ -28,6 +28,11 @@ class Options(object):
             'source': 'config',
             'api_keys': {},
         },
+        'flask': {
+            'host': '127.0.0.1',
+            'port': 8000,
+            'json_prefix': None,
+        },
     }
 
     _schema = {
@@ -45,6 +50,11 @@ class Options(object):
         'api': {
             'source': ('config', 'backend'),
             'api_keys': dict,
+        },
+        'flask': {
+            'host': basestring,
+            'port': int,
+            'json_prefix': basestring,
         },
     }
 
@@ -98,8 +108,8 @@ class TrackerCmd(cmd.Cmd):
         self.prompt = 'mtj.tracker.ctrl> '
         cmd.Cmd.__init__(self)
 
-        if runner is None:
-            runner = BaseRunner()
+        if runner_factory is None:
+            runner_factory = FlaskRunner
 
         self.runner_factory = runner_factory
 

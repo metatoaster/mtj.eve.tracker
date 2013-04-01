@@ -139,3 +139,28 @@ class BaseRunner(object):
 
     def run(self):
         raise NotImplementedError
+
+
+class FlaskRunner(BaseRunner):
+    """
+    Runs a Flask app.
+    """
+
+    def run(self, app=None):
+        """
+        Run the flask app.
+        """
+
+        # local import here to not cause package to depend on flask.
+        import flask
+        from mtj.eve.tracker.frontend.flask import json_frontend
+
+        host = self.config['flask']['host']
+        port = self.config['flask']['port']
+        prefix = self.config['flask'].get('json_prefix')
+
+        if not app:
+            app = flask.Flask(__name__)
+
+        app.register_blueprint(json_frontend, url_prefix=prefix)
+        app.run(host=host, port=port)
