@@ -36,6 +36,15 @@ class OptionsTestCase(TestCase):
         options.update({'api': {'api_keys': {'1': '2'}}})
         self.assertEqual(options.config['api'].get('api_keys'), {'1': '2'})
 
+    def test_0103_update_choice(self):
+        options = Options()
+        options.update({'api': {'source': 'backend'}})
+        self.assertEqual(options.config['api']['source'], 'backend')
+        options.update({'api': {'source': 'fake'}})
+        self.assertEqual(options.config['api']['source'], 'backend')
+        options.update({'api': {'source': 'config'}})
+        self.assertEqual(options.config['api']['source'], 'config')
+
 
 def test_suite():
     suite = TestSuite()

@@ -43,7 +43,7 @@ class BaseRunner(object):
         log_format = s_logging.get('format',
             '%(asctime)s %(levelname)s %(name)s %(message)s')
         time_format = s_logging.get('time_format', '%Y-%m-%d %H:%M:%S')
-        log_path = s_logging.get('path', None)
+        log_path = s_logging.get('path', '')
 
         # data
         s_paths = config.get('data', {})
@@ -59,10 +59,10 @@ class BaseRunner(object):
         # set up the logging.
 
         formatter = logging.Formatter(log_format, time_format)
-        if log_path is None:
-            handler = logging.StreamHandler()
-        else:
+        if log_path:
             handler = logging.FileHandler(log_path)
+        else:
+            handler = logging.StreamHandler()
         handler.setFormatter(formatter)
         root_logger = logging.getLogger()
         root_logger.setLevel(log_level)

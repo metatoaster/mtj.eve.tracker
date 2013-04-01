@@ -25,8 +25,8 @@ class Options(object):
             'backend_url': 'sqlite:///:memory:',
         },
         'api': {
-            'source': 'config',  # 'backend' is the other choice
-            'api_keys': []
+            'source': 'config',
+            'api_keys': {},
         },
     }
 
@@ -43,7 +43,7 @@ class Options(object):
             'backend_url': basestring,
         },
         'api': {
-            'source': basestring,
+            'source': ('config', 'backend'),
             'api_keys': dict,
         },
     }
@@ -78,6 +78,10 @@ class Options(object):
 
             if isinstance(_schema[k], type):
                 if isinstance(v, _schema[k]):
+                    target[k] = v
+
+            if isinstance(_schema[k], tuple):
+                if v in _schema[k]:
                     target[k] = v
 
 
