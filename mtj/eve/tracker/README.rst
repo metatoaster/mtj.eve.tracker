@@ -59,6 +59,8 @@ for the charter requirements::
     [4247, 16275]
     >>> tower1.solarSystemName
     u'6VDT-H'
+    >>> tower1.regionName
+    u'Fountain'
     >>> tower1.celestialName
     u'6VDT-H III - Moon 1'
     >>> tower1.allianceID

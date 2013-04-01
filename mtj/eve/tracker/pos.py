@@ -70,6 +70,7 @@ class Tower(object):
         self.allianceID = None
         self.celestialName = None
         self.solarSystemName = None
+        self.regionName = None
         self.capacity = None
         self.strontCapacity = None
 
@@ -94,6 +95,7 @@ class Tower(object):
         stront = pos_info.getControlTowerStrontCapacity(self.typeID)
         self.celestialName = moon['itemName']
         self.solarSystemName = solar_system['solarSystemName']
+        self.regionName = solar_system['regionName']
         self.typeName = pos['typeName']
         self.capacity = pos['capacity']
         self.strontCapacity = stront['capacitySecondary']

@@ -25,6 +25,8 @@ class Json(object):
             v.id: {
                  'id': v.id,
                  'celestialName': v.celestialName,
+                 'regionName': v.regionName,
+                 'typeName': v.typeName,
                  'typeName': v.typeName,
                  'offlineAt': v.getOfflineTimestamp(),
                  'offlineAtFormatted': strftime(
@@ -36,4 +38,3 @@ class Json(object):
             # FIXME using private _towers.
             } for v in self._backend._towers.values()}
         return json.dumps(test_json)
-
