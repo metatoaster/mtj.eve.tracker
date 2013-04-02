@@ -8,6 +8,8 @@ import json
 from mtj.evedb.structure import ControlTower
 from mtj.eve.tracker.interfaces import ITrackerBackend
 
+from . import util
+
 
 class Json(object):
     """
@@ -104,8 +106,9 @@ class Json(object):
                 '%Y-%m-%d %H:%M', gmtime(tower.getOfflineTimestamp())),
             'state': tower.getState(timestamp),
             'stateName': constants.Corp.pos_states[tower.getState(timestamp)],
-            'reinforcementLength':
-                unicode(timedelta(seconds=tower.getReinforcementLength())),
+            'reinforcementLength': tower.getReinforcementLength(),
+            'reinforcementLengthFormatted': util.format_reinforcement(
+                timedelta(seconds=tower.getReinforcementLength())),
         }
 
         fuels = tower.getResources(timestamp)
