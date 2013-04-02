@@ -118,11 +118,15 @@ class Json(object):
         }
 
         fuels = tower.getResources(timestamp)
+        fuel_ratio = tower.getIdealFuelRatio()
+        fuel_targets = tower.getIdealFuelingAmount(timestamp)
 
         fuel_json = [{
             'fuelId': k,
             'fuelName': self.fuel_names.get(k, ''),
             'value': v,
+            'optimalValue': fuel_ratio.get(k, 0),
+            'missingValue': fuel_targets.get(k, 0),
         } for k, v in fuels.iteritems()]
 
         result = {
