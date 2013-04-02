@@ -39,7 +39,7 @@ class Json(object):
         return self.towers()
 
     def towers(self):
-        timestamp = time()
+        timestamp = int(time())
         test_json = {'towers': {
             v.id: {
                 'id': v.id,
@@ -63,7 +63,7 @@ class Json(object):
             return self.towers()
 
         backend = self._backend
-        timestamp = time()
+        timestamp = int(time())
 
         tower = backend.getTower(tower_id, None)
         if tower is None:
