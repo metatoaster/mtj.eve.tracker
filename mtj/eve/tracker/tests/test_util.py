@@ -18,6 +18,10 @@ class FrontendUtilTestCase(TestCase):
             '1 day, 7 hours')
         self.assertEqual(util.format_reinforcement(timedelta(seconds=90000)),
             '1 day, 1 hour')
+        self.assertEqual(util.format_reinforcement(timedelta(seconds=89999)),
+            '1 day')
+        self.assertEqual(util.format_reinforcement(timedelta(seconds=86401)),
+            '1 day')
         self.assertEqual(util.format_reinforcement(timedelta(seconds=86400)),
             '1 day')
         self.assertEqual(util.format_reinforcement(timedelta(seconds=86399)),
