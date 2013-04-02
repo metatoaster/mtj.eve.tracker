@@ -168,6 +168,11 @@ class TrackerCmd(cmd.Cmd):
         manager = zope.component.getUtility(interfaces.ITowerManager)
         backend = zope.component.getUtility(interfaces.ITrackerBackend)
 
+        try:
+            import readline
+        except ImportError:
+            pass
+
         console = code.InteractiveConsole(locals={
             b'backend': backend,
             b'manager': manager,
