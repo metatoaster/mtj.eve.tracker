@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 from time import time, strftime, gmtime
+from datetime import timedelta
 from evelink import constants
 import json
 
@@ -54,3 +55,71 @@ class Json(object):
             # FIXME using private _towers.
             } for v in self._backend._towers.values()}}
         return json.dumps(test_json)
+
+    def tower(self, tower_id=None):
+        if tower_id is None:
+            return self.towers()
+
+        backend = self._backend
+        timestamp = time()
+
+        tower = backend.getTower(tower_id)
+        if tower is None:
+            return {
+                'error': 'Tower not found'
+            }
+
+        tower_log = backend.getTowerLog(tower_id)
+        tower_log_json = [{
+            'id': v.id,
+            'state': v.state,
+            'stateName': constants.Corp.pos_states[v.state],
+            'timestamp': v.timestamp,
+            'timestampFormatted':
+                strftime('%Y-%m-%d %H:%M:%S', gmtime(v.timestamp)),
+        } for v in tower_log]
+
+        fuel_log = backend.getFuelLog(tower_id)
+        fuel_log_json = [{
+            'id': v.id,
+            'fuelId': v.fuelTypeID,
+            'fuelName': self.fuel_names.get(v.fuelTypeID, ''),
+            'value': v.value,
+            'delta': v.delta,
+            'timestamp': v.timestamp,
+            'timestampFormatted':
+                strftime('%Y-%m-%d %H:%M:%S', gmtime(v.timestamp)),
+        } for v in fuel_log]
+
+        tower_json = {
+            'id': tower.id,
+            'celestialName': tower.celestialName,
+            'regionName': tower.regionName,
+            'typeName': tower.typeName,
+            'onlineSince': tower.onlineTimestamp,
+            'onlineSinceFormatted':
+                strftime('%Y-%m-%d %H:%M', gmtime(tower.onlineTimestamp)),
+            'offlineAt': tower.getOfflineTimestamp(),
+            'offlineAtFormatted': strftime(
+                '%Y-%m-%d %H:%M', gmtime(tower.getOfflineTimestamp())),
+            'state': tower.getState(timestamp),
+            'stateName': constants.Corp.pos_states[tower.getState(timestamp)],
+            'reinforcementLength':
+                unicode(timedelta(seconds=tower.getReinforcementLength())),
+        }
+
+        fuels = tower.getResources(timestamp)
+
+        fuel_json = [{
+            'fuelId': k,
+            'fuelName': self.fuel_names.get(k, ''),
+            'value': v,
+        } for k, v in fuels.iteritems()]
+
+        result = {
+            'tower': tower_json,
+            'tower_log': tower_log_json,
+            'fuel': fuel_json,
+            'fuel_log': fuel_log_json,
+        }
+        return json.dumps(result)
