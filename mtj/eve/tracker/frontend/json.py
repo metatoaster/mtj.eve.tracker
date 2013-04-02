@@ -124,6 +124,8 @@ class Json(object):
         fuel_json = [{
             'fuelId': k,
             'fuelName': self.fuel_names.get(k, ''),
+            # TODO upstream needs to make this less ugly to acquire
+            'delta': getattr(tower.fuels.get(k, None), 'delta', 0),
             'value': v,
             'optimalValue': fuel_ratio.get(k, 0),
             'missingValue': fuel_targets.get(k, 0),
