@@ -28,18 +28,18 @@ class Json(object):
         timestamp = time()
         test_json = {'towers': {
             v.id: {
-                 'id': v.id,
-                 'celestialName': v.celestialName,
-                 'regionName': v.regionName,
-                 'typeID': v.typeID,
-                 'typeName': v.typeName,
-                 'offlineAt': v.getOfflineTimestamp(),
-                 'offlineAtFormatted': strftime(
-                     '%Y-%m-%d %H:%M',
-                     gmtime(v.getOfflineTimestamp())
-                 ),
-                 'state': v.getState(timestamp),
-                 'stateName': constants.Corp.pos_states[v.getState(timestamp)],
+                'id': v.id,
+                'celestialName': v.celestialName,
+                'regionName': v.regionName,
+                'typeID': v.typeID,
+                'typeName': v.typeName,
+                'offlineAt': v.getOfflineTimestamp(),
+                'offlineAtFormatted': strftime(
+                    '%Y-%m-%d %H:%M',
+                    gmtime(v.getOfflineTimestamp())
+                ),
+                'state': v.getState(timestamp),
+                'stateName': constants.Corp.pos_states[v.getState(timestamp)],
             # FIXME using private _towers.
             } for v in self._backend._towers.values()}}
         return json.dumps(test_json)
