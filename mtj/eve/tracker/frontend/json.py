@@ -54,6 +54,9 @@ class Json(object):
                 ),
                 'state': v.getState(timestamp),
                 'stateName': constants.Corp.pos_states[v.getState(timestamp)],
+                'timeRemaining': v.getTimeRemaining(timestamp),
+                'timeRemainingFormatted':
+                    str(timedelta(seconds=v.getTimeRemaining(timestamp))),
             # FIXME using private _towers.
             } for v in self._backend._towers.values()}}
         return json.dumps(test_json)
@@ -109,6 +112,9 @@ class Json(object):
             'reinforcementLength': tower.getReinforcementLength(),
             'reinforcementLengthFormatted': util.format_reinforcement(
                 timedelta(seconds=tower.getReinforcementLength())),
+            'timeRemaining': tower.getTimeRemaining(timestamp),
+            'timeRemainingFormatted':
+                str(timedelta(seconds=tower.getTimeRemaining(timestamp))),
         }
 
         fuels = tower.getResources(timestamp)
