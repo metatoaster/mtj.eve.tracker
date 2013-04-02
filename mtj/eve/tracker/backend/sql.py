@@ -392,6 +392,17 @@ class SQLAlchemyBackend(object):
 
         return tower
 
+    def getFuelLog(self, tower_id):
+        """
+        Return the fuel logs for tower_id
+        """
+
+        session = self.session()
+        q = session.query(Fuel).filter(Fuel.tower_id == tower_id)
+        result = q.all()
+        session.expunge_all()
+        return result
+
     def getTower(self, tower_id):
         """
         Return a copy of the tower at its current state.
