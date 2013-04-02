@@ -20,21 +20,26 @@ class Json(object):
         self._backend = backend
 
     def overview(self):
+        # overview should be a brief # listing of various things, rather
+        # than a listing of all the towers.
+        return self.towers()
+
+    def towers(self):
         timestamp = time()
-        test_json = {
+        test_json = {'towers': {
             v.id: {
                  'id': v.id,
                  'celestialName': v.celestialName,
                  'regionName': v.regionName,
-                 'typeName': v.typeName,
+                 'typeID': v.typeID,
                  'typeName': v.typeName,
                  'offlineAt': v.getOfflineTimestamp(),
                  'offlineAtFormatted': strftime(
-                     '%Y-%m-%d:%H:%M',
+                     '%Y-%m-%d %H:%M',
                      gmtime(v.getOfflineTimestamp())
                  ),
                  'state': v.getState(timestamp),
                  'stateName': constants.Corp.pos_states[v.getState(timestamp)],
             # FIXME using private _towers.
-            } for v in self._backend._towers.values()}
+            } for v in self._backend._towers.values()}}
         return json.dumps(test_json)
