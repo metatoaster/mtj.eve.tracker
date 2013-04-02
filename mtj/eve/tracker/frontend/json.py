@@ -63,11 +63,11 @@ class Json(object):
         backend = self._backend
         timestamp = time()
 
-        tower = backend.getTower(tower_id)
+        tower = backend.getTower(tower_id, None)
         if tower is None:
-            return {
+            return json.dumps({
                 'error': 'Tower not found'
-            }
+            })
 
         tower_log = backend.getTowerLog(tower_id)
         tower_log_json = [{

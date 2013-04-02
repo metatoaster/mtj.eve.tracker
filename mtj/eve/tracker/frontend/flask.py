@@ -21,6 +21,16 @@ def overview():
     response.headers['Access-Control-Allow-Origin'] = '*'
     return response
 
+@json_frontend.route('/tower/<int:tower_id>')
+def tower(tower_id):
+    backend = zope.component.getUtility(ITrackerBackend)
+    jst = Json(backend)
+    result = jst.tower(tower_id)
+    response = make_response(result)
+    response.headers['Content-type'] = 'application/json'
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    return response
+
 @json_frontend.route('/update')
 def update():
     """
