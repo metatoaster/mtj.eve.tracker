@@ -16,6 +16,8 @@ from mtj.eve.tracker import pos
 from mtj.eve.tracker import evelink
 
 
+_marker = object()
+
 Base = declarative_base()
 
 logger = logging.getLogger('mtj.eve.tracker.backend.sql')
@@ -403,12 +405,14 @@ class SQLAlchemyBackend(object):
         session.expunge_all()
         return result
 
-    def getTower(self, tower_id):
+    def getTower(self, tower_id, default=_marker):
         """
         Return a copy of the tower at its current state.
         """
 
         # XXX not actually a copy yet.
+        if default is not _marker:
+            return self._towers.get(tower_id, default)
         return self._towers[tower_id]
 
     def getTowerIds(self):

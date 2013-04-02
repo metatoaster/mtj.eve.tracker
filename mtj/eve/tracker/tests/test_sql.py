@@ -53,6 +53,11 @@ class SqlBackendTestCase(TestCase):
         self.assertEqual(result, [(1, 1000001, 12235, 30004608, 40291202, 4,
             1325376000, 1306886400, 498125261)])
 
+        marker = object()
+        self.assertEqual(self.backend.getTower(1, default=marker), tower)
+        self.assertEqual(self.backend.getTower(2, default=marker), marker)
+        self.assertRaises(KeyError, self.backend.getTower, 2)
+
     def test_0100_fuel(self):
         tower = self.backend.addTower(1000001, 12235, 30004608, 40291202, 4,
             1325376000, 1306886400, 498125261)
