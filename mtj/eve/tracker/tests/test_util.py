@@ -9,28 +9,48 @@ class FrontendUtilTestCase(TestCase):
     Unit tests for the basic structures.
     """
 
-    def test_format_reinforcement(self):
-        self.assertEqual(util.format_reinforcement(timedelta(seconds=180000)),
+    def test_0000_format_timedelta(self):
+        self.assertEqual(util.format_timedelta(timedelta(seconds=180000)),
             '2 days, 2 hours')
-        self.assertEqual(util.format_reinforcement(timedelta(seconds=172800)),
+
+    def test_0001_format_timedelta(self):
+        self.assertEqual(util.format_timedelta(timedelta(seconds=172800)),
             '2 days')
-        self.assertEqual(util.format_reinforcement(timedelta(seconds=111600)),
+
+    def test_0002_format_timedelta(self):
+        self.assertEqual(util.format_timedelta(timedelta(seconds=111600)),
             '1 day, 7 hours')
-        self.assertEqual(util.format_reinforcement(timedelta(seconds=90000)),
+
+    def test_0003_format_timedelta(self):
+        self.assertEqual(util.format_timedelta(timedelta(seconds=90000)),
             '1 day, 1 hour')
-        self.assertEqual(util.format_reinforcement(timedelta(seconds=89999)),
+
+    def test_0004_format_timedelta(self):
+        self.assertEqual(util.format_timedelta(timedelta(seconds=89999)),
             '1 day')
-        self.assertEqual(util.format_reinforcement(timedelta(seconds=86401)),
+
+    def test_0005_format_timedelta(self):
+        self.assertEqual(util.format_timedelta(timedelta(seconds=86401)),
             '1 day')
-        self.assertEqual(util.format_reinforcement(timedelta(seconds=86400)),
+
+    def test_0006_format_timedelta(self):
+        self.assertEqual(util.format_timedelta(timedelta(seconds=86400)),
             '1 day')
-        self.assertEqual(util.format_reinforcement(timedelta(seconds=86399)),
+
+    def test_0007_format_timedelta(self):
+        self.assertEqual(util.format_timedelta(timedelta(seconds=86399)),
             '23 hours')
-        self.assertEqual(util.format_reinforcement(timedelta(seconds=3600)),
+
+    def test_0008_format_timedelta(self):
+        self.assertEqual(util.format_timedelta(timedelta(seconds=3600)),
             '1 hour')
-        self.assertEqual(util.format_reinforcement(timedelta(seconds=0)),
+
+    def test_0009_format_timedelta(self):
+        self.assertEqual(util.format_timedelta(timedelta(seconds=0)),
             '0 hours')
-        self.assertEqual(util.format_reinforcement(timedelta(seconds=1)),
+
+    def test_0010_format_timedelta(self):
+        self.assertEqual(util.format_timedelta(timedelta(seconds=1)),
             '0 hours')
 
         # negative values of all types very undefined (:aaaaa:)

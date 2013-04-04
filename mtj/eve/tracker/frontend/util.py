@@ -1,4 +1,4 @@
-def format_reinforcement(delta_t):
+def format_timedelta(delta_t):
     hours = delta_t.seconds / 3600
     days = delta_t.days
     seconds = delta_t.seconds
