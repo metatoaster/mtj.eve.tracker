@@ -2,7 +2,7 @@ import time
 import logging
 
 import sqlalchemy
-from sqlalchemy import func
+from sqlalchemy import func, desc
 from sqlalchemy import Column, Integer, String, Boolean, Float, MetaData, Text
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -99,7 +99,7 @@ class TowerLog(Base):
     onlineTimestamp = Column(Integer)
     standingOwnerID = Column(Integer)
 
-    timestamp = Column(Integer)
+    timestamp = Column(Integer, index=True)
 
     def __init__(self, tower_id, itemID, typeID, locationID, moonID, state,
             stateTimestamp, onlineTimestamp, standingOwnerID):
@@ -156,7 +156,7 @@ class Fuel(Base):
 
     fuelTypeID = Column(Integer)
     delta = Column(Integer)
-    timestamp = Column(Integer)
+    timestamp = Column(Integer, index=True)
     # purpose is omitted as it is derived.
     value = Column(Integer)
     # resourceTypeName can be derived.
@@ -400,7 +400,8 @@ class SQLAlchemyBackend(object):
         """
 
         session = self.session()
-        q = session.query(Fuel).filter(Fuel.tower_id == tower_id)
+        q = session.query(Fuel).filter(Fuel.tower_id == tower_id).order_by(
+            desc(Fuel.timestamp))
         result = q.all()
         session.expunge_all()
         return result
@@ -424,7 +425,8 @@ class SQLAlchemyBackend(object):
         """
 
         session = self.session()
-        q = session.query(TowerLog).filter(TowerLog.tower_id == tower_id)
+        q = session.query(TowerLog).filter(TowerLog.tower_id == tower_id
+            ).order_by(desc(TowerLog.timestamp))
         result = q.all()
         session.expunge_all()
         return result
