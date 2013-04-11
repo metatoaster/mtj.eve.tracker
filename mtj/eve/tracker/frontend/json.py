@@ -5,10 +5,9 @@ from datetime import timedelta
 from evelink import constants
 import json
 
+from mtj.f3u1.units import Time
 from mtj.evedb.structure import ControlTower
 from mtj.eve.tracker.interfaces import ITrackerBackend
-
-from . import util
 
 
 class Json(object):
@@ -82,6 +81,9 @@ class Json(object):
             'timestamp': v.timestamp,
             'timestampFormatted':
                 strftime('%Y-%m-%d %H:%M:%S', gmtime(v.timestamp)),
+            'stateTimestamp': v.stateTimestamp,
+            'stateTimestampFormatted':
+                strftime('%Y-%m-%d %H:%M:%S', gmtime(v.stateTimestamp)),
         } for v in tower_log]
 
         fuel_log = backend.getFuelLog(tower_id)
@@ -110,8 +112,8 @@ class Json(object):
             'state': tower.getState(timestamp),
             'stateName': constants.Corp.pos_states[tower.getState(timestamp)],
             'reinforcementLength': tower.getReinforcementLength(),
-            'reinforcementLengthFormatted': util.format_reinforcement(
-                timedelta(seconds=tower.getReinforcementLength())),
+            'reinforcementLengthFormatted': str(Time('hour',
+                second=tower.getReinforcementLength())),
             'timeRemaining': tower.getTimeRemaining(timestamp),
             'timeRemainingFormatted':
                 str(timedelta(seconds=tower.getTimeRemaining(timestamp))),
