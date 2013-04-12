@@ -5,6 +5,7 @@ import cmd
 import code
 import json
 import os
+import sys
 import tempfile
 
 from mtj.eve.tracker.runner import BaseRunner, FlaskRunner
