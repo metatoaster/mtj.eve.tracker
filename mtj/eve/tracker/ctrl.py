@@ -32,6 +32,9 @@ class Options(object):
         'flask': {
             'host': '127.0.0.1',
             'port': 8000,
+            'secret': 'defaultsecretkeypleasechangeme',
+        },
+        'mtj.eve.tracker.runner.FlaskRunner': {
             'json_prefix': None,
         },
     }
@@ -55,6 +58,9 @@ class Options(object):
         'flask': {
             'host': basestring,
             'port': int,
+            'secret': basestring,
+        },
+        'mtj.eve.tracker.runner.FlaskRunner': {
             'json_prefix': basestring,
         },
     }
