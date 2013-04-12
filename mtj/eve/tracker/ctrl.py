@@ -61,7 +61,7 @@ class Options(object):
 
     def __init__(self):
         self.config = {}
-        self.config.update(Options.default_config)
+        self.config.update(self.default_config)
 
     def load_config(self, stream):
         config = json.load(stream)
