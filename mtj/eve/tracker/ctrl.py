@@ -98,7 +98,7 @@ class Options(object):
 
 class TrackerCmd(cmd.Cmd):
 
-    def __init__(self, options, runner_factory=None):
+    def __init__(self, options, app=None, runner_factory=None):
         if isinstance(options, Options):
             self.options = options
         else:
@@ -112,6 +112,7 @@ class TrackerCmd(cmd.Cmd):
         if runner_factory is None:
             runner_factory = FlaskRunner
 
+        self.app = app
         self.runner_factory = runner_factory
 
     def run(self, config):
@@ -122,7 +123,7 @@ class TrackerCmd(cmd.Cmd):
         runner = self.runner_factory()
         runner.configure(config=config)
         runner.initialize()
-        runner.run()
+        runner.run(app=self.app)
 
     def do_start(self, arg):
         """
@@ -253,7 +254,7 @@ def get_argparsers():
     return parser, sp
 
 
-def main(args=None, options=None, cmdclass=TrackerCmd):
+def main(args=None, options=None, app=None, cmdclass=TrackerCmd):
     if args is None:
         args = sys.argv[1:]
 
@@ -270,7 +271,7 @@ def main(args=None, options=None, cmdclass=TrackerCmd):
 
     parsed_args = parser.parse_args(args)
 
-    c = cmdclass(options)
+    c = cmdclass(options, app)
 
     if parsed_args.config_file:
         c.do_read_config(parsed_args.config_file)
