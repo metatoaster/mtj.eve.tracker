@@ -162,5 +162,10 @@ class FlaskRunner(BaseRunner):
         if not app:
             app = flask.Flask(__name__)
 
-        app.register_blueprint(json_frontend, url_prefix=prefix)
+        if prefix:
+            app.config['MTJPOSTRACKER_JSON_PREFIX'] = prefix
+            app.register_blueprint(json_frontend, url_prefix=prefix)
+        else:
+            logger.info('No json_prefix defined; tracker will not serve JSON.')
+
         app.run(host=host, port=port)
