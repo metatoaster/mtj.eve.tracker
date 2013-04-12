@@ -254,7 +254,8 @@ def get_argparsers():
     return parser, sp
 
 
-def main(args=None, options=None, app=None, cmdclass=TrackerCmd):
+def main(args=None, options=None, app=None, runner_factory=None,
+        cmdclass=TrackerCmd):
     if args is None:
         args = sys.argv[1:]
 
@@ -271,7 +272,7 @@ def main(args=None, options=None, app=None, cmdclass=TrackerCmd):
 
     parsed_args = parser.parse_args(args)
 
-    c = cmdclass(options, app)
+    c = cmdclass(options, app=app, runner_factory=runner_factory)
 
     if parsed_args.config_file:
         c.do_read_config(parsed_args.config_file)
