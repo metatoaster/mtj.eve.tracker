@@ -146,26 +146,33 @@ class FlaskRunner(BaseRunner):
     Runs a Flask app.
     """
 
-    def run(self, app=None):
-        """
-        Run the flask app.
-        """
+    # note: local imports are used here to avoid direct dependency on
+    # flask, as the flask specific modules here are provided for
+    # convenience
 
-        # local import here to not cause package to depend on flask.
-        import flask
-        from mtj.eve.tracker.frontend.flask import json_frontend
-
-        host = self.config['flask']['host']
-        port = self.config['flask']['port']
-        prefix = self.config['flask'].get('json_prefix')
-
-        if not app:
-            app = flask.Flask(__name__)
-
+    def prepare(self, app):
+        prefix = self.config['mtj.eve.tracker.runner.FlaskRunner'].get(
+            'json_prefix')
         if prefix:
+            from mtj.eve.tracker.frontend.flask import json_frontend
             app.config['MTJPOSTRACKER_JSON_PREFIX'] = prefix
             app.register_blueprint(json_frontend, url_prefix=prefix)
         else:
             logger.info('No json_prefix defined; tracker will not serve JSON.')
 
+    def run(self, app=None):
+        """
+        Run the flask app.
+        """
+
+        if not app:
+            import flask
+            app = flask.Flask(__name__)
+
+        self.prepare(app)
+
+        host = self.config['flask']['host']
+        port = self.config['flask']['port']
+        # must be casted into a string.
+        app.config['SECRET_KEY'] = str(self.config['flask']['secret'])
         app.run(host=host, port=port)
