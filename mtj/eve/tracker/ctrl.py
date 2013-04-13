@@ -151,7 +151,7 @@ class TrackerCmd(cmd.Cmd):
         """
 
         # local foreground options.
-        options = Options()
+        options = self.options.__class__()
         options.update(self.options.config)
         options.update({'logging': {'level': 'INFO', 'path': '',}})
 
@@ -163,7 +163,7 @@ class TrackerCmd(cmd.Cmd):
         """
 
         # local foreground options.
-        options = Options()
+        options = self.options.__class__()
         options.update(self.options.config)
         options.update({'logging': {'level': 'INFO', 'path': '',}})
 

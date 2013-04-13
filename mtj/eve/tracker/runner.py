@@ -133,7 +133,7 @@ class BaseRunner(object):
         if manager is None:
             raise TypeError('No manager is registered.  Site not registered?')
 
-        logger.info('BaseRunner starting up')
+        logger.info('%s starting up', self.__class__.__name__)
         logger.info('Instantiating towers from database.')
         manager.backend.reinstantiate()
 
