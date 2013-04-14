@@ -2,7 +2,7 @@ import time
 import logging
 
 import sqlalchemy
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, and_, or_
 from sqlalchemy import Column, Integer, String, Boolean, Float, MetaData, Text
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
@@ -134,14 +134,14 @@ class TowerApi(Base):
     currentTime = Column(Integer)
     timestamp = Column(Integer)
 
-    def __init__(self, tower_id, api_key, currentTime):
+    def __init__(self, tower_id, api_key, currentTime, timestamp=None):
 
         self.tower_id = tower_id
         self.api_key = api_key
         self.currentTime = currentTime
         # this may seem to duplicate above, but is useful to verify
         # the staleness of the data's currentTime.
-        self.timestamp = int(time.time())
+        self.timestamp = timestamp is None and int(time.time()) or timestamp
 
 
 class Fuel(Base):
@@ -410,6 +410,19 @@ class SQLAlchemyBackend(object):
         session.merge(usage)
         session.commit()
 
+    def getApiTowerIds(self):
+        completed = self.completedApiUsage()
+
+        conditions = []
+        for k, v in completed.iteritems():
+            begin, end, state = v
+            conditions.append(
+                (TowerApi.api_key == k) & (TowerApi.timestamp >= begin))
+
+        session = self.session()
+        q = session.query(TowerApi.tower_id).filter(or_(*conditions))
+        return {i[0] for i in q.all()}
+
     def reinstantiate(self):
         """
         Recreate all the objects in the tracker from the database.
@@ -550,7 +563,7 @@ class SQLAlchemyBackend(object):
 
         return fuel
 
-    def setTowerApi(self, tower_id, api_key, currentTime):
+    def setTowerApi(self, tower_id, api_key, currentTime, timestamp=None):
         """
         Sets the tower API.
         """
@@ -558,7 +571,7 @@ class SQLAlchemyBackend(object):
         # don't trigger autoincrement.
         assert tower_id is not None
 
-        tower_api = TowerApi(tower_id, api_key, currentTime)
+        tower_api = TowerApi(tower_id, api_key, currentTime, timestamp)
         session = self.session()
         session.merge(tower_api)
         session.commit()

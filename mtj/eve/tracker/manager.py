@@ -96,7 +96,13 @@ class BaseTowerManager(object):
             # resource verification.
             tower.setState(state)
 
-            # finally log down this tower as having updated with api.
+            # Finally log down this tower as having updated with api.
+            # Reason why we don't use the tower's api itemID is because
+            # we could be tracking the previous locations of the same
+            # tower that may have been anchored elsewhere, as a tower's
+            # itemID is not reset when unanchored.  This is why some
+            # corporation ensure that every unanchored tower is to be
+            # repackaged before being anchored again, if possible.
             self.backend.setTowerApi(tower.id, corp.api.api_key[0], api_time)
 
         logger.info('(%d/%d) processing complete', starbases_c, starbases_c)
@@ -147,11 +153,11 @@ class TowerManager(BaseTowerManager):
         corps = keyman.getAllWith(evelink.Corp)
         for corp in corps:
             error = 0
-            self.backend.logApiUsage(corp.api.api_key[0], None)
+            m_usage = self.backend.beginApiUsage(corp.api.api_key[0])
             try:
                 self.importWithCorp(corp)
             except:
                 # well crap.
                 logger.exception('Import failed with uncatched exception')
                 error = 1
-            self.backend.logApiUsage(corp.api.api_key[0], error)
+            self.backend.endApiUsage(m_usage, error)
