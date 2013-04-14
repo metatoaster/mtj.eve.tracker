@@ -136,9 +136,16 @@ class TowerManager(BaseTowerManager):
 
         self._setBackend(backend)
         self._api_keys = {}
+        self.updateApiTowerIds()
 
     def addApiKey(self, api_id, vcode):
         self._api_keys[api_id] = vcode
+
+    def updateApiTowerIds(self):
+        self._api_tower_ids = self.backend.getApiTowerIds()
+
+    def getTowerApiTimestamp(self, id_):
+        return self._api_tower_ids.get(id_, None)
 
     def importAll(self):
         keyman = zope.component.queryAdapter(self.backend, IAPIKeyManager)
@@ -161,3 +168,6 @@ class TowerManager(BaseTowerManager):
                 logger.exception('Import failed with uncatched exception')
                 error = 1
             self.backend.endApiUsage(m_usage, error)
+
+        # update the api key usage.
+        self.updateApiTowerIds()
