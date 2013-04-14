@@ -420,8 +420,9 @@ class SQLAlchemyBackend(object):
                 (TowerApi.api_key == k) & (TowerApi.timestamp >= begin))
 
         session = self.session()
-        q = session.query(TowerApi.tower_id).filter(or_(*conditions))
-        return {i[0] for i in q.all()}
+        q = session.query(TowerApi.tower_id, TowerApi.currentTime
+            ).filter(or_(*conditions))
+        return {i[0]: i[1] for i in q.all()}
 
     def reinstantiate(self):
         """

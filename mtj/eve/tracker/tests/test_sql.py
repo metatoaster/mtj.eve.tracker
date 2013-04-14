@@ -315,31 +315,36 @@ class SqlBackendTestCase(TestCase):
         self.backend.setTowerApi(3, 123456, 10001, 10001)
         self.backend.setTowerApi(4, 123456, 10003, 10003)
         self.backend.endApiUsage(m, 0, 10004)
-        self.assertEqual(self.backend.getApiTowerIds(), {1, 2, 3, 4})
+        self.assertEqual(self.backend.getApiTowerIds(), {
+            1: 10000, 2: 10001, 3: 10001, 4: 10003})
 
         m = self.backend.beginApiUsage(123456, 20000)
         self.backend.setTowerApi(1, 123456, 20000, 20000)
         self.backend.setTowerApi(4, 123456, 20001, 20001)
         # update has not been marked as completed.
-        self.assertEqual(self.backend.getApiTowerIds(), {1, 2, 3, 4})
+        self.assertEqual(self.backend.getApiTowerIds(), {
+            1: 20000, 2: 10001, 3: 10001, 4: 20001})
         self.backend.endApiUsage(m, 0, 20004)
-        self.assertEqual(self.backend.getApiTowerIds(), {1, 4})
+        self.assertEqual(self.backend.getApiTowerIds(), {
+            1: 20000, 4: 20001})
 
         # Extra keys overlapping shouldn't cause problems.
         m = self.backend.beginApiUsage(123457, 30000)
         self.backend.setTowerApi(1, 123457, 30000, 30000)
         self.backend.setTowerApi(2, 123457, 30001, 30001)
-        self.backend.setTowerApi(5, 123457, 30002, 30002)
+        self.backend.setTowerApi(5, 123457, 29957, 30002)
         self.backend.endApiUsage(m, 0, 30004)
         # This is still stuck a number of seconds behind but it's of
         # a different API key...
-        self.assertEqual(self.backend.getApiTowerIds(), {1, 2, 4, 5})
+        self.assertEqual(self.backend.getApiTowerIds(), {
+            1: 30000, 2: 30001, 4: 20001, 5: 29957})  # note, API timestamp
 
         m = self.backend.beginApiUsage(123456, 40000)
         self.backend.setTowerApi(1, 123456, 40000, 40000)
         self.backend.endApiUsage(m, 0, 40000)
         # ... until that API key is fetched to verify that this is gone.
-        self.assertEqual(self.backend.getApiTowerIds(), {1, 2, 5})
+        self.assertEqual(self.backend.getApiTowerIds(), {
+            1: 40000, 2: 30001, 5: 29957})  # note, API timestamp
 
 def test_suite():
     suite = TestSuite()
