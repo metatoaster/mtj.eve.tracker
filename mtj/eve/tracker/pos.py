@@ -242,7 +242,7 @@ class Tower(object):
         return mismatches
 
     def updateResources(self, values, timestamp, stateTimestamp=None,
-            force=False):
+            force=False, omit_missing=True):
         """
         Updates resource levels.
 
@@ -260,6 +260,9 @@ class Tower(object):
         force
             Optional argument.  If supplied, validation against existing
             levels are not done so an event will be forced.
+        omit_missing
+            Optional argument.  If False, all missing resources are
+            treated as zero and will be supplied.
 
         Possible return values
             List of typeIDs of resources updated.
@@ -278,6 +281,16 @@ class Tower(object):
             # monitored.
             state_ts_result = self.setStateTimestamp(stateTimestamp)
 
+        # dict comprehension
+        all_fuels = {v['resourceTypeID']: v for v in
+            pos_info.getControlTowerResource(self.typeID)}
+
+        if not omit_missing:
+            # mismatches should be all the resources
+            base_values = {v: 0 for v in all_fuels.keys()}
+            base_values.update(values)
+            values = base_values
+
         # flag the need to update all the fuels.
         updateAll = not self.fuels
         mismatches = self.verifyResources(values, timestamp)
@@ -287,10 +300,6 @@ class Tower(object):
             # mismatches should be all the resources
             update_values = {v: 0 for v in mismatches}
         update_values.update(values)
-
-        # dict comprehension
-        all_fuels = {v['resourceTypeID']: v for v in
-            pos_info.getControlTowerResource(self.typeID)}
 
         updateStateTimestamp(stateTimestamp)
         if stateTimestamp > timestamp:

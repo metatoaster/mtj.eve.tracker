@@ -79,6 +79,20 @@ class TowerTestCase(TestCase):
         self.assertEqual(fuels[4247], 0)
         self.assertEqual(fuels[16275], 0)
 
+    def test_0301_update_resource_missing(self):
+        tower = Tower(1000001, 12235, 30004608, 40291202, 4,
+            1325376000, None, 498125261)
+        tower.updateResources({4247: 28000, 16275: 10000}, 0)
+        fuels = tower.getResources(0)
+        # Omitted values assumed unchanged bvy default...
+        self.assertEqual(fuels[16275], 10000)
+
+        # ... unless otherwise specified.
+        tower.updateResources({4247: 28000}, 0, omit_missing=False)
+        fuels = tower.getResources(0)
+        # Omitted values now 0.
+        self.assertEqual(fuels[16275], 0)
+
 
 class TowerResourceBufferTestCase(TestCase):
     """

@@ -86,7 +86,7 @@ class BaseTowerManager(object):
 
             # supply the new stateTimestamp.
             tower.updateResources(details['fuel'], api_time,
-                stateTimestamp=state_ts)
+                stateTimestamp=state_ts, omit_missing=False)
 
             # This is done after the resources to not interfere with the
             # resource verification.
