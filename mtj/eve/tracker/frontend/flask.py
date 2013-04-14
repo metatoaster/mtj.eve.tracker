@@ -20,6 +20,15 @@ def overview():
     response.headers['Content-type'] = 'application/json'
     return response
 
+@json_frontend.route('/tower')
+def towers():
+    backend = zope.component.getUtility(ITrackerBackend)
+    jst = Json(backend)
+    result = jst.towers()
+    response = make_response(result)
+    response.headers['Content-type'] = 'application/json'
+    return response
+
 @json_frontend.route('/tower/<int:tower_id>')
 def tower(tower_id):
     backend = zope.component.getUtility(ITrackerBackend)

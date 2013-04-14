@@ -32,14 +32,31 @@ class Json(object):
             }
         return self._fuel_names
 
-    def overview(self):
+    def overview(self, low_fuel=432000):
         # overview should be a brief # listing of various things, rather
         # than a listing of all the towers.
-        return self.towers()
+        timestamp, towers = self._towers()
+        towers = towers.values()
 
-    def towers(self):
+        online = sorted([tower for tower in towers if tower.get('state') == 4
+                and tower.get('timeRemaining', 0) < low_fuel],
+            lambda x, y: cmp(x.get('timeRemaining'), y.get('timeRemaining'))
+        )
+        reinforced = sorted(
+            [tower for tower in towers if tower.get('state') == 3],
+            lambda x, y: cmp(x.get('stateTimestamp'), y.get('stateTimestamp'))
+        )
+
+        result = {
+            'timestamp': timestamp,
+            'online': online,
+            'reinforced': reinforced,
+        }
+        return json.dumps(result)
+
+    def _towers(self):
         timestamp = int(time())
-        test_json = {'towers': {
+        all_towers = {
             v.id: {
                 'id': v.id,
                 'celestialName': v.celestialName,
@@ -53,12 +70,23 @@ class Json(object):
                 ),
                 'state': v.getState(timestamp),
                 'stateName': constants.Corp.pos_states[v.getState(timestamp)],
+                'stateTimestamp': v.stateTimestamp,
+                'stateTimestampFormatted': strftime(
+                    '%Y-%m-%d %H:%M',
+                    gmtime(v.stateTimestamp)
+                ),
+                'stateTimestampDeltaFormatted':
+                    str(timedelta(seconds=(v.stateTimestamp - timestamp))),
                 'timeRemaining': v.getTimeRemaining(timestamp),
                 'timeRemainingFormatted':
                     str(timedelta(seconds=v.getTimeRemaining(timestamp))),
             # FIXME using private _towers.
-            } for v in self._backend._towers.values()}}
-        return json.dumps(test_json)
+            } for v in self._backend._towers.values()}
+        return timestamp, all_towers
+
+    def towers(self):
+        result = dict(zip(['timestamp', 'towers'], self._towers()))
+        return json.dumps(result)
 
     def tower(self, tower_id=None):
         if tower_id is None:
@@ -134,6 +162,7 @@ class Json(object):
         } for k, v in fuels.iteritems()]
 
         result = {
+            'timestamp': timestamp,
             'tower': tower_json,
             'tower_log': tower_log_json,
             'fuel': fuel_json,
