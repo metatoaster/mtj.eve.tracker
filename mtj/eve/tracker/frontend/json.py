@@ -139,6 +139,13 @@ class Json(object):
                 '%Y-%m-%d %H:%M', gmtime(tower.getOfflineTimestamp())),
             'state': tower.getState(timestamp),
             'stateName': constants.Corp.pos_states[tower.getState(timestamp)],
+            'stateTimestamp': tower.stateTimestamp,
+            'stateTimestampFormatted': strftime(
+                '%Y-%m-%d %H:%M',
+                gmtime(tower.stateTimestamp)
+            ),
+            'stateTimestampDeltaFormatted':
+                str(timedelta(seconds=(tower.stateTimestamp - timestamp))),
             'reinforcementLength': tower.getReinforcementLength(),
             'reinforcementLengthFormatted': str(Time('hour',
                 second=tower.getReinforcementLength())),
