@@ -275,6 +275,21 @@ class APIKey(Base):
         self.vcode = vcode
 
 
+class ApiUsageLog(Base):
+
+    __tablename__ = 'api_usage_log'
+
+    id = Column(Integer, primary_key=True)
+    api_key = Column(Integer, index=True)
+    state = Column(Integer)
+    timestamp = Column(Integer, index=True)
+
+    def __init__(self, api_key, state, timestamp=None):
+        self.api_key = api_key
+        self.state = state
+        self.timestamp = timestamp and timestamp or int(time.time())
+
+
 class SQLAlchemyBackend(object):
     """
     SQLAlchemy based backend.
@@ -323,6 +338,63 @@ class SQLAlchemyBackend(object):
 
     def session(self):
         return self._sessions()
+
+    def currentApiUsage(self):
+        """
+        Report the current Api usage.
+
+        Returns a dictionary with tuple with statistics as follows:
+
+        First value is the time when the last API call was made
+
+        Second value is the time when the API concluded.  None if it was
+        Not concluded
+
+        Third value is the conclusion state.
+
+        0
+            Success
+        1
+            In progress
+        2
+            Failed with error
+        """
+
+        def genResults(log, current):
+            if isinstance(current, tuple):
+                return current
+
+            if log.state is None:
+                # State is open, we are done.
+                if current is None:
+                    return (log.timestamp, None, 1)
+                elif isinstance(current, list):
+                    current[0] = log.timestamp
+                    return tuple(current)
+            else:
+                # State is completed, find the None entry.
+                return [log.timestamp, log.timestamp, log.state]
+
+        # query for stuff
+        session = self.session()
+        logs = session.query(ApiUsageLog).order_by(
+            desc(ApiUsageLog.timestamp)).group_by(ApiUsageLog.api_key,
+                ApiUsageLog.state).having(func.max(ApiUsageLog.timestamp))
+
+        results = {}
+        for log in logs:
+            if log.api_key not in results.keys():
+                results[log.api_key] = genResults(log, None)
+            else:
+                results[log.api_key] = genResults(log, results[log.api_key])
+
+        return results
+
+    def logApiUsage(self, api_key, state, timestamp=None):
+        usage = ApiUsageLog(api_key, state, timestamp)
+        session = self.session()
+        session.add(usage)
+        session.commit()
 
     def reinstantiate(self):
         """

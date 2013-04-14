@@ -232,6 +232,71 @@ class SqlBackendTestCase(TestCase):
         self.assertEqual(result[0], (1, u'tower', 1,
             u"DJ's personal tech moon", u'label', u'DJ', 1364479379))
 
+    def test_3000_api_usage_audit(self):
+        usage = self.backend.currentApiUsage()
+        self.assertEqual(usage, {})
+
+        self.backend.logApiUsage(123456, None, 1000000)
+        usage = self.backend.currentApiUsage()
+        self.assertEqual(usage, {
+            123456: (1000000, None, 1),
+        })
+
+        self.backend.logApiUsage(123456, 0, 1000020)
+        usage = self.backend.currentApiUsage()
+        self.assertEqual(usage, {
+            123456: (1000000, 1000020, 0),
+        })
+
+        self.backend.logApiUsage(123456, None, 2000000)
+        usage = self.backend.currentApiUsage()
+        self.assertEqual(usage, {
+            123456: (2000000, None, 1),
+        })
+
+        self.backend.logApiUsage(123456, 2, 2000020)
+        usage = self.backend.currentApiUsage()
+        self.assertEqual(usage, {
+            123456: (2000000, 2000020, 2),
+        })
+
+        self.backend.logApiUsage(123456, None, 3000000)
+        self.backend.logApiUsage(123456, 0, 3000010)
+        # Shouldn't really happen
+        self.backend.logApiUsage(123456, 2, 3000011)
+        self.backend.logApiUsage(123456, 1, 3000012)
+        usage = self.backend.currentApiUsage()
+        # Entries without a corresponding open are omitted.
+        self.assertEqual(usage, {
+            123456: (3000000, 3000010, 0),
+        })
+
+        self.backend.logApiUsage(123457, None, 1000000)
+        self.backend.logApiUsage(123457, 1, 1000041)
+        self.backend.logApiUsage(123457, 3, 1000012)
+        self.backend.logApiUsage(123457, 0, 1000060)
+        usage = self.backend.currentApiUsage()
+        self.assertEqual(usage, {
+            123456: (3000000, 3000010, 0),
+            123457: (1000000, 1000012, 3),
+        })
+
+    def test_3001_api_usage_opens(self):
+        self.backend.logApiUsage(123458, None, 1000000)
+        self.backend.logApiUsage(123458, None, 2000000)
+        self.backend.logApiUsage(123458, None, 3000000)
+        usage = self.backend.currentApiUsage()
+        self.assertEqual(usage, {
+            123458: (3000000, None, 1),
+        })
+
+    def test_3002_api_usage_orphan_close(self):
+        self.backend.logApiUsage(123459, 0, 3000000)
+        usage = self.backend.currentApiUsage()
+        self.assertEqual(usage, {
+            123459: [3000000, 3000000, 0],
+        })
+
 def test_suite():
     suite = TestSuite()
     suite.addTest(makeSuite(SqlBackendTestCase))
