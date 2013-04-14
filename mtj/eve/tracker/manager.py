@@ -22,7 +22,11 @@ class APIKeyManager(object):
 
     zope.interface.implements(IAPIKeyManager)
 
-    def __init__(self, api_keys={}):
+    def __init__(self, api_keys=None):
+        if api_keys is None:
+            api_keys = {}
+        assert isinstance(api_keys, dict)
+
         self.api_keys = api_keys
 
     def getAllWith(self, cls):
@@ -140,10 +144,14 @@ class TowerManager(BaseTowerManager):
             logger.warning('No key manager is present')
             return
 
-        corps = keyman.getAllWith(Corp)
+        corps = keyman.getAllWith(evelink.Corp)
         for corp in corps:
+            error = 0
+            self.backend.logApiUsage(corp.api.api_key[0], None)
             try:
-                self.importWithApi(corp)
+                self.importWithCorp(corp)
             except:
                 # well crap.
                 logger.exception('Import failed with uncatched exception')
+                error = 1
+            self.backend.logApiUsage(corp.api.api_key[0], error)

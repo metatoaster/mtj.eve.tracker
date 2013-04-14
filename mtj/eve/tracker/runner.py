@@ -56,7 +56,7 @@ class BaseRunner(object):
         # api
         s_api = config.get('api', {})
         api_src = s_api.get('source', 'config')
-        api_keys = s_api.get('api_keys', [])
+        api_keys = s_api.get('api_keys', {})
 
         # set up the logging.
 
