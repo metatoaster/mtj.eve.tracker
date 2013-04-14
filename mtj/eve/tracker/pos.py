@@ -230,8 +230,8 @@ class Tower(object):
                 mismatches.append(fuel_id)
                 continue
 
-            verifier = values.get(fuel_id)
-            if not verifier:
+            verifier = values.get(fuel_id, None)
+            if verifier is None:
                 # Can't verify against unspecified value.
                 continue
 

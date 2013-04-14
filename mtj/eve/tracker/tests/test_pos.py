@@ -65,6 +65,20 @@ class TowerTestCase(TestCase):
         self.assertEqual(tower.resourcePulseTimestamp(1325376000), 1325376000)
         self.assertEqual(tower.resourcePulseTimestamp(1325376001), 1325379600)
 
+    def test_0300_update_resource_zero(self):
+        tower = Tower(1000001, 12235, 30004608, 40291202, 4,
+            1325376000, None, 498125261)
+        tower.updateResources({4247: 28000, 16275: 10000}, 0)
+        fuels = tower.getResources(0)
+        self.assertEqual(fuels[4247], 28000)
+        self.assertEqual(fuels[16275], 10000)
+
+        tower.updateResources({4247: 0, 16275: 0}, 0)
+        fuels = tower.getResources(0)
+        # Ensure zero values CAN be set.
+        self.assertEqual(fuels[4247], 0)
+        self.assertEqual(fuels[16275], 0)
+
 
 class TowerResourceBufferTestCase(TestCase):
     """
