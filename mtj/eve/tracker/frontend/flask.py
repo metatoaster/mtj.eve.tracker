@@ -5,7 +5,7 @@ import zope.component
 
 from flask import Blueprint, Flask, make_response
 
-from mtj.eve.tracker.interfaces import ITrackerBackend
+from mtj.eve.tracker.interfaces import ITrackerBackend, ITowerManager
 from mtj.eve.tracker.frontend.json import Json
 
 
@@ -14,7 +14,8 @@ json_frontend = Blueprint('json_frontend', 'mtj.eve.tracker.frontend.flask')
 @json_frontend.route('/overview')
 def overview():
     backend = zope.component.getUtility(ITrackerBackend)
-    jst = Json(backend)
+    manager = zope.component.getUtility(ITowerManager)
+    jst = Json(backend, manager)
     result = jst.overview()
     response = make_response(result)
     response.headers['Content-type'] = 'application/json'
@@ -23,7 +24,8 @@ def overview():
 @json_frontend.route('/tower')
 def towers():
     backend = zope.component.getUtility(ITrackerBackend)
-    jst = Json(backend)
+    manager = zope.component.getUtility(ITowerManager)
+    jst = Json(backend, manager)
     result = jst.towers()
     response = make_response(result)
     response.headers['Content-type'] = 'application/json'
@@ -32,7 +34,8 @@ def towers():
 @json_frontend.route('/tower/<int:tower_id>')
 def tower(tower_id):
     backend = zope.component.getUtility(ITrackerBackend)
-    jst = Json(backend)
+    manager = zope.component.getUtility(ITowerManager)
+    jst = Json(backend, manager)
     result = jst.tower(tower_id)
     response = make_response(result)
     response.headers['Content-type'] = 'application/json'

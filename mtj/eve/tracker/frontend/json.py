@@ -4,10 +4,11 @@ from time import time, strftime, gmtime
 from datetime import timedelta
 from evelink import constants
 import json
+import zope.component
 
 from mtj.f3u1.units import Time
 from mtj.evedb.structure import ControlTower
-from mtj.eve.tracker.interfaces import ITrackerBackend
+from mtj.eve.tracker.interfaces import ITrackerBackend, ITowerManager
 
 
 class Json(object):
@@ -18,9 +19,11 @@ class Json(object):
     format.
     """
 
-    def __init__(self, backend):
+    def __init__(self, backend, manager):
         assert ITrackerBackend.providedBy(backend)
+        assert ITowerManager.providedBy(manager)
         self._backend = backend
+        self._manager = manager
 
     @property
     def fuel_names(self):
@@ -38,12 +41,17 @@ class Json(object):
         timestamp, towers = self._towers()
         towers = towers.values()
 
-        online = sorted([tower for tower in towers if tower.get('state') == 4
-                and tower.get('timeRemaining', 0) < low_fuel],
+        online = sorted(
+            [tower for tower in towers if tower.get('state') == 4
+                and tower.get('timeRemaining', 0) < low_fuel
+                and tower.get('apiTimestamp')
+            ],
             lambda x, y: cmp(x.get('timeRemaining'), y.get('timeRemaining'))
         )
         reinforced = sorted(
-            [tower for tower in towers if tower.get('state') == 3],
+            [tower for tower in towers if tower.get('state') == 3
+                and tower.get('apiTimestamp')
+            ],
             lambda x, y: cmp(x.get('stateTimestamp'), y.get('stateTimestamp'))
         )
 
@@ -56,9 +64,14 @@ class Json(object):
 
     def _towers(self):
         timestamp = int(time())
+        api_ts = self._manager.getTowerApiTimestamp
         all_towers = {
             v.id: {
                 'id': v.id,
+                'apiTimestamp': api_ts(v.id),
+                'apiTimestampFormatted': api_ts(v.id) is not None and
+                        strftime('%Y-%m-%d %H:%M', gmtime(api_ts(v.id)))
+                        or '',
                 'celestialName': v.celestialName,
                 'regionName': v.regionName,
                 'typeID': v.typeID,
@@ -94,6 +107,7 @@ class Json(object):
 
         backend = self._backend
         timestamp = int(time())
+        api_ts = self._manager.getTowerApiTimestamp
 
         tower = backend.getTower(tower_id, None)
         if tower is None:
@@ -128,6 +142,10 @@ class Json(object):
 
         tower_json = {
             'id': tower.id,
+            'apiTimestamp': api_ts(tower.id),
+            'apiTimestampFormatted': api_ts(tower.id) is not None and
+                    strftime('%Y-%m-%d %H:%M', gmtime(api_ts(tower.id)))
+                    or '',
             'celestialName': tower.celestialName,
             'regionName': tower.regionName,
             'typeName': tower.typeName,
