@@ -233,69 +233,80 @@ class SqlBackendTestCase(TestCase):
             u"DJ's personal tech moon", u'label', u'DJ', 1364479379))
 
     def test_3000_api_usage_audit(self):
-        usage = self.backend.currentApiUsage()
-        self.assertEqual(usage, {})
+        self.assertEqual(self.backend.currentApiUsage(), {})
+        self.assertEqual(self.backend.completedApiUsage(), {})
 
-        self.backend.logApiUsage(123456, None, 1000000)
-        usage = self.backend.currentApiUsage()
-        self.assertEqual(usage, {
-            123456: (1000000, None, 1),
+        m = self.backend.beginApiUsage(123456, 1000000)
+        self.assertEqual(self.backend.currentApiUsage(), {
+            123456: (1000000, None, None),
         })
+        self.assertEqual(self.backend.completedApiUsage(), {})
 
-        self.backend.logApiUsage(123456, 0, 1000020)
-        usage = self.backend.currentApiUsage()
-        self.assertEqual(usage, {
+        self.backend.endApiUsage(m, 0, 1000020)
+        self.assertEqual(self.backend.currentApiUsage(), {
             123456: (1000000, 1000020, 0),
         })
 
-        self.backend.logApiUsage(123456, None, 2000000)
-        usage = self.backend.currentApiUsage()
-        self.assertEqual(usage, {
-            123456: (2000000, None, 1),
+        m = self.backend.beginApiUsage(123456, 2000000)
+        self.assertEqual(self.backend.currentApiUsage(), {
+            123456: (2000000, None, None),
+        })
+        # completed usage still unchanged.
+        self.assertEqual(self.backend.completedApiUsage(), {
+            123456: (1000000, 1000020, 0),
         })
 
-        self.backend.logApiUsage(123456, 2, 2000020)
-        usage = self.backend.currentApiUsage()
-        self.assertEqual(usage, {
-            123456: (2000000, 2000020, 2),
+        n = self.backend.beginApiUsage(123457, 1000000)
+        self.assertEqual(self.backend.completedApiUsage(), {
+            123456: (1000000, 1000020, 0),
+        })
+        self.backend.endApiUsage(n, 1, 1000041)
+        self.assertEqual(self.backend.currentApiUsage(), {
+            123456: (2000000, None, None),
+            123457: (1000000, 1000041, 1),
+        })
+        self.assertEqual(self.backend.completedApiUsage(), {
+            123456: (1000000, 1000020, 0),
+            123457: (1000000, 1000041, 1),
         })
 
-        self.backend.logApiUsage(123456, None, 3000000)
-        self.backend.logApiUsage(123456, 0, 3000010)
-        # Shouldn't really happen
-        self.backend.logApiUsage(123456, 2, 3000011)
-        self.backend.logApiUsage(123456, 1, 3000012)
+        self.backend.endApiUsage(m, 3, 3000041)
         usage = self.backend.currentApiUsage()
-        # Entries without a corresponding open are omitted.
         self.assertEqual(usage, {
-            123456: (3000000, 3000010, 0),
+            123456: (2000000, 3000041, 3),
+            123457: (1000000, 1000041, 1),
         })
 
-        self.backend.logApiUsage(123457, None, 1000000)
-        self.backend.logApiUsage(123457, 1, 1000041)
-        self.backend.logApiUsage(123457, 3, 1000012)
-        self.backend.logApiUsage(123457, 0, 1000060)
-        usage = self.backend.currentApiUsage()
-        self.assertEqual(usage, {
-            123456: (3000000, 3000010, 0),
-            123457: (1000000, 1000012, 3),
+    def test_3001_api_usage_alt(self):
+        m = self.backend.beginApiUsage(123458, 1000000)
+        self.backend.endApiUsage(m, None, 1000001)
+        m = self.backend.beginApiUsage(123458, 2000000)
+        self.backend.endApiUsage(m, None, 1000001)
+        m = self.backend.beginApiUsage(123458, 3000000)
+        self.assertEqual(self.backend.currentApiUsage(), {
+            123458: (3000000, None, None),
+        })
+        # heh backwards in time, but that's expected due to GIGO
+        self.assertEqual(self.backend.completedApiUsage(), {
+            123458: (2000000, 1000001, None),
         })
 
-    def test_3001_api_usage_opens(self):
-        self.backend.logApiUsage(123458, None, 1000000)
-        self.backend.logApiUsage(123458, None, 2000000)
-        self.backend.logApiUsage(123458, None, 3000000)
-        usage = self.backend.currentApiUsage()
-        self.assertEqual(usage, {
-            123458: (3000000, None, 1),
+    def test_3002_api_usage_opens(self):
+        self.backend.beginApiUsage(123458, 1000000)
+        self.backend.beginApiUsage(123458, 2000000)
+        self.backend.beginApiUsage(123458, 3000000)
+        self.assertEqual(self.backend.currentApiUsage(), {
+            123458: (3000000, None, None),
         })
 
-    def test_3002_api_usage_orphan_close(self):
-        self.backend.logApiUsage(123459, 0, 3000000)
-        usage = self.backend.currentApiUsage()
-        self.assertEqual(usage, {
-            123459: [3000000, 3000000, 0],
-        })
+    def test_3003_api_usage_orphan_close(self):
+        # Not really, but the data is mangled in an unexpected way.
+        m = self.backend.beginApiUsage(123459, 3000000)
+        m.start_ts = None
+        self.backend.endApiUsage(m, 0, 3000001)
+        # Not sure if this is really empty, but apparently it is?
+        # Shouldn't happen under normal circumstances anyway.
+        self.assertEqual(self.backend.currentApiUsage(), {})
 
 def test_suite():
     suite = TestSuite()

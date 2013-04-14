@@ -282,12 +282,13 @@ class ApiUsageLog(Base):
     id = Column(Integer, primary_key=True)
     api_key = Column(Integer, index=True)
     state = Column(Integer)
-    timestamp = Column(Integer, index=True)
+    start_ts = Column(Integer, index=True)
+    end_ts = Column(Integer)
 
-    def __init__(self, api_key, state, timestamp=None):
+    def __init__(self, api_key, start_ts=None):
         self.api_key = api_key
-        self.state = state
-        self.timestamp = timestamp and timestamp or int(time.time())
+        self.start_ts = start_ts and start_ts or int(time.time())
+        self.end_ts = None
 
 
 class SQLAlchemyBackend(object):
@@ -339,7 +340,7 @@ class SQLAlchemyBackend(object):
     def session(self):
         return self._sessions()
 
-    def currentApiUsage(self):
+    def currentApiUsage(self, completed=False):
         """
         Report the current Api usage.
 
@@ -360,40 +361,53 @@ class SQLAlchemyBackend(object):
             Failed with error
         """
 
-        def genResults(log, current):
-            if isinstance(current, tuple):
-                return current
-
-            if log.state is None:
-                # State is open, we are done.
-                if current is None:
-                    return (log.timestamp, None, 1)
-                elif isinstance(current, list):
-                    current[0] = log.timestamp
-                    return tuple(current)
-            else:
-                # State is completed, find the None entry.
-                return [log.timestamp, log.timestamp, log.state]
-
         # query for stuff
         session = self.session()
-        logs = session.query(ApiUsageLog).order_by(
-            desc(ApiUsageLog.timestamp)).group_by(ApiUsageLog.api_key,
-                ApiUsageLog.state).having(func.max(ApiUsageLog.timestamp))
+        logs = session.query(ApiUsageLog)
+
+        logs = logs.order_by(
+            desc(ApiUsageLog.start_ts)).group_by(ApiUsageLog.api_key
+                ).having(func.max(ApiUsageLog.start_ts))
+
+        if completed:
+            logs = logs.filter(ApiUsageLog.end_ts != None)
 
         results = {}
         for log in logs:
-            if log.api_key not in results.keys():
-                results[log.api_key] = genResults(log, None)
-            else:
-                results[log.api_key] = genResults(log, results[log.api_key])
+            results[log.api_key] = (log.start_ts, log.end_ts, log.state)
 
         return results
 
-    def logApiUsage(self, api_key, state, timestamp=None):
-        usage = ApiUsageLog(api_key, state, timestamp)
+    def completedApiUsage(self):
+        return self.currentApiUsage(completed=True)
+
+    def beginApiUsage(self, api_key, timestamp=None):
+        """
+        Return a marker for an API usage.
+
+        returns a usage marker.
+        """
+
+        usage = ApiUsageLog(api_key, timestamp)
         session = self.session()
         session.add(usage)
+        session.commit()
+        session.expunge(usage)
+        return usage
+
+    def endApiUsage(self, usage, state, timestamp=None):
+        """
+        Ends api usage
+
+        mark the usage marker as completed, with the state it is at.
+        """
+
+        if timestamp is None:
+            timestamp = int(time.time())
+        usage.state = state
+        usage.end_ts = timestamp
+        session = self.session()
+        session.merge(usage)
         session.commit()
 
     def reinstantiate(self):
