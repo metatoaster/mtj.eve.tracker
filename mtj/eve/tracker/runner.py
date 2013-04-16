@@ -160,6 +160,9 @@ class FlaskRunner(BaseRunner):
         else:
             logger.info('No json_prefix defined; tracker will not serve JSON.')
 
+        app.config['MTJPOSTRACKER_ADMIN_KEY'] = self.config[
+            'mtj.eve.tracker.runner.FlaskRunner'].get('admin_key')
+
     def run(self, app=None):
         """
         Run the flask app.

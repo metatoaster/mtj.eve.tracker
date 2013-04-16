@@ -36,6 +36,7 @@ class Options(object):
         },
         'mtj.eve.tracker.runner.FlaskRunner': {
             'json_prefix': None,
+            'admin_key': None
         },
     }
 
@@ -62,6 +63,7 @@ class Options(object):
         },
         'mtj.eve.tracker.runner.FlaskRunner': {
             'json_prefix': basestring,
+            'admin_key': basestring,
         },
     }
 
@@ -156,6 +158,31 @@ class TrackerCmd(cmd.Cmd):
         options.update({'logging': {'level': 'INFO', 'path': '',}})
 
         self.run(options.config)
+
+    def do_import(self, arg):
+        # local foreground options.
+        # XXX this needs DRYing...
+        options = self.options.__class__()
+        options.update(self.options.config)
+        options.update({'logging': {'level': 'INFO', 'path': '',}})
+
+        if arg:
+            print 'Notice: `%s` will be notified of update.' % arg
+
+        runner = self.runner_factory()
+        runner.configure(config=options.config)
+        runner.initialize()
+
+        import requests
+        import zope.component
+        from mtj.eve.tracker import interfaces
+        manager = zope.component.getUtility(interfaces.ITowerManager)
+        manager.importAll()
+
+        if arg:
+            p = options.config['mtj.eve.tracker.runner.FlaskRunner']
+            print requests.post(arg, data='{"key": "%(admin_key)s"}' % p
+                ).content
 
     def do_debug(self, arg):
         """
@@ -254,8 +281,14 @@ def get_argparsers():
     sp_stop = sp.add_parser(r'stop', help='Stops %(prog)s daemon')
     sp_restart = sp.add_parser(r'restart', help='Restarts %(prog)s daemon')
     sp_fg = sp.add_parser(r'fg', help='Run %(prog)s in foreground')
+    sp_import = sp.add_parser(r'import', help='Imports API data')
     sp_debug = sp.add_parser(r'debug', help='Open a debug python shell')
     sp_console = sp.add_parser(r'console', help='Console mode (default)')
+
+    sp_import.add_argument('--update', '-u', dest='cmdarg', required=False,
+        help='After API update, send a reload request to a running instance. '
+             'optionally specify the target.',
+        default='', nargs='?')
 
     return parser, sp
 
@@ -284,7 +317,13 @@ def main(args=None, options=None, app=None, runner_factory=None,
         c.do_read_config(parsed_args.config_file)
 
     if parsed_args.command and parsed_args.command != _default:
-        return c.onecmd(parsed_args.command)
+        cmdarg = getattr(parsed_args, 'cmdarg', '')
+        if not cmdarg and parsed_args.command == 'import':
+            p = {}
+            p.update(c.options.config['mtj.eve.tracker.runner.FlaskRunner'])
+            p.update(c.options.config['flask'])
+            cmdarg = 'http://%(host)s:%(port)s%(json_prefix)s/reload' % p
+        return c.onecmd(parsed_args.command + ' ' + cmdarg)
     else:  # interactive mode
         try:
             import readline

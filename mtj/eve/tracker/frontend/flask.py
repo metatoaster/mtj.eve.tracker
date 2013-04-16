@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import json
 import zope.component
 
-from flask import Blueprint, Flask, make_response
+from flask import Blueprint, Flask, make_response, current_app, request
 
 from mtj.eve.tracker.interfaces import ITrackerBackend, ITowerManager
 from mtj.eve.tracker.frontend.json import Json
@@ -41,18 +41,37 @@ def tower(tower_id):
     response.headers['Content-type'] = 'application/json'
     return response
 
-@json_frontend.route('/update')
-def update():
+@json_frontend.route('/reload', methods=['POST'])
+def reload_db():
     """
-    Need to figure out how to trigger the update from here without
-    having a thread in here blocking for a while.
-
-    We could just spawn a site based on that and then have it probe for
-    updates periodically which is triggered in another thread/process
-    above the one that is running flask.  So if API queries were to
-    happen it should not affect the running flask instance.
-
-    In that case, have this write a value somewhere.
+    Trigger a reload from db if the right keys are provided.
     """
 
-    return ''
+    def process():
+        admin_key = current_app.config.get('MTJPOSTRACKER_ADMIN_KEY')
+        if not admin_key:
+            return {'status': 'error', 'result':
+                'reload not enabled; no admin key defined',
+            }, 403
+        try:
+            # consider using request.json?
+            data = json.loads(request.data)
+            key = data.get('key')
+        except:
+            key = None
+
+        if not (key and key == admin_key):
+            return {'status': 'error', 'result':
+                'invalid key',
+            }, 403
+        backend = zope.component.getUtility(ITrackerBackend)
+        results = backend.reinstantiate()
+        return {'status': 'ok', 'result':
+            '%d towers reloaded.' % results,
+        }, None
+
+    data, http_code = process()
+    result = json.dumps(data)
+    response = make_response(result, http_code)
+    response.headers['Content-type'] = 'application/json'
+    return response
