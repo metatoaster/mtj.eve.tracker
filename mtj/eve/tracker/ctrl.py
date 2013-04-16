@@ -167,7 +167,7 @@ class TrackerCmd(cmd.Cmd):
         options.update(self.options.config)
         options.update({'logging': {'level': 'INFO', 'path': '',}})
 
-        runner = BaseRunner()
+        runner = self.runner_factory()
         runner.configure(config=options.config)
         runner.initialize()
 
