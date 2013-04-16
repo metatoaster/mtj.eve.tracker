@@ -15,7 +15,7 @@ class DummyBackend(object):
         self.towers = []
 
     def updateTower(self, tower):
-        self.towers.append([(k, v) for k, v in tower.__dict__.items()
+        self.towers.append([(k, v) for k, v in sorted(tower.__dict__.items())
             if '_' not in k])
 
 
