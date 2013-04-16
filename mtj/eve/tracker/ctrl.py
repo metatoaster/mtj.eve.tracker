@@ -164,7 +164,6 @@ class TrackerCmd(cmd.Cmd):
         # XXX this needs DRYing...
         options = self.options.__class__()
         options.update(self.options.config)
-        options.update({'logging': {'level': 'INFO', 'path': '',}})
 
         if arg:
             print 'Notice: `%s` will be notified of update.' % arg
