@@ -429,25 +429,34 @@ class SQLAlchemyBackend(object):
         Recreate all the objects in the tracker from the database.
         """
 
+        # TODO ensure that _any_ updates done to towers done to this
+        # that gets persisted back into the database gets logged, so
+        # they can be reinstantiated again until no outstanding writes
+        # that got written are left unread here.
+
         logger.info('Reinstantiation requested.')
         session = self.session()
         towerq = session.query(Tower)
-        self._towers = {}
+        towers = {}
 
-        towers = towerq.all()
-        count = len(towers)
+        towers_raw = towerq.all()
+        count = len(towers_raw)
 
         logger.info('%d towers to reinstantiate.', count)
 
-        for c, tower in enumerate(towers):
+        for c, tower in enumerate(towers_raw):
             logger.debug('(%d/%d) towers reinstantiated.', c, count)
             tower._initDerived()
             tower._reloadResources(session)
-            self._towers[tower.id] = tower
+            towers[tower.id] = tower
 
         # detatch all objects loaded with this session.
         logger.info('(%d/%d) towers reinstantiated.', count, count)
         session.expunge_all()
+
+        self._towers = towers
+
+        return count
 
     def _queryTower(self, session, itemID):
         # see if we already have this tower_id registered.
