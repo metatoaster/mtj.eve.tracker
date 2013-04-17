@@ -145,6 +145,12 @@ class TowerTestCase(TestCase):
         fuels = tower.getResources(20000)
         self.assertEqual(fuels[4247], 28000)
 
+        # These are somewhat redundant, but might as well.
+        self.assertTrue(tower.fuels[4247].freeze)
+        self.assertEqual(tower.verifyResources(fuels, 0), [])
+        self.assertEqual(tower.verifyResources(fuels, 3600), [])
+        self.assertEqual(tower.verifyResources(fuels, 20000), [])
+
     def test_1020_not_online_results(self):
         tower = Tower(1000001, 12235, 30004608, 40291202, 1,
             0, 0, 0)
