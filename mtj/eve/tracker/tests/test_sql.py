@@ -207,11 +207,16 @@ class SqlBackendTestCase(TestCase):
 
     def test_2002_reinstantiate_null_state_ts(self):
         self.backend._conn.execute('insert into tower values '
-            '(1, 1000001, 12235, 30004608, 40291202, 4, 1325376661, '
-            '1306886400, 498125261)')
+            '(1, 1000001, 12235, 30004608, 40291202, 1, 1325376661, '
+            'null, 498125261)')
         self.backend._conn.execute('insert into tower values '
             '(2, 1000002, 20066, 30004268, 40270415, 1, null, '
-            '1306942573, 498125261)')
+            'null, 498125261)')
+
+        self.backend._conn.execute('insert into fuel values '
+            '(1, 1, 16275, 300, 1325376000, 7200)')
+        self.backend._conn.execute('insert into fuel values '
+            '(2, 1, 4247, 30, 1325376000, 12345)')
 
         self.backend.reinstantiate()
 
@@ -221,6 +226,16 @@ class SqlBackendTestCase(TestCase):
         tower2 = self.backend.getTower(2)
         self.assertEqual(tower2.stateTimestamp, None)
         self.assertEqual(tower2.resourcePulse, 0)
+
+        tower1 = self.backend.getTower(1)
+        self.assertEqual(tower1.getResources(1325376000), {
+            4247: 12345,
+            16275: 7200,
+        })
+        self.assertEqual(tower1.getResources(1325376662), {
+            4247: 12345,
+            16275: 7200,
+        })
 
     def test_3000_add_audit(self):
         tower = self.backend.addTower(1000001, 12235, 30004608, 40291202, 4,

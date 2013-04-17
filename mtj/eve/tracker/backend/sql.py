@@ -72,6 +72,7 @@ class Tower(Base, pos.Tower):
             fuel = all_fuels.get(resourceTypeID)
             timestamp = self.resourcePulseTimestamp(result.timestamp)
             res_buffer = pos.TowerResourceBuffer(
+                tower=self,
                 delta=result.delta,
                 timestamp=timestamp,
                 purpose=fuel['purpose'],
