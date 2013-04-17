@@ -242,7 +242,7 @@ class Tower(object):
         return mismatches
 
     def updateResources(self, values, timestamp, stateTimestamp=None,
-            force=False, omit_missing=True):
+            state=None, force=False, omit_missing=True):
         """
         Updates resource levels.
 
@@ -257,6 +257,8 @@ class Tower(object):
             magic involved when handling this argument, especially when
             the creators of this class think they (know how to) care
             about timing consistencies.
+        state
+            The new state of this tower.
         force
             Optional argument.  If supplied, validation against existing
             levels are not done so an event will be forced.
@@ -294,6 +296,11 @@ class Tower(object):
         # flag the need to update all the fuels.
         updateAll = not self.fuels
         mismatches = self.verifyResources(values, timestamp)
+
+        # Now that resources are verified, the new state can be
+        # installed
+
+        self.setState(state)
 
         update_values = {}
         if updateAll:
@@ -522,6 +529,9 @@ class Tower(object):
 
     @monitor.towerUpdates('state')
     def setState(self, state):
+        if state is None:
+            return
+
         if isinstance(state, basestring):
             # TODO evaluate whether to allow this evelink specific
             # constant access here.
@@ -547,15 +557,15 @@ class Tower(object):
         # so new pulse need to be calculated.
         self.setStateTimestamp(exitAt)
 
-        self.updateResources(resources, exitAt, force=True)
+        # Update silo content first to ensure right calculations...
         siloLevels = self.getSiloLevels(timestamp)
         for k, v in siloLevels.iteritems():
             self.updateSiloBuffer(k, value=v, timestamp=timestamp,
                 online=False)
 
-        # Finally set the state here, to not interfere with the above
-        # calculations.
-        self.state = STATE_REINFORCED
+        # Before the resources is updated along with state.
+        self.updateResources(resources, exitAt, state=STATE_REINFORCED,
+            force=True)
 
     @monitor.towerUpdates('state')
     def exitReinforcement(self, strontium, timestamp=None):
@@ -565,8 +575,7 @@ class Tower(object):
         """
 
         self.updateResources({STRONTIUM_ITEMID: strontium}, timestamp,
-            force=True)
-        self.state = STATE_ONLINE
+            state=STATE_ONLINE, force=True)
 
     def attachSilo(self, itemID, typeID, resourceTypeID=None):
         """

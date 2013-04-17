@@ -88,6 +88,9 @@ class BaseTowerManager(object):
             logger.info('timestamps (%s, %s, %s) | delta %d',
                 ts, api_time, state_ts, delta)
 
+            # XXX state should be supplied here, one to ensure correct
+            # calculation, and then the other for initializing the correct
+            # rates.
             # supply the new stateTimestamp.
             tower.updateResources(details['fuel'], api_time,
                 stateTimestamp=state_ts, omit_missing=False)

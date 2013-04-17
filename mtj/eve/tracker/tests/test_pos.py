@@ -145,6 +145,32 @@ class TowerTestCase(TestCase):
         fuels = tower.getResources(20000)
         self.assertEqual(fuels[4247], 28000)
 
+    def test_1100_anchored_fuel_full_update(self):
+        # Following the API date patterns.
+        tower = Tower(1000001, 12235, 30004608, 40291202, 1,
+            0, 0, 0)
+        # stateTimestamps always submitted via API update.
+        tower.updateResources({4247: 28000}, 10000, stateTimestamp=10001,
+            state=STATE_ONLINE,)
+        fuels = tower.getResources(20800)
+        self.assertEqual(fuels[4247], 27880)
+        fuels = tower.getResources(20801)
+        self.assertEqual(fuels[4247], 27880)
+        fuels = tower.getResources(20802)
+        self.assertEqual(fuels[4247], 27840)
+
+    def test_1101_offline_fuel_full_update(self):
+        # Following the API date patterns.
+        tower = Tower(1000001, 12235, 30004608, 40291202, 0,
+            0, 0, 0)
+        # stateTimestamps always submitted via API update.
+        tower.updateResources({4247: 28000}, 10000, stateTimestamp=11001,
+            state=STATE_ONLINE,)
+        fuels = tower.getResources(20800)
+        self.assertEqual(fuels[4247], 27880)
+        fuels = tower.getResources(21802)
+        self.assertEqual(fuels[4247], 27840)
+
 
 class TowerResourceBufferTestCase(TestCase):
     """
