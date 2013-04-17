@@ -465,6 +465,9 @@ class Tower(object):
         to any of the normal fuels.
         """
 
+        if self.state not in [STATE_ONLINING, STATE_REINFORCED, STATE_ONLINE]:
+            return None
+
         offlineTimestamps = []
         for key, fuel in self.fuels.iteritems():
             if fuel is None or not fuel.isNormalFuel():
@@ -491,7 +494,7 @@ class Tower(object):
         if timestamp is None:
             timestamp = int(time.time())
         offlineAt = self.getOfflineTimestamp()
-        return max(offlineAt - timestamp, 0)
+        return offlineAt and max(offlineAt - timestamp, 0) or 0
 
     def getState(self, timestamp=None):
         """

@@ -145,6 +145,13 @@ class TowerTestCase(TestCase):
         fuels = tower.getResources(20000)
         self.assertEqual(fuels[4247], 28000)
 
+    def test_1020_not_online_results(self):
+        tower = Tower(1000001, 12235, 30004608, 40291202, 1,
+            0, 0, 0)
+        tower.updateResources({4247: 28000}, 0)
+        self.assertEqual(tower.getOfflineTimestamp(), None)
+        self.assertEqual(tower.getTimeRemaining(), 0)
+
     def test_1100_anchored_fuel_full_update(self):
         # Following the API date patterns.
         tower = Tower(1000001, 12235, 30004608, 40291202, 1,
