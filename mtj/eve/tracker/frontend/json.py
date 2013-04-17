@@ -150,11 +150,13 @@ class Json(object):
             'regionName': tower.regionName,
             'typeName': tower.typeName,
             'onlineSince': tower.onlineTimestamp,
-            'onlineSinceFormatted':
-                strftime('%Y-%m-%d %H:%M', gmtime(tower.onlineTimestamp)),
+            'onlineSinceFormatted': tower.onlineTimestamp and
+                strftime('%Y-%m-%d %H:%M', gmtime(tower.onlineTimestamp)) or
+                    'N/A',
             'offlineAt': tower.getOfflineTimestamp(),
-            'offlineAtFormatted': strftime(
-                '%Y-%m-%d %H:%M', gmtime(tower.getOfflineTimestamp())),
+            'offlineAtFormatted': tower.getOfflineTimestamp() and strftime(
+                '%Y-%m-%d %H:%M', gmtime(tower.getOfflineTimestamp())) or
+                    'N/A',
             'state': tower.getState(timestamp),
             'stateName': constants.Corp.pos_states[tower.getState(timestamp)],
             'stateTimestamp': tower.stateTimestamp,
