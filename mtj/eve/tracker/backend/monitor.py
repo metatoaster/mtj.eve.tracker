@@ -28,6 +28,9 @@ def towerUpdates(*attributes):
 
         @functools.wraps(f)
         def wrapper(inst, *a, **kw):
+            # XXX consider acquring the tracker (transaction) here so
+            # that nested calls will result in an empty transaction
+            # object.   Rather, a deferred call.
             before = extract(inst, attributes)
             result = f(inst, *a, **kw)
 

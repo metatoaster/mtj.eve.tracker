@@ -587,21 +587,32 @@ See that the values are accumulating as expected::
 
     >>> sorted(tower3.getSiloLevels(timestamp=1327509000).items())
     [(16644, 19700), (16649, 19700), (16662, 600)]
+    >>> sorted(tower3.getSiloLevels(timestamp=1327832999).items())
+    [(16644, 10800), (16649, 10800), (16662, 18400)]
+    >>> sorted(tower3.getSiloLevels(timestamp=1327833000).items())
+    [(16644, 10700), (16649, 10700), (16662, 18600)]
 
 Oh yeah, should probably add strontium back into the bay::
 
-    >>> sorted(tower3.getResources(timestamp=1327509000).items())
-    [(4246, 19800), (16275, 0)]
     >>> tower3.exitReinforcement(strontium=14400, timestamp=1327372200)
-    >>> sorted(tower3.getResources(timestamp=1327509000).items())
-    [(4246, 19800), (16275, 14400)]
+    Traceback (most recent call last):
+    ...
+    ValueError: Cannot exit reinforcement 129600s before 1327501800
+
+Too soon, I guess.  Wait a bit::
+
+    >>> sorted(tower3.getResources(timestamp=1327869000).items())
+    [(4246, 15800), (16275, 0)]
+    >>> tower3.exitReinforcement(strontium=14400, timestamp=1327833600)
+    >>> sorted(tower3.getResources(timestamp=1327869000).items())
+    [(4246, 15800), (16275, 14400)]
 
 Should not interfere with the silo calculations either::
 
-    >>> sorted(tower3.getSiloLevels(timestamp=1327509000).items())
-    [(16644, 19700), (16649, 19700), (16662, 600)]
-    >>> sorted(tower3.getSiloLevels(timestamp=1327512600).items())
-    [(16644, 19600), (16649, 19600), (16662, 800)]
+    >>> sorted(tower3.getSiloLevels(timestamp=1327832999).items())
+    [(16644, 10800), (16649, 10800), (16662, 18400)]
+    >>> sorted(tower3.getSiloLevels(timestamp=1327833000).items())
+    [(16644, 10700), (16649, 10700), (16662, 18600)]
 
 Logging and replay
 ------------------
@@ -615,6 +626,6 @@ Now let's see if we have the tower entries logged::
 
     >>> results = list(backend._conn.execute('select * from fuel'))
     >>> len(results)
-    22
-    >>> results[21]
-    (22, 3, 16275, 400, 1327372200, 14400)
+    25
+    >>> results[24]
+    (25, 3, 16275, 400, 1327836600, 14400)

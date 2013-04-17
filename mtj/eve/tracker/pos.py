@@ -120,6 +120,9 @@ class Tower(object):
             the new stateTimestamp
         """
 
+        return self._setStateTimestamp(stateTimestamp)
+
+    def _setStateTimestamp(self, stateTimestamp):
         if stateTimestamp is None:
             # This can happen when API says so when querying for a long
             # offline pos.  Just assume this to be 0.
@@ -242,7 +245,7 @@ class Tower(object):
         return mismatches
 
     def updateResources(self, values, timestamp, stateTimestamp=None,
-            state=None, force=False, omit_missing=True):
+            force=False, omit_missing=True):
         """
         Updates resource levels.
 
@@ -257,8 +260,6 @@ class Tower(object):
             magic involved when handling this argument, especially when
             the creators of this class think they (know how to) care
             about timing consistencies.
-        state
-            The new state of this tower.
         force
             Optional argument.  If supplied, validation against existing
             levels are not done so an event will be forced.
@@ -278,9 +279,6 @@ class Tower(object):
                 # possible difference slide.
                 return
 
-            # TODO if we do setState here, reuse the method BUT ensure
-            # the monitor decorator can see that values are being
-            # monitored.
             state_ts_result = self.setStateTimestamp(stateTimestamp)
 
         # dict comprehension
@@ -297,17 +295,15 @@ class Tower(object):
         updateAll = not self.fuels
         mismatches = self.verifyResources(values, timestamp)
 
-        # Now that resources are verified, the new state can be
-        # installed
-
-        self.setState(state)
-
         update_values = {}
         if updateAll:
             # mismatches should be all the resources
             update_values = {v: 0 for v in mismatches}
         update_values.update(values)
 
+        # TODO rename this better, as this really is to verify that the
+        # input stateTimestamp is correct and only update when it's
+        # incorrect.
         updateStateTimestamp(stateTimestamp)
         if stateTimestamp > timestamp:
             # assume all fuel values specified at future timestamps are
@@ -527,10 +523,13 @@ class Tower(object):
         remaining = fuel.getCyclesPossible() * fuel.period
         return remaining
 
-    @monitor.towerUpdates('state')
-    def setState(self, state):
+    @monitor.towerUpdates('state', 'stateTimestamp')
+    def setState(self, state=None, stateTimestamp=None, timestamp=None):
         if state is None:
             return
+
+        if timestamp is None:
+            timestamp = int(time.time())
 
         if isinstance(state, basestring):
             # TODO evaluate whether to allow this evelink specific
@@ -538,9 +537,33 @@ class Tower(object):
             state = corp_const.pos_states.index(state)
         if not isinstance(state, int):
             raise TypeError('state must be an int')
-        self.state = state
 
-    @monitor.towerUpdates('state')
+        if self.state != state:
+            # Fully update all the things.
+            resources = self.getResources(timestamp)
+            # Update silo content first to ensure right calculations...
+            siloLevels = self.getSiloLevels(timestamp)
+
+            # New state
+            self.state = state
+            # New pulses
+            if stateTimestamp:
+                self._setStateTimestamp(stateTimestamp)
+            else:
+                stateTimestamp = self.stateTimestamp
+
+            # Now update the levels using this new state (for freeze)
+            # and the new stateTimestamp (for when exiting).
+            self.updateResources(resources, timestamp, stateTimestamp,
+                    force=True)
+
+            # Only update silo levels if this pos is no longer online
+            if self.state != STATE_ONLINE:
+                for k, v in siloLevels.iteritems():
+                    # TODO make online state determined more intelligently
+                    self.updateSiloBuffer(k, value=v, timestamp=timestamp,
+                        online=False)
+
     def enterReinforcement(self, exitAt, timestamp=None):
         """
         Helper method to trigger a reinforcement.  API update method can
@@ -550,32 +573,30 @@ class Tower(object):
         if timestamp is None:
             timestamp = int(time.time())
 
+        self.setState(STATE_REINFORCED, exitAt, timestamp)
+
         resources = self.getResources(timestamp)
         resources[STRONTIUM_ITEMID] = 0
 
-        # the exit stamp is the new stateTimestamp as per the API, and
-        # so new pulse need to be calculated.
-        self.setStateTimestamp(exitAt)
-
-        # Update silo content first to ensure right calculations...
-        siloLevels = self.getSiloLevels(timestamp)
-        for k, v in siloLevels.iteritems():
-            self.updateSiloBuffer(k, value=v, timestamp=timestamp,
-                online=False)
-
         # Before the resources is updated along with state.
-        self.updateResources(resources, exitAt, state=STATE_REINFORCED,
-            force=True)
+        self.updateResources(resources, timestamp)
 
-    @monitor.towerUpdates('state')
     def exitReinforcement(self, strontium, timestamp=None):
         """
         Used to verify reinforcement is completed, with new strontium
         added back into the strontium bay.
         """
 
-        self.updateResources({STRONTIUM_ITEMID: strontium}, timestamp,
-            state=STATE_ONLINE, force=True)
+        if timestamp is None:
+            timestamp = int(time.time())
+
+        if timestamp < self.stateTimestamp:
+            raise ValueError("Cannot exit reinforcement %ds before %d" %
+                (self.stateTimestamp - timestamp, self.stateTimestamp))
+
+        self.setState(STATE_ONLINE, timestamp=timestamp)
+        self.updateResources({STRONTIUM_ITEMID: strontium}, timestamp)
+
 
     def attachSilo(self, itemID, typeID, resourceTypeID=None):
         """

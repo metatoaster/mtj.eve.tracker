@@ -88,16 +88,11 @@ class BaseTowerManager(object):
             logger.info('timestamps (%s, %s, %s) | delta %d',
                 ts, api_time, state_ts, delta)
 
-            # XXX state should be supplied here, one to ensure correct
-            # calculation, and then the other for initializing the correct
-            # rates.
-            # supply the new stateTimestamp.
+            # supply the new stateTimestamp and state.
+            tower.setState(state=state, stateTimestamp=state_ts,
+                timestamp=api_time)
             tower.updateResources(details['fuel'], api_time,
                 stateTimestamp=state_ts, omit_missing=False)
-
-            # This is done after the resources to not interfere with the
-            # resource verification.
-            tower.setState(state)
 
             # Finally log down this tower as having updated with api.
             # Reason why we don't use the tower's api itemID is because

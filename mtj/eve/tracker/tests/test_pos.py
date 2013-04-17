@@ -150,8 +150,8 @@ class TowerTestCase(TestCase):
         tower = Tower(1000001, 12235, 30004608, 40291202, 1,
             0, 0, 0)
         # stateTimestamps always submitted via API update.
-        tower.updateResources({4247: 28000}, 10000, stateTimestamp=10001,
-            state=STATE_ONLINE,)
+        tower.setState(STATE_ONLINE, stateTimestamp=10001)
+        tower.updateResources({4247: 28000}, 10000, stateTimestamp=10001)
         fuels = tower.getResources(20800)
         self.assertEqual(fuels[4247], 27880)
         fuels = tower.getResources(20801)
@@ -164,8 +164,8 @@ class TowerTestCase(TestCase):
         tower = Tower(1000001, 12235, 30004608, 40291202, 0,
             0, 0, 0)
         # stateTimestamps always submitted via API update.
-        tower.updateResources({4247: 28000}, 10000, stateTimestamp=11001,
-            state=STATE_ONLINE,)
+        tower.setState(STATE_ONLINE, stateTimestamp=11001)
+        tower.updateResources({4247: 28000}, 10000, stateTimestamp=11001)
         fuels = tower.getResources(20800)
         self.assertEqual(fuels[4247], 27880)
         fuels = tower.getResources(21802)

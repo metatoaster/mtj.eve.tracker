@@ -98,12 +98,12 @@ class DefaultManagerTestCase(TestCase):
         corp.starbase_details_index = 2
         self.manager.importWithCorp(corp)
 
-        # two updates (currently, until state + stateTimestamp is unified)
+        # two updates (currently, until state + stateTimestamp is fully
+        # unified)
         tower_log_1 = self.backend.getTowerLog(1)
-        self.assertEqual(len(tower_log_1), 2)
+        self.assertEqual(len(tower_log_1), 1)
         self.assertEqual(tower_log_1[0].stateTimestamp, 1362901009)
-        self.assertEqual(tower_log_1[0].state, 4)
-        self.assertEqual(tower_log_1[1].state, 3)
+        self.assertEqual(tower_log_1[0].state, 3)
 
         tower_apis = self.backend.getTowerApis()
         self.assertEqual(len(tower_apis), 2)
