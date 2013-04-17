@@ -526,7 +526,7 @@ class Tower(object):
             # TODO evaluate whether to allow this evelink specific
             # constant access here.
             state = corp_const.pos_states.index(state)
-        elif not isinstance(state, int):
+        if not isinstance(state, int):
             raise TypeError('state must be an int')
         self.state = state
 
@@ -705,6 +705,15 @@ class TowerResourceBuffer(TimedBuffer):
         self.purpose = purpose
         self.resourceTypeName = resourceTypeName
         self.unitVolume = unitVolume
+
+        if (self.tower is not None and
+                self.tower.state not in [STATE_REINFORCED, STATE_ONLINE]):
+            # If the state of the tower is already not one that consumes
+            # fuel, freeze.  Note that this is what the tower is marked
+            # as, so there are likely cross dependencies that need to be
+            # noted.  Generally we assume towers are initialized before
+            # the resource buffer does.
+            freeze = True
 
         if freeze is None:
             freeze = not self.isNormalFuel()

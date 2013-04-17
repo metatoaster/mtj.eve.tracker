@@ -93,6 +93,58 @@ class TowerTestCase(TestCase):
         # Omitted values now 0.
         self.assertEqual(fuels[16275], 0)
 
+    def test_1000_reinforced_fuel_consumption(self):
+        # tower = Tower(itemID, typeID, locationID, moonID, state,
+        #     stateTimestamp, onlineTimestamp, standingOwnerID)
+
+        # Following the API date patterns.
+        tower = Tower(1000001, 12235, 30004608, 40291202, 3,
+            20000, 0, 0)
+        tower.updateResources({4247: 28000}, 20000)
+        fuels = tower.getResources(0)
+        self.assertEqual(fuels[4247], 28000)
+        fuels = tower.getResources(3600)
+        self.assertEqual(fuels[4247], 28000)
+        fuels = tower.getResources(20000)
+        self.assertEqual(fuels[4247], 28000)
+        fuels = tower.getResources(20001)
+        self.assertEqual(fuels[4247], 27960)
+
+    def test_1001_anchored_fuel_consumption(self):
+        # Following the API date patterns.
+        tower = Tower(1000001, 12235, 30004608, 40291202, 1,
+            0, 0, 0)
+        tower.updateResources({4247: 28000}, 0)
+        fuels = tower.getResources(0)
+        self.assertEqual(fuels[4247], 28000)
+        fuels = tower.getResources(3600)
+        self.assertEqual(fuels[4247], 28000)
+        fuels = tower.getResources(20000)
+        self.assertEqual(fuels[4247], 28000)
+
+    def test_1002_anchored_fuel_consumption_resume(self):
+        # Following the API date patterns.
+        tower = Tower(1000001, 12235, 30004608, 40291202, 1,
+            0, 0, 0)
+        tower.updateResources({4247: 28000}, 10000)
+        tower.setState(STATE_ONLINE)
+        fuels = tower.getResources(20000)
+        # This is why we need to update resource and state at the same
+        # time if possible.
+        self.assertEqual(fuels[4247], 28000)
+
+    def test_1011_offline_fuel_consumption(self):
+        # Following the API date patterns.
+        tower = Tower(1000001, 12235, 30004608, 40291202, 0,
+            0, 0, 0)
+        tower.updateResources({4247: 28000}, 0)
+        fuels = tower.getResources(0)
+        self.assertEqual(fuels[4247], 28000)
+        fuels = tower.getResources(3600)
+        self.assertEqual(fuels[4247], 28000)
+        fuels = tower.getResources(20000)
+        self.assertEqual(fuels[4247], 28000)
+
 
 class TowerResourceBufferTestCase(TestCase):
     """
