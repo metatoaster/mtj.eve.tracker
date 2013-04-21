@@ -43,6 +43,8 @@ def towerUpdates(*attributes):
             after = extract(inst, attributes)
 
             if before != after:
+                # XXX need to check that the tracker actually supports
+                # this tower instance.
                 tracker.updateTower(inst)
 
             return result
@@ -70,6 +72,8 @@ def towerResourceBuffer(f):
                 'for tower update.')
             return
 
+        # XXX need to check that the tracker actually supports this
+        # tower instance.
         tracker.addFuel(**result)
 
     return wrapper
