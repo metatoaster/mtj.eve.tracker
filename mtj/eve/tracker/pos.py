@@ -149,8 +149,8 @@ class Tower(object):
         # index, it will be impossible to reliably determine whether
         # the discount is indeed applied.
         evelink_helper = zope.component.getUtility(IAPIHelper)
-        sov_info = evelink_helper.sov[self.locationID]
-        return sov_info['alliance_id'] == self.allianceID
+        sov_info = evelink_helper.sov.get(self.locationID)
+        return sov_info and sov_info['alliance_id'] == self.allianceID or False
 
     @monitor.towerResourceBuffer
     def setResourceBuffer(self, bufferGroupName, bufferKey, delta, timestamp,
@@ -196,11 +196,11 @@ class Tower(object):
     def initResources(self):
         evelink_helper = zope.component.getUtility(IAPIHelper)
         all_fuels = pos_info.getControlTowerResource(self.typeID)
-        sov_info = evelink_helper.sov[self.locationID]
+        sov_info = evelink_helper.sov.get(self.locationID, {})
 
         # Determine fuel type from systemID + factionID
-        faction_id = sov_info['faction_id']
-        security = eve_map.getSolarSystem(self.locationID)['security']
+        faction_id = sov_info.get('faction_id', None)
+        security = eve_map.getSolarSystem(self.locationID).get('security', 0)
 
         for fuel in all_fuels:
             if fuel['factionID'] in (faction_id, None):
