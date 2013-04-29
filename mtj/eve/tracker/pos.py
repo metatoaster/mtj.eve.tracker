@@ -39,6 +39,8 @@ class Tower(object):
     # that contain timestamp.  Value tends to be fuel value and they all
     # precede it, but other optional arguments have to follow after.
 
+    _missing = '<missing name>'
+
     def __init__(self, itemID, typeID, locationID, moonID, state,
             stateTimestamp, onlineTimestamp, standingOwnerID):
         """
@@ -89,16 +91,17 @@ class Tower(object):
         # It's done using self to avoid logging while also updating
         # `resourcePulse`
         self.setStateTimestamp(self.stateTimestamp)
-        moon = eve_map.getCelestial(self.moonID)
-        solar_system = eve_map.getSolarSystem(self.locationID)
-        pos = pos_info.getControlTower(self.typeID)
-        stront = pos_info.getControlTowerStrontCapacity(self.typeID)
-        self.celestialName = moon['itemName']
-        self.solarSystemName = solar_system['solarSystemName']
-        self.regionName = solar_system['regionName']
-        self.typeName = pos['typeName']
-        self.capacity = pos['capacity']
-        self.strontCapacity = stront['capacitySecondary']
+        moon = eve_map.getCelestial(self.moonID) or {}
+        solar_system = eve_map.getSolarSystem(self.locationID) or {}
+        pos = pos_info.getControlTower(self.typeID) or {}
+        stront = pos_info.getControlTowerStrontCapacity(self.typeID) or {}
+        self.celestialName = moon.get('itemName', self._missing)
+        self.solarSystemName = solar_system.get('solarSystemName',
+            self._missing)
+        self.regionName = solar_system.get('regionName', self._missing)
+        self.typeName = pos.get('typeName', self._missing)
+        self.capacity = pos.get('capacity', 0)
+        self.strontCapacity = stront.get('capacitySecondary', 0)
 
         # Not calling the update method defined below as this is part of
         # initialization.

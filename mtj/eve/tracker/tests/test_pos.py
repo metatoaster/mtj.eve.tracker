@@ -33,6 +33,10 @@ class TowerTestCase(TestCase):
         self.assertEqual(tower.capacity, 140000)
         self.assertEqual(tower.strontCapacity, 50000)
 
+    def test_0001_base_tower(self):
+        tower = Tower(1, 1, 1, 1, 4, 1325376000, 1306886400, 1)
+        self.assertEqual(tower.celestialName, tower._missing)
+
     def test_0010_none_timestamp(self):
         # onlineTimestamp might be None.  Assume to be 0.
         # this can be caused by API.
