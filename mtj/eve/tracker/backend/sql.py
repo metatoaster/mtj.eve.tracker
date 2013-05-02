@@ -327,8 +327,12 @@ class SQLAlchemyBackend(object):
         )
 
         self._towers = {}
+        self._setAuditables(Fuel, Tower, TowerLog, Silo)
 
         self._addDefaultData()
+
+    def _setAuditables(self, *cls):
+        self._auditable = {c.__tablename__: c for c in cls}
 
     def _addDefaultData(self):
         session = self.session()
@@ -595,10 +599,32 @@ class SQLAlchemyBackend(object):
         session.expunge_all()
         return result
 
+    def getAuditable(self, tbl_key, rowid):
+        if tbl_key not in self._auditable:
+            return None
+
+        cls = self._auditable[tbl_key]
+
+        session = self.session()
+        q = session.query(cls).filter(cls.id == rowid)
+        # assuming id always primary key (i.e. unique)
+        result = None
+        if q.count() == 1:
+            result = q.one()
+            session.expunge(result)
+        session.close()
+        return result
+
     def addAudit(self, obj, reason, category, user, timestamp=None):
         """
         Add an audit entry for the object.
         """
+
+        if isinstance(obj, tuple):
+            obj = self.getAuditable(*obj)
+
+        if not isinstance(obj, Base):
+            return
 
         table = obj.__table__.name
         rowid = obj.id

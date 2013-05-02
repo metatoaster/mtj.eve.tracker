@@ -247,6 +247,28 @@ class SqlBackendTestCase(TestCase):
         self.assertEqual(result[0], (1, u'tower', 1,
             u"DJ's personal tech moon", u'label', u'DJ', 1364479379))
 
+    def test_3001_get_auditable(self):
+        tower = self.backend.addTower(1000001, 12235, 30004608, 40291202, 4,
+            1325376000, 1306886400, 498125261)
+        auditable = self.backend.getAuditable('tower', 1)
+        self.assertEqual(tower.id, auditable.id)
+        self.assertEqual(tower.locationID, auditable.locationID)
+
+    def test_3002_add_audit_get_auditable(self):
+        tower = self.backend.addTower(1000001, 12235, 30004608, 40291202, 4,
+            1325376000, 1306886400, 498125261)
+        self.backend.addAudit(('tower', '2'), "DJ's personal tech moon",
+            'label', 'DJ', 1364479379)
+
+        result = list(self.backend._conn.execute('select * from audit'))
+        self.assertEqual(len(result), 0)
+
+        self.backend.addAudit(('tower', '1'), "DJ's personal tech moon",
+            'label', 'DJ', 1364479379)
+        result = list(self.backend._conn.execute('select * from audit'))
+        self.assertEqual(result[0], (1, u'tower', 1,
+            u"DJ's personal tech moon", u'label', u'DJ', 1364479379))
+
     def test_3000_api_usage_audit(self):
         self.assertEqual(self.backend.currentApiUsage(), {})
         self.assertEqual(self.backend.completedApiUsage(), {})
