@@ -158,6 +158,29 @@ class DefaultManagerTestCase(TestCase):
         self.backend.reinstantiate()
         self.assertEqual(self.backend.getTower(1).stateTimestamp, 1362829009)
 
+    def test_1500_resolve_multi_location(self):
+        # when towers once anchored at a location then unanchored, then
+        # reanchored at new location without being repackaged.
+
+        corp = DummyCorp()
+        corp.starbases_index = 2
+        corp.starbase_details_index = 2
+        self.manager.importWithCorp(corp)
+        self.assertEqual(len(self.backend.getTowerIds()), 2)
+
+        corp.starbases_index = 3
+        corp.starbase_details_index = 3
+        self.manager.importWithCorp(corp)
+        self.assertEqual(len(self.backend.getTowerIds()), 3)
+
+        tower2 = self.backend.getTower(2)
+        self.assertEqual(tower2.fuels[16275].value, 1000)
+        self.assertEqual(tower2.fuels[4051].value, 3939)
+
+        tower3 = self.backend.getTower(3)
+        self.assertEqual(tower3.fuels[16275].value, 1000)
+        self.assertEqual(tower3.fuels[4051].value, 6000)
+
 
 def test_suite():
     suite = TestSuite()

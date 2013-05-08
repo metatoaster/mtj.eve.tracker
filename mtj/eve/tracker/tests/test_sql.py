@@ -75,19 +75,17 @@ class SqlBackendTestCase(TestCase):
         self.assertEqual(result[2].value, 25000)
         self.assertEqual(result[2].fuelTypeID, 4247)
 
-
     def test_0200_double_add(self):
         tower = self.backend.addTower(1000001, 12235, 30004608, 40291202, 4,
             1325376000, 1306886400, 498125261)
         fuel = {4247: 12345, 16275: 7200,}
         tower.updateResources(fuel, 1325376000)
 
-        dupe = self.backend.addTower(1000001, 12235, 0, 0, 0, 0, 0, 0)
+        # only the itemID and moonID are checked
+        dupe = self.backend.addTower(1000001, 12235, 0, 40291202, 3, 0, 0, 0)
         # if another attempt to add a second tower with the same itemID,
         # ignore the new and return the previously added.
         self.assertEqual(tower, dupe)
-
-        # TODO test for log entries when set is implemented.
 
     def test_0300_tower_update(self):
         tower = self.backend.addTower(1000001, 12235, 30004608, 40291202, 4,

@@ -463,9 +463,12 @@ class SQLAlchemyBackend(object):
 
         return count
 
-    def _queryTower(self, session, itemID):
+    def _queryTower(self, session, itemID, moonID):
         # see if we already have this tower_id registered.
-        q = session.query(Tower).filter(Tower.itemID == itemID)
+        q = session.query(Tower).filter(
+            (Tower.itemID == itemID) &
+            (Tower.moonID == moonID)
+        )
         try:
             result = q.one()
         except NoResultFound:
@@ -492,10 +495,12 @@ class SQLAlchemyBackend(object):
         # basic demo of just the fuel tracking.
 
         session = self.session()
+        # 2 is the positional argument for moonID in `Tower`
+        moonID = kw.get('moonID', *a[2:3])
 
         if itemID:
             # XXX the check should include rest of the fields.
-            result = self._queryTower(session, itemID)
+            result = self._queryTower(session, itemID, moonID)
             if result:
                 return self._towers[result.id]
 

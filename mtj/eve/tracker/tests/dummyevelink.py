@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import time
 import json
 import itertools
+from collections import OrderedDict
 import zope.interface
 from evelink.api import APIError
 
@@ -24,7 +25,8 @@ class DummyCorp(object):
                 'api_key': (1, 'vcode')})()
 
     def _dummy_starbases(self):
-        return dummy_starbases[self.starbases_index]
+        return OrderedDict(sorted(
+            dummy_starbases[self.starbases_index].items()))
 
     def starbases(self):
         results = self._dummy_starbases()
@@ -33,7 +35,8 @@ class DummyCorp(object):
         return results['results']
 
     def _dummy_starbase_details(self):
-        return dummy_starbase_details[self.starbase_details_index]
+        return OrderedDict(sorted(
+            dummy_starbase_details[self.starbase_details_index].items()))
 
     def starbase_details(self, itemID):
         all_results = self._dummy_starbase_details()
@@ -339,6 +342,36 @@ dummy_starbases = [
         },
     },
 
+    {
+        'last_timestamps': {
+            'current_time': 1363188986, 'cached_until': 1363189351},
+        'results': {
+
+            507862: {
+                'itemID': 507862,
+                'typeID': 20064,
+                'standingOwnerID': 498125261,
+                'stateTimestamp': 1363261009,
+                'state': 4,
+                'onlineTimestamp': 1362901009,
+                'locationID': 30004751,
+                'moonID': 40291202,
+            },
+
+            507863: {
+                'itemID': 507863,
+                'typeID': 20062,
+                'standingOwnerID': 498125261,
+                'stateTimestamp': 1363189986,
+                'state': 4,
+                'onlineTimestamp': 1362109986,
+                'locationID': 30002904,
+                'moonID': 40300804,
+            },
+
+        },
+    },
+
 ]
 
 dummy_starbase_details = [
@@ -400,4 +433,34 @@ dummy_starbase_details = [
         },
 
     },
+
+    {
+        507862: {
+            'results': {
+                u'online_ts': 1317197424,
+                u'state': u'online',
+                u'state_ts': 1363261009,
+                u'fuel': {16275: 3000, 4312: 6000},
+            },
+            'last_timestamps': {
+                'current_time': 1363225863,
+                'cached_until': 1363226462,
+            },
+        },
+
+        507863: {
+            'results': {
+                u'online_ts': 1362109986,
+                u'state': u'online',
+                u'state_ts': 1363228609,
+                u'fuel': {16275: 1000, 4051: 6000},
+            },
+            'last_timestamps': {
+                'current_time': 1363225863,
+                'cached_until': 1363226462,
+            },
+        },
+
+    },
+
 ]
