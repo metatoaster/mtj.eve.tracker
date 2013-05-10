@@ -620,7 +620,7 @@ class SQLAlchemyBackend(object):
         session.close()
         return result
 
-    def addAudit(self, obj, reason, category, user, timestamp=None):
+    def addAudit(self, obj, reason, user, category, timestamp=None):
         """
         Add an audit entry for the object.
         """
@@ -634,7 +634,7 @@ class SQLAlchemyBackend(object):
         table = obj.__table__.name
         rowid = obj.id
 
-        audit = Audit(table, rowid, reason, category, user, timestamp)
+        audit = Audit(table, rowid, reason, user, category, timestamp)
 
         session = self.session()
         session.add(audit)
