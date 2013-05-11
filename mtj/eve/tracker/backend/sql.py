@@ -640,6 +640,50 @@ class SQLAlchemyBackend(object):
         session.add(audit)
         session.commit()
 
+    def getAuditCategories(self, table):
+        """
+        Get the audit category for a table.
+        """
+
+        session = self.session()
+        q = session.query(Category).filter(Category.table == table).order_by(
+            Category.name)
+        result = q.all()
+        session.expunge_all()
+        return result
+
+    def getAuditForTable(self, table):
+        """
+        Get audit entries for a table.  Only the latest entries per 
+        category is returned.
+        """
+
+        session = self.session()
+        q = session.query(Audit).filter(Audit.table == table).group_by(
+            Audit.category_name, Audit.rowid).having(
+            func.max(Audit.timestamp)).order_by(Audit.category_name)
+        audits = q.all()
+        session.expunge_all()
+        result = {}
+        for audit in audits:
+            if audit.rowid not in result:
+                result[audit.rowid] = []
+            result[audit.rowid].append(audit)
+        return result
+
+    def getAuditForEntry(self, table, rowid):
+        """
+        Get audit entries for a table and rowid.  Sorted by timestamp
+        for all entries.
+        """
+
+        session = self.session()
+        q = session.query(Audit).filter(Audit.table == table &
+            Audit.rowid == rowid).order_by(desc(Audit.timestamp))
+        result = q.all()
+        session.expunge_all()
+        return result
+
     def getApiKeys(self):
         """
         Return all the API keys.

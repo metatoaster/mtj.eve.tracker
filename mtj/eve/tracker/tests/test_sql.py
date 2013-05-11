@@ -267,6 +267,42 @@ class SqlBackendTestCase(TestCase):
         self.assertEqual(result[0], (1, u'tower', 1,
             u"DJ's personal tech moon", u'label', u'DJ', 1364479379))
 
+    def test_3003_get_audit_entries(self):
+        tower = self.backend.addTower(1000001, 12235, 30004608, 40291202, 4,
+            1325376000, 1306886400, 498125261)
+        tower = self.backend.addTower(1000001, 12235, 30004268, 40270415, 4,
+            1325376000, 1306886400, 498125261)
+        self.backend.addAudit(('tower', '1'), "DJ's personal tech moon",
+            'DJ', 'label', 1369479379)
+        self.backend.addAudit(('tower', '1'), "This should be nationalized.",
+            'admin', 'notice', 1369479472)
+        self.backend.addAudit(('tower', '1'), "Maybe in a month?",
+            'DJ', 'notice', 1369479476)
+        self.backend.addAudit(('tower', '1'), "No.",
+            'admin', 'notice', 1369479482)
+        self.backend.addAudit(('tower', '2'), "DJ's personal tech moon",
+            'DJ', 'label', 1369479449)
+        self.backend.addAudit(('tower', '2'), "DJ's personal neo moon",
+            'DJ', 'label', 1369479596)
+
+        audits = self.backend.getAuditForTable('tower')
+        self.assertEqual(audits[1][0].reason, "DJ's personal tech moon")
+        self.assertEqual(audits[1][0].category_name, 'label')
+        self.assertEqual(audits[1][1].reason, "No.")
+        self.assertEqual(audits[1][1].category_name, 'notice')
+        self.assertEqual(audits[2][0].reason, "DJ's personal neo moon")
+        self.assertEqual(audits[2][0].category_name, 'label')
+
+        self.backend.addAudit(('tower', '2'), "DJ :getout:",
+            'admin', 'label', 1369479597)
+        audits = self.backend.getAuditForTable('tower')
+        self.assertEqual(audits[2][0].reason, "DJ :getout:")
+
+    def test_3100_get_audit_categories_default(self):
+        categories = self.backend.getAuditCategories('tower')
+        names = [c.name for c in categories]
+        self.assertEqual(names, ['label', 'notice'])
+
     def test_3000_api_usage_audit(self):
         self.assertEqual(self.backend.currentApiUsage(), {})
         self.assertEqual(self.backend.completedApiUsage(), {})
