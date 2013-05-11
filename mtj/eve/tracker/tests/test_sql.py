@@ -293,6 +293,12 @@ class SqlBackendTestCase(TestCase):
         self.assertEqual(audits[2][0].reason, "DJ's personal neo moon")
         self.assertEqual(audits[2][0].category_name, 'label')
 
+        audits = self.backend.getAuditEntry('tower', 1)
+        self.assertEqual(audits['label'][0].reason, "DJ's personal tech moon")
+        self.assertEqual(audits['notice'][0].reason, "No.")
+        self.assertEqual(audits['notice'][1].reason, "Maybe in a month?")
+        self.assertEqual(audits['notice'][2].user, "admin")
+
         self.backend.addAudit(('tower', '2'), "DJ :getout:",
             'admin', 'label', 1369479597)
         audits = self.backend.getAuditForTable('tower')
