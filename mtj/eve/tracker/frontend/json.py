@@ -65,6 +65,15 @@ class Json(object):
     def _towers(self):
         timestamp = int(time())
         api_ts = self._manager.getTowerApiTimestamp
+        tower_labels = self._backend.getAuditForTable('tower')
+
+        def getLabel(id_):
+            labels = tower_labels.get(id_, [])
+            for label in labels:
+                if label.category_name == 'label':
+                    return label.reason
+            return ''
+
         all_towers = {
             v.id: {
                 'id': v.id,
@@ -93,6 +102,7 @@ class Json(object):
                 'timeRemaining': v.getTimeRemaining(timestamp),
                 'timeRemainingFormatted':
                     str(timedelta(seconds=v.getTimeRemaining(timestamp))),
+                'auditLabel': getLabel(v.id),
             # FIXME using private _towers.
             } for v in self._backend._towers.values()}
         return timestamp, all_towers
@@ -108,6 +118,10 @@ class Json(object):
         backend = self._backend
         timestamp = int(time())
         api_ts = self._manager.getTowerApiTimestamp
+        audits = self._backend.getAuditEntry('tower', tower_id)
+
+        all_labels = audits.get('label', [])
+        label = len(all_labels) and all_labels[0].reason or ''
 
         tower = backend.getTower(tower_id, None)
         if tower is None:
@@ -172,6 +186,7 @@ class Json(object):
             'timeRemaining': tower.getTimeRemaining(timestamp),
             'timeRemainingFormatted':
                 str(timedelta(seconds=tower.getTimeRemaining(timestamp))),
+            'auditLabel': label,
         }
 
         fuels = tower.getResources(timestamp)
