@@ -694,6 +694,23 @@ class SQLAlchemyBackend(object):
             result[audit.category_name].append(audit)
         return result
 
+    def getAuditEntriesFor(self, table, rowid):
+        """
+        Get ungrouped audit entries for a table and rowid.  Sorted by 
+        timestamp for all entries.
+        """
+
+        # XXX name this method better.
+
+        session = self.session()
+        q = session.query(Audit).filter((Audit.table == table) &
+            (Audit.rowid == rowid)).order_by(desc(Audit.timestamp))
+        audits = q.all()
+        session.expunge_all()
+        return audits
+
+        # code duping previous method...
+
     def getApiKeys(self):
         """
         Return all the API keys.

@@ -41,6 +41,16 @@ def tower(tower_id):
     response.headers['Content-type'] = 'application/json'
     return response
 
+@json_frontend.route('/audit/<table>/<int:rowid>')
+def audit_tbl_rowid(table, rowid):
+    backend = zope.component.getUtility(ITrackerBackend)
+    manager = zope.component.getUtility(ITowerManager)
+    jst = Json(backend, manager)
+    result = jst.audits(table, rowid)
+    response = make_response(result)
+    response.headers['Content-type'] = 'application/json'
+    return response
+
 @json_frontend.route('/reload', methods=['POST'])
 def reload_db():
     """

@@ -126,6 +126,20 @@ class Json(object):
             ] for category_name, audits in all_audits.iteritems()
         }
 
+    def audits(self, obj, rowid):
+        audits = self._backend.getAuditEntriesFor(obj, rowid)
+        result = {
+            'audits': [{
+                'category_name': v.category_name,
+                'reason': v.reason,
+                'user': v.user,
+                'timestamp': v.timestamp,
+                'timestampFormatted':
+                    strftime('%Y-%m-%d %H:%M:%S', gmtime(v.timestamp)),
+            } for v in audits]
+        }
+        return json.dumps(result)
+
     def tower(self, tower_id=None):
         if tower_id is None:
             return self.towers()
