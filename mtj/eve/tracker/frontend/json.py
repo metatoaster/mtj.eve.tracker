@@ -111,7 +111,7 @@ class Json(object):
         result = dict(zip(['timestamp', 'towers'], self._towers()))
         return json.dumps(result)
 
-    def audits(self, obj, rowid):
+    def _audits(self, obj, rowid):
         all_audits = self._backend.getAuditEntry(obj, rowid)
         return {
             category_name: [
@@ -197,7 +197,7 @@ class Json(object):
             'timeRemaining': tower.getTimeRemaining(timestamp),
             'timeRemainingFormatted':
                 str(timedelta(seconds=tower.getTimeRemaining(timestamp))),
-            'audits': self.audits('tower', tower.id),
+            'audits': self._audits('tower', tower.id),
         }
 
         fuels = tower.getResources(timestamp)
