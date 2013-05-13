@@ -676,31 +676,11 @@ class SQLAlchemyBackend(object):
             result[audit.rowid].append(audit)
         return result
 
-    def getAuditEntry(self, table, rowid):
-        """
-        Get audit entries for a table and rowid.  Sorted by timestamp
-        for all entries.
-        """
-
-        session = self.session()
-        q = session.query(Audit).filter((Audit.table == table) &
-            (Audit.rowid == rowid)).order_by(desc(Audit.timestamp))
-        audits = q.all()
-        session.expunge_all()
-        result = {}
-        for audit in audits:
-            if audit.category_name not in result:
-                result[audit.category_name] = []
-            result[audit.category_name].append(audit)
-        return result
-
     def getAuditEntriesFor(self, table, rowid):
         """
         Get ungrouped audit entries for a table and rowid.  Sorted by 
         timestamp for all entries.
         """
-
-        # XXX name this method better.
 
         session = self.session()
         q = session.query(Audit).filter((Audit.table == table) &
@@ -709,7 +689,21 @@ class SQLAlchemyBackend(object):
         session.expunge_all()
         return audits
 
-        # code duping previous method...
+    def getAuditEntry(self, table, rowid):
+        """
+        Get audit entries for a table and rowid.  Sorted by timestamp
+        for all entries.
+        """
+
+        # TODO rename to getCategorizedAuditEntriesFor
+
+        audits = self.getAuditEntriesFor(table, rowid)
+        result = {}
+        for audit in audits:
+            if audit.category_name not in result:
+                result[audit.category_name] = []
+            result[audit.category_name].append(audit)
+        return result
 
     def getApiKeys(self):
         """
