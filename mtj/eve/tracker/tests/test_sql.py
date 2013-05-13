@@ -33,7 +33,7 @@ class SqlBackendTestCase(TestCase):
 
     def test_init(self):
         result = list(self.backend._conn.execute('select * from category'))
-        self.assertEqual(len(result), 4)
+        self.assertEqual(len(result), 5)
 
     def test_0000_tower(self):
         tower = self.backend.addTower(1000001, 12235, 30004608, 40291202, 4,
@@ -307,7 +307,7 @@ class SqlBackendTestCase(TestCase):
     def test_3100_get_audit_categories_default(self):
         categories = self.backend.getAuditCategories('tower')
         names = [c.name for c in categories]
-        self.assertEqual(names, ['label', 'notice'])
+        self.assertEqual(names, [u'comment', u'label', u'notice'])
 
     def test_3000_api_usage_audit(self):
         self.assertEqual(self.backend.currentApiUsage(), {})
