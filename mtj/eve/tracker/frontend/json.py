@@ -111,6 +111,21 @@ class Json(object):
         result = dict(zip(['timestamp', 'towers'], self._towers()))
         return json.dumps(result)
 
+    def audits(self, obj, rowid):
+        all_audits = self._backend.getAuditEntry(obj, rowid)
+        return {
+            category_name: [
+                {
+                    'reason': v.reason,
+                    'user': v.user,
+                    'timestamp': v.timestamp,
+                    'timestampFormatted':
+                        strftime('%Y-%m-%d %H:%M:%S', gmtime(v.timestamp)),
+                }
+                for v in audits
+            ] for category_name, audits in all_audits.iteritems()
+        }
+
     def tower(self, tower_id=None):
         if tower_id is None:
             return self.towers()
@@ -118,10 +133,6 @@ class Json(object):
         backend = self._backend
         timestamp = int(time())
         api_ts = self._manager.getTowerApiTimestamp
-        audits = self._backend.getAuditEntry('tower', tower_id)
-
-        all_labels = audits.get('label', [])
-        label = len(all_labels) and all_labels[0].reason or ''
 
         tower = backend.getTower(tower_id, None)
         if tower is None:
@@ -186,7 +197,7 @@ class Json(object):
             'timeRemaining': tower.getTimeRemaining(timestamp),
             'timeRemainingFormatted':
                 str(timedelta(seconds=tower.getTimeRemaining(timestamp))),
-            'auditLabel': label,
+            'audits': self.audits('tower', tower.id),
         }
 
         fuels = tower.getResources(timestamp)
