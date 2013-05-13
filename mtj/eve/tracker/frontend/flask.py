@@ -41,6 +41,17 @@ def tower(tower_id):
     response.headers['Content-type'] = 'application/json'
     return response
 
+@json_frontend.route('/audits_recent/', defaults={'count': 50})
+@json_frontend.route('/audits_recent/<int:count>')
+def audits_recent(count):
+    backend = zope.component.getUtility(ITrackerBackend)
+    manager = zope.component.getUtility(ITowerManager)
+    jst = Json(backend, manager)
+    result = jst.audits_recent(count)
+    response = make_response(result)
+    response.headers['Content-type'] = 'application/json'
+    return response
+
 @json_frontend.route('/audit/<table>/<int:rowid>')
 def audit_tbl_rowid(table, rowid):
     backend = zope.component.getUtility(ITrackerBackend)

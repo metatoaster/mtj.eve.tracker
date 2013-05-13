@@ -676,6 +676,20 @@ class SQLAlchemyBackend(object):
             result[audit.rowid].append(audit)
         return result
 
+    def getAuditEntriesRecent(self, count=50):
+        """
+        Get the most recent audit entries.
+
+        count
+            amount to return, defaults to 50.
+        """
+
+        session = self.session()
+        q = session.query(Audit).order_by(desc(Audit.timestamp)).limit(count)
+        audits = q.all()
+        session.expunge_all()
+        return audits
+
     def getAuditEntriesFor(self, table, rowid):
         """
         Get ungrouped audit entries for a table and rowid.  Sorted by 

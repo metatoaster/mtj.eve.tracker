@@ -140,6 +140,22 @@ class Json(object):
         }
         return json.dumps(result)
 
+    def audits_recent(self, count=50):
+        audits = self._backend.getAuditEntriesRecent(count)
+        result = {
+            'audits': [{
+                'table': v.table,
+                'rowid': v.rowid,
+                'category_name': v.category_name,
+                'reason': v.reason,
+                'user': v.user,
+                'timestamp': v.timestamp,
+                'timestampFormatted':
+                    strftime('%Y-%m-%d %H:%M:%S', gmtime(v.timestamp)),
+            } for v in audits]
+        }
+        return json.dumps(result)
+
     def tower(self, tower_id=None):
         if tower_id is None:
             return self.towers()
