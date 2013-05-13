@@ -131,11 +131,14 @@ class SqlBackendTestCase(TestCase):
         tower.setStateTimestamp(1325379602)
         self.backend.reinstantiate()
         self.assertEqual(self.backend.getTower(1).stateTimestamp, 1325379602)
-        self.assertEqual(len(self.backend.getTowerLog(1)), 2)
-        self.assertEqual(self.backend.getTowerLog(1)[0].stateTimestamp,
-            1325379601)
-        self.assertEqual(self.backend.getTowerLog(1)[1].stateTimestamp,
-            1325379602)
+        log = self.backend.getTowerLog(1)
+        self.assertEqual(len(log), 2)
+        self.assertEqual(log[0].stateTimestamp, 1325379602)
+        self.assertEqual(log[1].stateTimestamp, 1325379601)
+
+        log = self.backend.getTowerLog(1, 1)
+        self.assertEqual(len(log), 1)
+        self.assertEqual(log[0].stateTimestamp, 1325379602)
 
     def test_2000_reinstantiate(self):
         self.backend._conn.execute('insert into tower values '

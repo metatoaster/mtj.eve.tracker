@@ -541,14 +541,16 @@ class SQLAlchemyBackend(object):
     def getTowerIds(self):
         return self._towers.keys()
 
-    def getTowerLog(self, tower_id):
+    def getTowerLog(self, tower_id, count=None):
         """
         Return the tower logs for tower_id
         """
 
         session = self.session()
         q = session.query(TowerLog).filter(TowerLog.tower_id == tower_id
-            ).order_by(desc(TowerLog.timestamp))
+            ).order_by(desc(TowerLog.stateTimestamp))
+        if count:
+            q = q.limit(count)
         result = q.all()
         session.expunge_all()
         return result
