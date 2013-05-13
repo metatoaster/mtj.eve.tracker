@@ -140,7 +140,7 @@ class Json(object):
                 'error': 'Tower not found'
             })
 
-        tower_log = backend.getTowerLog(tower_id)
+        tower_log = backend.getTowerLog(tower_id, 10)
         tower_log_json = [{
             'id': v.id,
             'state': v.state,
@@ -153,7 +153,7 @@ class Json(object):
                 strftime('%Y-%m-%d %H:%M:%S', gmtime(v.stateTimestamp)),
         } for v in tower_log]
 
-        fuel_log = backend.getFuelLog(tower_id)
+        fuel_log = backend.getFuelLog(tower_id, 10)
         fuel_log_json = [{
             'id': v.id,
             'fuelId': v.fuelTypeID,
