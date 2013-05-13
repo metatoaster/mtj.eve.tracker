@@ -336,6 +336,7 @@ class SQLAlchemyBackend(object):
 
     def _addDefaultData(self):
         session = self.session()
+        session.merge(Category('tower', 'comment', 'General comments.'))
         session.merge(Category('tower', 'label', 'Label for the tower.'))
         session.merge(Category('tower', 'notice', 'A notice.'))
         session.merge(Category('fuel', 'fueled', 'A claim for fueling.'))
