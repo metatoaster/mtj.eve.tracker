@@ -514,7 +514,7 @@ class SQLAlchemyBackend(object):
 
         return tower
 
-    def getFuelLog(self, tower_id):
+    def getFuelLog(self, tower_id, count=None):
         """
         Return the fuel logs for tower_id
         """
@@ -522,6 +522,8 @@ class SQLAlchemyBackend(object):
         session = self.session()
         q = session.query(Fuel).filter(Fuel.tower_id == tower_id).order_by(
             desc(Fuel.timestamp))
+        if count:
+            q = q.limit(count)
         result = q.all()
         session.expunge_all()
         return result

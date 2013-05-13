@@ -68,12 +68,18 @@ class SqlBackendTestCase(TestCase):
         fuel = {4247: 25000, 16275: 7200,}
         tower.updateResources(fuel, 1325484000)
 
-        fuel_log = self.backend.getFuelLog(1)
         result = list(self.backend._conn.execute('select * from fuel'))
         self.assertEqual(result[0].timestamp, 1325376000)
         self.assertEqual(result[2].timestamp, 1325484000)
         self.assertEqual(result[2].value, 25000)
         self.assertEqual(result[2].fuelTypeID, 4247)
+
+        fuel_log = self.backend.getFuelLog(1)
+        self.assertEqual(len(fuel_log), 3)
+
+        fuel_log = self.backend.getFuelLog(1, 1)
+        self.assertEqual(len(fuel_log), 1)
+        self.assertEqual(fuel_log[0].timestamp, 1325484000)
 
     def test_0200_double_add(self):
         tower = self.backend.addTower(1000001, 12235, 30004608, 40291202, 4,
