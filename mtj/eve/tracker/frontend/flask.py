@@ -85,8 +85,8 @@ def reload_db():
             return {'status': 'error', 'result':
                 'invalid key',
             }, 403
-        backend = zope.component.getUtility(ITrackerBackend)
-        results = backend.reinstantiate()
+        manager = zope.component.getUtility(ITowerManager)
+        results = manager.refresh()
         return {'status': 'ok', 'result':
             '%d towers reloaded.' % results,
         }, None

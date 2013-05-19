@@ -169,3 +169,11 @@ class TowerManager(BaseTowerManager):
 
         # update the api key usage.
         self.updateApiTowerIds()
+
+    def refresh(self):
+        """
+        Refresh all data from the db.
+        """
+
+        self.updateApiTowerIds()
+        return self.backend.reinstantiate()
