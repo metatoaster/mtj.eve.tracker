@@ -405,9 +405,11 @@ class Tower(object):
         # everything after offline time will not be defined.
         timestamp = min(timestamp, self.getOfflineTimestamp())
 
-        # dict comprehension
-        return {key: fuel.getCurrent(timestamp=timestamp).value
-            for key, fuel in self.fuels.iteritems()}
+        result = {}
+        for key, fuel in self.fuels.iteritems():
+            result[key] = (fuel and fuel.getCurrent(timestamp=timestamp).value
+                or 0)
+        return result
 
     def getIdealFuelRatio(self):
         """
