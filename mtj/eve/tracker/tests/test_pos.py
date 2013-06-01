@@ -97,6 +97,18 @@ class TowerTestCase(TestCase):
         # Omitted values now 0.
         self.assertEqual(fuels[16275], 0)
 
+    def test_0302_uninitialized_resources(self):
+        tower = Tower(1000001, 12235, 30004608, 40291202, 4,
+            1325376000, None, 498125261)
+        tower.initResources()
+        # There are cases where the buffers are not set for whatever
+        # reasons.  This should not present a problem as the buffers
+        # themselves are never updated, but a new one is created every
+        # time the set buffer method is called.
+        fuels = tower.getResources(0)
+        self.assertEqual(fuels[16275], 0)
+        self.assertEqual(fuels[4247], 0)
+
     def test_1000_reinforced_fuel_consumption(self):
         # tower = Tower(itemID, typeID, locationID, moonID, state,
         #     stateTimestamp, onlineTimestamp, standingOwnerID)
