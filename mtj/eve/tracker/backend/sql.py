@@ -521,7 +521,7 @@ class SQLAlchemyBackend(object):
 
         session = self.session()
         q = session.query(Fuel).filter(Fuel.tower_id == tower_id).order_by(
-            desc(Fuel.timestamp))
+            desc(Fuel.timestamp), desc(Fuel.id))
         if count:
             q = q.limit(count)
         result = q.all()
