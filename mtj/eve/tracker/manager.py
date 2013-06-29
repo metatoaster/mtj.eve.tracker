@@ -3,6 +3,7 @@ from __future__ import absolute_import
 import time
 import logging
 
+from xml.etree import ElementTree
 from evelink.api import APIError
 
 import zope.component
@@ -77,6 +78,10 @@ class BaseTowerManager(object):
             except APIError as e:
                 logger.warning('Fail to retrieve corp/StarbaseDetail for %s; '
                     'corp/StarbaseList may be out of date', k)
+                continue
+            except ElementTree.ParseError as e:
+                logger.warning('Fail to retrieve corp/StarbaseDetail for %s; '
+                    'corp/StarbaseList response was invalid XML', k)
                 continue
 
             # Determine relevant fields.
