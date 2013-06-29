@@ -376,7 +376,8 @@ class SQLAlchemyBackend(object):
                 ).having(func.max(ApiUsageLog.start_ts))
 
         if completed:
-            logs = logs.filter(ApiUsageLog.end_ts != None)
+            logs = logs.filter((ApiUsageLog.end_ts != None) &
+                (ApiUsageLog.state == 0))
 
         results = {}
         for log in logs:

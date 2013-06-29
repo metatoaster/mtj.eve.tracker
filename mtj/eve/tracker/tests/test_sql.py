@@ -353,7 +353,6 @@ class SqlBackendTestCase(TestCase):
         })
         self.assertEqual(self.backend.completedApiUsage(), {
             123456: (1000000, 1000020, 0),
-            123457: (1000000, 1000041, 1),
         })
 
         self.backend.endApiUsage(m, 3, 3000041)
@@ -363,18 +362,25 @@ class SqlBackendTestCase(TestCase):
             123457: (1000000, 1000041, 1),
         })
 
+        n = self.backend.beginApiUsage(123457, 1000000)
+        self.backend.endApiUsage(n, 0, 1000081)
+        self.assertEqual(self.backend.completedApiUsage(), {
+            123456: (1000000, 1000020, 0),
+            123457: (1000000, 1000081, 0),
+        })
+
     def test_3001_api_usage_alt(self):
         m = self.backend.beginApiUsage(123458, 1000000)
         self.backend.endApiUsage(m, None, 1000001)
         m = self.backend.beginApiUsage(123458, 2000000)
-        self.backend.endApiUsage(m, None, 1000001)
+        self.backend.endApiUsage(m, 0, 1000001)
         m = self.backend.beginApiUsage(123458, 3000000)
         self.assertEqual(self.backend.currentApiUsage(), {
             123458: (3000000, None, None),
         })
         # heh backwards in time, but that's expected due to GIGO
         self.assertEqual(self.backend.completedApiUsage(), {
-            123458: (2000000, 1000001, None),
+            123458: (2000000, 1000001, 0),
         })
 
     def test_3002_api_usage_opens(self):
@@ -431,6 +437,15 @@ class SqlBackendTestCase(TestCase):
         # ... until that API key is fetched to verify that this is gone.
         self.assertEqual(self.backend.getApiTowerIds(), {
             1: 40000, 2: 30001, 5: 29957})  # note, API timestamp
+
+        m = self.backend.beginApiUsage(123457, 50000)
+        self.backend.setTowerApi(1, 123457, 50000, 50000)
+        self.backend.setTowerApi(2, 123457, 50001, 50001)
+        # error happened as result code not 0
+        self.backend.endApiUsage(m, 1, 50004)
+        # the time stuck is from the previous success call.
+        self.assertEqual(self.backend.getApiTowerIds(), {
+            1: 50000, 2: 50001, 5: 29957})
 
 def test_suite():
     suite = TestSuite()
