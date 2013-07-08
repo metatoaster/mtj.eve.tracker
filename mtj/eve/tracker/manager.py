@@ -178,7 +178,7 @@ class TowerManager(BaseTowerManager):
                 self.importWithCorp(corp)
             except:
                 # well crap.
-                logger.exception('Import failed with uncatched exception')
+                logger.exception('Import failed with uncaught exception')
                 error = 1
             self.backend.endApiUsage(m_usage, error)
 
