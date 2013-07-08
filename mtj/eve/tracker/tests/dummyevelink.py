@@ -372,6 +372,36 @@ dummy_starbases = [
         },
     },
 
+    {
+        'last_timestamps': {
+            'current_time': 1363260409, 'cached_until': 1363264009},
+        'results': {
+
+            507862: {
+                'itemID': 507862,
+                'typeID': 20064,
+                'standingOwnerID': 498125261,
+                'stateTimestamp': 1363261009,
+                'state': 4,
+                'onlineTimestamp': 1362901009,
+                'locationID': 30004751,
+                'moonID': 40291202,
+            },
+
+            507863: {
+                'itemID': 507863,
+                'typeID': 20062,
+                'standingOwnerID': 498125261,
+                'stateTimestamp': 1363909986,
+                'state': 0,
+                'onlineTimestamp': 0,
+                'locationID': None,
+                'moonID': None,
+            },
+
+        },
+    },
+
 ]
 
 dummy_starbase_details = [
@@ -461,6 +491,21 @@ dummy_starbase_details = [
             },
         },
 
+    },
+
+    {
+        507862: {
+            'results': {
+                u'online_ts': 1317197424,
+                u'state': u'online',
+                u'state_ts': 1363261009,
+                u'fuel': {16275: 2250, 4312: 4027},
+            },
+            'last_timestamps': {
+                'current_time': 1363260409,
+                'cached_until': 1363264009,
+            },
+        },
     },
 
 ]

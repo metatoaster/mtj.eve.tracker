@@ -491,6 +491,8 @@ class SQLAlchemyBackend(object):
         to log all changes made to a tower.
         """
 
+        # XXX should really be called instantiateTower
+
         # A better plan may be this: have a table that maps internal ID
         # with the API one, and the timestamps and other related fields
         # be maintained separately from it.  For now this will do for a

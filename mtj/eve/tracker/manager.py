@@ -69,7 +69,17 @@ class BaseTowerManager(object):
             k, v = item
             logger.info('(%d/%d) starbases processed.', c, starbases_c)
             logger.info('processing itemID: %s', k)
-            tower = self.backend.addTower(**v)
+
+            try:
+                tower = self.backend.addTower(**v)
+            except TypeError:
+                # can be caused by celestialId being undefined from an
+                # unanchored tower.
+                logger.warning('Fail to instantiate tower with the following '
+                    'arguments as parameters: %s', v)
+                continue
+
+            logger.info('backend tower id: %s', tower.id)
 
             # Get time right before the request.
             try:

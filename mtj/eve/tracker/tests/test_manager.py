@@ -181,6 +181,26 @@ class DefaultManagerTestCase(TestCase):
         self.assertEqual(tower3.fuels[16275].value, 1000)
         self.assertEqual(tower3.fuels[4051].value, 6000)
 
+    def test_1501_unanchored(self):
+        # when tower becomes unanchored.
+        # reanchored at new location without being repackaged.
+
+        corp = DummyCorp()
+        corp.starbases_index = 3
+        corp.starbase_details_index = 3
+        self.manager.importWithCorp(corp)
+        tower_apis = self.backend.getTowerApis()
+        self.assertEqual(tower_apis[0].currentTime, 1363225863)
+        self.assertEqual(tower_apis[1].currentTime, 1363225863)
+
+        corp.starbases_index = 4
+        corp.starbase_details_index = 4
+        self.manager.importWithCorp(corp)
+        tower_apis = self.backend.getTowerApis()
+        self.assertEqual(tower_apis[0].currentTime, 1363260409)
+        # This has failed to update.
+        self.assertEqual(tower_apis[1].currentTime, 1363225863)
+
 
 def test_suite():
     suite = TestSuite()
