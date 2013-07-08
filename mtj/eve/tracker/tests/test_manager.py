@@ -183,7 +183,6 @@ class DefaultManagerTestCase(TestCase):
 
     def test_1501_unanchored(self):
         # when tower becomes unanchored.
-        # reanchored at new location without being repackaged.
 
         corp = DummyCorp()
         corp.starbases_index = 3
