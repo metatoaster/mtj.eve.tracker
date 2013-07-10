@@ -208,6 +208,7 @@ class TrackerCmd(cmd.Cmd):
             pass
 
         console = code.InteractiveConsole(locals={
+            b'runner': runner,
             b'backend': backend,
             b'manager': manager,
         })
