@@ -660,14 +660,17 @@ class SQLAlchemyBackend(object):
         session.expunge_all()
         return result
 
-    def getAuditForTable(self, table):
+    def getAuditForTable(self, table, category=None):
         """
         Get audit entries for a table.  Only the latest entries per 
         category is returned.
         """
 
         session = self.session()
-        q = session.query(Audit).filter(Audit.table == table).group_by(
+        condition = Audit.table == table
+        if category is not None:
+            condition = condition & (Audit.category_name == category)
+        q = session.query(Audit).filter(condition).group_by(
             Audit.category_name, Audit.rowid).having(
             func.max(Audit.timestamp)).order_by(Audit.category_name)
         audits = q.all()

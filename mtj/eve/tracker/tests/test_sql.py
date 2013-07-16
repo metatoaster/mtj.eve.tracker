@@ -281,6 +281,8 @@ class SqlBackendTestCase(TestCase):
             1325376000, 1306886400, 498125261)
         tower = self.backend.addTower(1000001, 12235, 30004268, 40270415, 4,
             1325376000, 1306886400, 498125261)
+        tower = self.backend.addTower(1000001, 12235, 30004268, 40270327, 4,
+            1325376000, 1306886400, 498125261)
         self.backend.addAudit(('tower', '1'), "DJ's personal tech moon",
             'DJ', 'label', 1369479379)
         self.backend.addAudit(('tower', '1'), "This should be nationalized.",
@@ -293,6 +295,8 @@ class SqlBackendTestCase(TestCase):
             'DJ', 'label', 1369479449)
         self.backend.addAudit(('tower', '2'), "DJ's personal neo moon",
             'DJ', 'label', 1369479596)
+        self.backend.addAudit(('tower', '3'), "Thrice is a charm.",
+            'DJ', 'notice', 1369479476)
 
         audits = self.backend.getAuditForTable('tower')
         self.assertEqual(audits[1][0].reason, "DJ's personal tech moon")
@@ -301,6 +305,16 @@ class SqlBackendTestCase(TestCase):
         self.assertEqual(audits[1][1].category_name, 'notice')
         self.assertEqual(audits[2][0].reason, "DJ's personal neo moon")
         self.assertEqual(audits[2][0].category_name, 'label')
+
+        audits = self.backend.getAuditForTable('tower', category='label')
+        self.assertEqual(audits[1][0].reason, "DJ's personal tech moon")
+        self.assertEqual(audits[2][0].reason, "DJ's personal neo moon")
+
+        audits = self.backend.getAuditForTable('tower', category='notice')
+        self.assertEqual(len(audits), 2)
+        self.assertEqual(len(audits[1]), 1)
+        self.assertEqual(audits[1][0].reason, "No.")
+        self.assertEqual(audits[3][0].reason, "Thrice is a charm.")
 
         audits = self.backend.getAuditEntry('tower', 1)
         self.assertEqual(audits['label'][0].reason, "DJ's personal tech moon")
