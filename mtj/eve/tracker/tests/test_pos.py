@@ -1,3 +1,4 @@
+from time import time
 from unittest import TestCase, TestSuite, makeSuite
 
 from mtj.eve.tracker.pos import Tower, TowerResourceBuffer, TowerSiloBuffer
@@ -68,6 +69,18 @@ class TowerTestCase(TestCase):
         tower.initResources()
         self.assertEqual(tower.resourcePulseTimestamp(1325376000), 1325376000)
         self.assertEqual(tower.resourcePulseTimestamp(1325376001), 1325379600)
+
+    def test_0250_state(self):
+        tower = Tower(1000001, 12235, 30004608, 40291202, 4,
+            1325376000, None, 498125261)
+        tower.updateResources({4247: 0, 16275: 0}, 0)
+        self.assertEqual(tower.stateName, 'anchored')
+
+        tower.updateResources({4247: 1000, 16275: 0}, time())
+        self.assertEqual(tower.stateName, 'online')
+
+        tower.enterReinforcement(exitAt=time() + 7200, timestamp=time())
+        self.assertEqual(tower.stateName, 'reinforced')
 
     def test_0300_update_resource_zero(self):
         tower = Tower(1000001, 12235, 30004608, 40291202, 4,

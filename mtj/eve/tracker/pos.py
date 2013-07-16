@@ -524,6 +524,10 @@ class Tower(object):
 
         return self.state
 
+    @property
+    def stateName(self):
+        return corp_const.pos_states[self.getState()]
+
     def getReinforcementLength(self):
         fuel = self.fuels.get(STRONTIUM_ITEMID)
         if not fuel:
