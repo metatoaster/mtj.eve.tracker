@@ -11,6 +11,9 @@ from mtj.f3u1.units import Time
 from mtj.evedb.structure import ControlTower
 from mtj.eve.tracker.interfaces import ITrackerBackend, ITowerManager
 
+# for case insensitive matching of '[ignore] in audit label.
+is_ignored = re.compile('\\[ignore\\]', re.IGNORECASE).search
+
 
 class Json(object):
     """
@@ -42,13 +45,11 @@ class Json(object):
         timestamp, towers = self._towers()
         towers = towers.values()
 
-        # XXX case insensitive matching of '[ignore] in audit label.
-        is_ignored = re.compile('\\[ignore\\]', re.IGNORECASE).match
-
         online = sorted(
             [tower for tower in towers if tower.get('state') == 4
                 and tower.get('timeRemaining', 0) < low_fuel
                 and tower.get('apiTimestamp')
+                and not is_ignored(tower.get('auditLabel'))
             ],
             lambda x, y: cmp(x.get('timeRemaining'), y.get('timeRemaining'))
         )
