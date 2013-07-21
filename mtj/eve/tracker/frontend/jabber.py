@@ -1,5 +1,5 @@
 import random
-import time
+from time import time
 from collections import OrderedDict
 
 import requests
@@ -14,7 +14,13 @@ class LogiCommand(Command):
         self.overview = kw.pop('tracker_overview')
         self.backdoor = kw.pop('tracker_backdoor')
 
-    def low_fuel(self, msg, match):
+        self.cache = {}
+        self.cache_time = 0
+
+    def _overview(self):
+        if time() - 10 < self.cache_time:
+            return self.cache
+
         try:
             r = requests.get(self.overview, headers={
                     'Authorization': 'Backdoor %s' % self.backdoor,
@@ -22,9 +28,14 @@ class LogiCommand(Command):
             data = r.json()
             if 'error' in data:
                 raise ValueError
+            self.cache_time = time()
+            self.cache = data
         except:
-            return 'Failed to retrieve results from <%s>' % (target)
+            return 'Failed to retrieve results from <%s>' % (self.overview)
+        return data
 
+    def low_fuel(self, msg, match):
+        data = self._overview()
         lines = []
         lines.append('<p>')
         lines.append('The following towers are low on fuel:<br/>')
@@ -53,16 +64,7 @@ class LogiCommand(Command):
         return '\n'.join(lines)
 
     def reinforced(self, msg, match):
-        try:
-            r = requests.get(self.overview, headers={
-                    'Authorization': 'Backdoor %s' % self.backdoor,
-                }, verify=False)
-            data = r.json()
-            if 'error' in data:
-                raise ValueError
-        except:
-            return
-
+        data = self._overview()
         if not data.get('reinforced'):
             return
 
