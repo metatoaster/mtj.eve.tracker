@@ -85,3 +85,25 @@ class LogiCommand(Command):
         lines.append('</p>')
 
         return '\n'.join(lines)
+
+    def offlined(self, msg, match):
+        data = self._overview()
+        if not data.get('offlined'):
+            return
+
+        lines = []
+        lines.append('<p>')
+        lines.append('**** UNINTENDED OFFLINED TOWER ALERT ****<br/>')
+        by_region = OrderedDict()
+        for p in data.get('offlined'):
+            p['auditLabel'] = p['auditLabel'] or '[unlabeled:%s]' % p['id']
+            p['typeNameShort'] = p['typeName'].replace('Control Tower Small',
+                'Small').replace('Control Tower Medium', 'Medium').replace(
+                'Control Tower', 'Large')
+            p['href'] = '%s%s' % (self.tower_root, p['id'])
+            lines.append('<a href="%(href)s">%(auditLabel)s</a>; '
+                '%(typeNameShort)s; Location: %(celestialName)s; '
+                '%(regionName)s<br />' % p)
+        lines.append('</p>')
+
+        return '\n'.join(lines)
