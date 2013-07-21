@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import re
 from time import time, strftime, gmtime
 from datetime import timedelta
 from evelink import constants
@@ -41,6 +42,9 @@ class Json(object):
         timestamp, towers = self._towers()
         towers = towers.values()
 
+        # XXX case insensitive matching of '[ignore] in audit label.
+        is_ignored = re.compile('\\[ignore\\]', re.IGNORECASE).match
+
         online = sorted(
             [tower for tower in towers if tower.get('state') == 4
                 and tower.get('timeRemaining', 0) < low_fuel
@@ -54,11 +58,19 @@ class Json(object):
             ],
             lambda x, y: cmp(x.get('stateTimestamp'), y.get('stateTimestamp'))
         )
+        offlined = sorted(
+            [tower for tower in towers if tower.get('state') == 1
+                and tower.get('apiTimestamp') and
+                not is_ignored(tower.get('auditLabel'))
+            ],
+            lambda x, y: cmp(x.get('auditLabel'), y.get('auditLabel'))
+        )
 
         result = {
             'timestamp': timestamp,
             'online': online,
             'reinforced': reinforced,
+            'offlined': offlined,
         }
         return json.dumps(result)
 
