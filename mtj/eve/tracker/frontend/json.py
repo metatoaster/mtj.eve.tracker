@@ -255,7 +255,7 @@ class Json(object):
             'value': v,
             'optimalValue': fuel_ratio.get(k, 0),
             'missingValue': fuel_targets.get(k, 0),
-        } for k, v in fuels.iteritems()]
+        } for k, v in sorted(fuels.iteritems())]
 
         result = {
             'timestamp': timestamp,
