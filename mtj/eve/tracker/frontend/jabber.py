@@ -34,7 +34,7 @@ class LogiCommand(Command):
             return 'Failed to retrieve results from <%s>' % (self.overview)
         return data
 
-    def low_fuel(self, msg, match):
+    def low_fuel(self, **kw):
         data = self._overview()
         lines = []
         lines.append('<p>')
@@ -63,7 +63,7 @@ class LogiCommand(Command):
         lines.append('</p>')
         return '\n'.join(lines)
 
-    def reinforced(self, msg, match):
+    def reinforced(self, **kw):
         data = self._overview()
         if not data.get('reinforced'):
             return
@@ -86,7 +86,7 @@ class LogiCommand(Command):
 
         return '\n'.join(lines)
 
-    def offlined(self, msg, match):
+    def offlined(self, **kw):
         data = self._overview()
         if not data.get('offlined'):
             return
