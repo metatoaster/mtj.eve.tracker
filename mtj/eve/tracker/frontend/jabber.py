@@ -21,17 +21,15 @@ class LogiCommand(Command):
         if time() - 10 < self.cache_time:
             return self.cache
 
-        try:
-            r = requests.get(self.overview, headers={
-                    'Authorization': 'Backdoor %s' % self.backdoor,
-                }, verify=False)
-            data = r.json()
-            if 'error' in data:
-                raise ValueError
-            self.cache_time = time()
-            self.cache = data
-        except:
-            return 'Failed to retrieve results from <%s>' % (self.overview)
+        r = requests.get(self.overview, headers={
+                'Authorization': 'Backdoor %s' % self.backdoor,
+            }, verify=False)
+        data = r.json()
+        if 'error' in data:
+            raise ValueError(data['error'])
+        self.cache_time = time()
+        self.cache = data
+
         return data
 
     def low_fuel(self, **kw):
