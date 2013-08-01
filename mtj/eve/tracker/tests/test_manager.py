@@ -105,6 +105,15 @@ class DefaultManagerTestCase(TestCase):
         self.assertEqual(tower_log_1[0].stateTimestamp, 1362901009)
         self.assertEqual(tower_log_1[0].state, 3)
 
+        fuel_log_1 = sorted([(f.timestamp, f.fuelTypeID, f.value, f.delta)
+            for f in self.backend.getFuelLog(1)])
+        self.assertEqual(fuel_log_1, [
+            (1362793009, 4312, 4027, 8),
+            (1362793009, 16275, 2250, 75),
+            (1362901009, 4312, 3939, 8),
+            (1362901009, 16275, 0, 75),
+        ])
+
         tower_apis = self.backend.getTowerApis()
         self.assertEqual(len(tower_apis), 2)
         self.assertEqual(tower_apis[0].currentTime, 1362865863)

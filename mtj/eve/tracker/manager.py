@@ -105,9 +105,14 @@ class BaseTowerManager(object):
 
             # supply the new stateTimestamp and state.
             tower.setState(state=state, stateTimestamp=state_ts,
-                timestamp=api_time)
-            tower.updateResources(details['fuel'], api_time,
-                stateTimestamp=state_ts, omit_missing=False)
+                timestamp=api_time,
+                # Ensure the resources get updated at the same time.
+                updateResources_kwargs={
+                    'values': details['fuel'],
+                    'timestamp': api_time,
+                    'stateTimestamp': state_ts,
+                    'omit_missing': False,
+                })
 
             # Finally log down this tower as having updated with api.
             # Reason why we don't use the tower's api itemID is because

@@ -536,7 +536,8 @@ class Tower(object):
         return remaining
 
     @monitor.towerUpdates('state', 'stateTimestamp')
-    def setState(self, state=None, stateTimestamp=None, timestamp=None):
+    def setState(self, state=None, stateTimestamp=None, timestamp=None,
+            updateResources_kwargs=None):
         if state is None:
             return
 
@@ -566,8 +567,31 @@ class Tower(object):
 
             # Now update the levels using this new state (for freeze)
             # and the new stateTimestamp (for when exiting).
-            self.updateResources(resources, timestamp, stateTimestamp,
-                    force=True)
+            resource_kwargs = {
+                'values': resources,
+                'timestamp': timestamp,
+                'stateTimestamp': stateTimestamp,
+
+                # ensure that all the fuel is refreshed as we loaded the
+                # resources just now.
+                'force': True,
+
+                # default value.  Also, do NOT update what we are not
+                # already tracking as that would inject _all_ the fuel
+                # that can be applicable to this tower type, but not to
+                # this instance.
+                'omit_missing': True,
+            }
+            if isinstance(updateResources_kwargs, dict):
+                # If a new set of data is provided, update.
+                resource_kwargs.update(updateResources_kwargs)
+                if not resource_kwargs.get('omit_missing'):
+                    # In that case, fill out the blanks from what we are
+                    # _already_ tracking, and not force everything to
+                    # fill out.
+                    resource_kwargs['force'] = False
+
+            self.updateResources(**resource_kwargs)
 
             # Only update silo levels if this pos is no longer online
             if self.state != STATE_ONLINE:
@@ -575,6 +599,9 @@ class Tower(object):
                     # TODO make online state determined more intelligently
                     self.updateSiloBuffer(k, value=v, timestamp=timestamp,
                         online=False)
+        else:
+            if updateResources_kwargs:
+                self.updateResources(**updateResources_kwargs)
 
     def enterReinforcement(self, exitAt, timestamp=None):
         """
