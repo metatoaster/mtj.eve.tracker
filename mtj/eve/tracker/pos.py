@@ -78,7 +78,6 @@ class Tower(object):
 
         # variable derived values
         self.allianceID = None
-        self.sov = None
 
         self._setDerivedValues()
 
@@ -106,7 +105,14 @@ class Tower(object):
         # Not calling the update method defined below as this is part of
         # initialization.
         self.allianceID = self.queryAllianceID()
-        self.sov = self.querySovStatus()
+
+        # Maintain backward compatibility (?) with originally planned
+        # behavior dealing with sov.
+        self._sov = self.sov
+
+    @property
+    def sov(self):
+        return self.querySovStatus()
 
     @monitor.towerUpdates('stateTimestamp')
     def setStateTimestamp(self, stateTimestamp):
@@ -350,17 +356,16 @@ class Tower(object):
         if standingOwnerID:
             self.standingOwnerID = standingOwnerID
         self.allianceID = self.queryAllianceID()
-        sov = self.querySovStatus()
 
-        if sov != self.sov:
+        if self.sov != self._sov:
             # Get the correct fuel values before sov status change.
             # XXX timestamp could be multiple things - it could be the
             # time when the corporation join/leaves the alliance, or the
             # timestamp of when the sovereignty status changed.  Trust
             # the provided value for now.
             values = self.getResources(timestamp)
-            # Set the new sov value and then update
-            self.sov = sov
+            # Again, a cache/insurance of sort, for this method.
+            self._sov = self.sov
             # force update
             self.updateResources(values, timestamp, force=True)
 
