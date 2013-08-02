@@ -127,24 +127,32 @@ class DummyHelper(object):
     sov_index = 0
 
     def __init__(self):
-        pass
+        self.refresh()
 
     def refresh(self):
-        pass
+        self._alliances = None
+        self._corporations = None
+        self._sov = None
 
     @property
     def alliances(self):
-        return dummy_alliances[self.alliances_index]
+        if self._alliances is None:
+            self._alliances = dummy_alliances[self.alliances_index]
+        return self._alliances
 
     @property
     def corporations(self):
-        return dict(itertools.chain(*[
-                [(j, i[0]) for j in i[1]['member_corps']]
-            for i in self.alliances.iteritems()]))
+        if self._corporations is None:
+            self._corporations = dict(itertools.chain(*[
+                    [(j, i[0]) for j in i[1]['member_corps']]
+                for i in self.alliances.iteritems()]))
+        return self._corporations
 
     @property
     def sov(self):
-        return dummy_sov[self.sov_index]
+        if self._sov is None:
+            self._sov = dummy_sov[self.sov_index]
+        return self._sov
 
 dummy_alliances = [
     {

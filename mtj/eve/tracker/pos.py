@@ -147,11 +147,8 @@ class Tower(object):
             return evelink_helper.corporations.get(self.standingOwnerID)
 
     def querySovStatus(self):
-        # As the API does not provide the current development index
-        # of the system, so if the discount is dependent on this
-        # index, it will be impossible to reliably determine whether
-        # the discount is indeed applied.
         evelink_helper = zope.component.getUtility(IAPIHelper)
+        evelink_helper.refresh()
         sov_info = evelink_helper.sov.get(self.locationID)
         return sov_info and sov_info['alliance_id'] == self.allianceID or False
 

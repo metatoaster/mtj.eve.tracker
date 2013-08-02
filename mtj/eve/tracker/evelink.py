@@ -8,6 +8,7 @@ as optional and provides an object for use.
 from __future__ import absolute_import
 
 import itertools
+from time import time
 
 import zope.interface
 import zope.component
@@ -90,11 +91,12 @@ class Helper(object):
 
     zope.interface.implements(IAPIHelper)
 
-    _alliances = None
-    _corporations = None
-    _sov = None
-
     api_cache = None
+
+    # control internal refresh, to prevent polling the cache and/or make
+    # api call.
+    refresh_limit = 300  # 5 minutes
+    refresh_time = 0
 
     def __init__(self):
         cache = zope.component.queryUtility(
@@ -102,6 +104,7 @@ class Helper(object):
         api = API(cache=cache)
         self.map = evelink.map.Map(api=api)
         self.eve = evelink.eve.EVE(api=api)
+        self.refresh()
 
     def refresh(self):
         """
@@ -110,6 +113,10 @@ class Helper(object):
         The next call will obviously get from the API.
         """
 
+        if self.refresh_time + self.refresh_limit < time():
+            return
+
+        self.refresh_time = time()
         self._alliances = None
         self._corporations = None
         self._sov = None
