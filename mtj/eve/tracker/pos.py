@@ -216,7 +216,7 @@ class Tower(object):
 
                 self.fuels[fuel['resourceTypeID']] = None
 
-    def verifyResources(self, values, timestamp):
+    def verifyResources(self, values, timestamp, all_fuels=None):
         """
         Verify resources with the given values
 
@@ -233,6 +233,11 @@ class Tower(object):
         if not self.fuels:
             self.initResources()
 
+        # XXX this should be a property already initialized?
+        if not all_fuels:
+            all_fuels = {v['resourceTypeID']: v for v in
+                pos_info.getControlTowerResource(self.typeID)}
+
         for fuel_id, fuel_buffer in self.fuels.iteritems():
             if fuel_buffer is None:
                 # initialized but no buffer, must be rectified.
@@ -246,6 +251,12 @@ class Tower(object):
 
             calculated = fuel_buffer.getCurrent(timestamp)
             if verifier != calculated.value:
+                mismatches.append(fuel_id)
+
+            delta = all_fuels.get(fuel_id)['quantity']
+            if self.sov:
+                delta = int(round(delta * 0.75))
+            if fuel_buffer.delta != delta:
                 mismatches.append(fuel_id)
 
         return mismatches
@@ -288,6 +299,7 @@ class Tower(object):
             state_ts_result = self.setStateTimestamp(stateTimestamp)
 
         # dict comprehension
+        # XXX isn't this relatively static?
         all_fuels = {v['resourceTypeID']: v for v in
             pos_info.getControlTowerResource(self.typeID)}
 
@@ -299,7 +311,7 @@ class Tower(object):
 
         # flag the need to update all the fuels.
         updateAll = not self.fuels
-        mismatches = self.verifyResources(values, timestamp)
+        mismatches = self.verifyResources(values, timestamp, all_fuels)
 
         update_values = {}
         if updateAll:

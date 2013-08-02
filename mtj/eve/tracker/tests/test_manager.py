@@ -2,7 +2,7 @@ from unittest import TestCase, TestSuite, makeSuite
 
 import zope.component
 
-from mtj.eve.tracker.interfaces import ITrackerBackend
+from mtj.eve.tracker.interfaces import IAPIHelper, ITrackerBackend
 from mtj.eve.tracker.pos import Tower
 from mtj.eve.tracker.manager import APIKeyManager, DefaultTowerManager
 
@@ -45,6 +45,7 @@ class DefaultManagerTestCase(TestCase):
         setUp(self)
         self.backend = zope.component.getUtility(ITrackerBackend)
         self.manager = DefaultTowerManager()
+        self.helper = zope.component.getUtility(IAPIHelper)
 
     def tearDown(self):
         tearDown(self)
@@ -166,6 +167,22 @@ class DefaultManagerTestCase(TestCase):
         # verify persistence by reinstantiating all objects.
         self.backend.reinstantiate()
         self.assertEqual(self.backend.getTower(1).stateTimestamp, 1362829009)
+
+    def test_1100_sov_change(self):
+        corp = DummyCorp()
+        self.manager.importWithCorp(corp)
+        tower = self.backend.getTower(1)
+        self.assertEqual(tower.fuels[4312].delta, 8)
+        self.assertEqual(tower.fuels[16275].delta, 75)
+
+        # didn't want that sov anyway.
+        self.helper.sov_index = 1
+        self.manager.importWithCorp(corp)
+        # This normally would have deviated from calculated value, so
+        # this updated normally before.
+        self.assertEqual(tower.fuels[4312].delta, 10)
+        # However, strontium, being static, nope.
+        self.assertEqual(tower.fuels[16275].delta, 100)
 
     def test_1500_resolve_multi_location(self):
         # when towers once anchored at a location then unanchored, then

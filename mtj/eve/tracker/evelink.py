@@ -113,7 +113,7 @@ class Helper(object):
         The next call will obviously get from the API.
         """
 
-        if self.refresh_time + self.refresh_limit < time():
+        if self.refresh_time + self.refresh_limit > time():
             return
 
         self.refresh_time = time()
