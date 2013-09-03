@@ -33,12 +33,8 @@ class LogiCommand(Command):
         return data
 
     def low_fuel(self, **kw):
-        data = self._overview()
-        lines = []
-        lines.append('<p>')
-        lines.append('The following towers are low on fuel:<br/>')
-        by_region = OrderedDict()
-        for p in data.get('online'):
+
+        def append_(by_region, p):
             region = p['regionName'] 
             if region not in by_region:
                 by_region[region] = []
@@ -47,19 +43,49 @@ class LogiCommand(Command):
                 'Control Tower', 'Large')
             by_region[region].append(p)
 
-        for region, towers in by_region.iteritems():
-            lines.append(region + ' towers<br/>')
-            for tower in towers:
-                tower['auditLabel'] = tower['auditLabel'] or \
-                    '[unlabeled:%s]' % tower['id']
-                tower['href'] = '%s%s' % (self.tower_root, tower['id'])
-                lines.append('    <a href="%(href)s">%(auditLabel)s</a>; '
-                    'Location: '
-                    '%(celestialName)s; Type: %(typeNameShort)s; '
-                    'Time Remaining: %(timeRemainingFormatted)s<br/>' % tower)
+        def report_by_region(by_region):
+            lines = []
+            for region, towers in by_region.iteritems():
+                lines.append(region + ' towers<br/>')
+                for tower in towers:
+                    tower['auditLabel'] = tower['auditLabel'] or \
+                        '[unlabeled:%s]' % tower['id']
+                    tower['href'] = '%s%s' % (self.tower_root, tower['id'])
+                    lines.append('    <a href="%(href)s">%(auditLabel)s</a>; '
+                        'Location: '
+                        '%(celestialName)s; Type: %(typeNameShort)s; '
+                        'Time Remaining: %(timeRemainingFormatted)s<br/>' %
+                            tower
+                    )
+            return lines
 
-        lines.append('</p>')
-        return '\n'.join(lines)
+        data = self._overview()
+        lines = []
+        by_region_normal = OrderedDict()
+        by_region_dangerous = OrderedDict()
+        for p in data.get('online'):
+            if p["timeRemaining"] > 86400:
+                append_(by_region_normal, p)
+            else:
+                append_(by_region_dangerous, p)
+
+        if by_region_normal:
+            lines.append('The following towers are low on fuel:<br/>')
+            lines.extend(report_by_region(by_region_normal))
+
+        if by_region_dangerous:
+            lines.append(
+                '<br/><strong style="font-weight:bold;color:#220000;">'
+                'The following towers have CRITICALLY LOW fuel '
+                'levels:<br/>')
+            lines.extend(report_by_region(by_region_dangerous))
+            lines.append('</strong>')
+
+        if by_region_normal or by_region_dangerous:
+            return '<p>%s</p>' % '\n'.join(lines)
+
+        # otherwise return a blank string to not say anything.
+        return ''
 
     def reinforced(self, **kw):
         data = self._overview()
