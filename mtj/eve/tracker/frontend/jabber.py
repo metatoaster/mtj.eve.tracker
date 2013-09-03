@@ -87,6 +87,12 @@ class LogiCommand(Command):
         # otherwise return a blank string to not say anything.
         return ''
 
+    def ok_fuel(self, **kw):
+        data = self._overview()
+        if data.get('online'):
+            return ''
+        return 'There are no towers with low fuel levels.'
+
     def reinforced(self, **kw):
         data = self._overview()
         if not data.get('reinforced'):
