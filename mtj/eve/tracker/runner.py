@@ -178,4 +178,16 @@ class FlaskRunner(BaseRunner):
         port = self.config['flask']['port']
         # must be casted into a string.
         app.config['SECRET_KEY'] = str(self.config['flask']['secret'])
-        app.run(host=host, port=port)
+
+        try:
+            from tornado.wsgi import WSGIContainer
+            from tornado.httpserver import HTTPServer
+            from tornado.ioloop import IOLoop
+            http_server = HTTPServer(WSGIContainer(app))
+            http_server.listen(port)
+            try:
+                IOLoop.instance().start()
+            except KeyboardInterrupt:
+                return
+        except ImportError:
+            app.run(host=host, port=port)
