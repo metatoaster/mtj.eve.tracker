@@ -1,10 +1,46 @@
 import random
 from time import time
 from collections import OrderedDict
+import logging
 
 import requests
+from requests import ConnectionError
+
+try:
+    # for requests will try to use this.
+    from simplejson import JSONDecodeError
+except ImportError:
+    JSONDecodeError = ValueError
 
 from mtj.jibber.bot import Command
+
+logger = logging.getLogger(__name__)
+
+_cache_length = 10
+
+
+class TrackerError(ValueError):
+    pass
+
+
+class TrackerResponseError(TrackerError):
+    pass
+
+
+def handle_tracker_error(f):
+
+    def run(inst, *a, **kw):
+        try:
+            return f(inst, *a, **kw)
+        except TrackerError as e:
+            if time() - _cache_length < inst.last_error_time:
+                return ''
+            inst.last_error_time = time()
+            if inst.error_format_string:
+                return inst.error_format_string % str(e)
+            return str(e)
+
+    return run
 
 
 class LogiCommand(Command):
@@ -13,25 +49,42 @@ class LogiCommand(Command):
         self.tower_root = kw.pop('tracker_tower_root')
         self.overview = kw.pop('tracker_overview')
         self.backdoor = kw.pop('tracker_backdoor')
+        self.error_format_string = kw.pop('error_format_string', '')
 
         self.cache = {}
         self.cache_time = 0
 
-    def _overview(self):
-        if time() - 10 < self.cache_time:
-            return self.cache
+        self.last_error_time = 0
 
-        r = requests.get(self.overview, headers={
-                'Authorization': 'Backdoor %s' % self.backdoor,
-            }, verify=False)
-        data = r.json()
+    def _overview(self):
+        last_cache = time() - _cache_length
+        if last_cache < self.cache_time:
+            return self.cache
+        if last_cache < self.last_error_time:
+            raise TrackerError('Timeout still active from last error')
+
+        try:
+            r = requests.get(self.overview, headers={
+                    'Authorization': 'Backdoor %s' % self.backdoor,
+                }, verify=False)
+            data = r.json()
+        except ConnectionError:
+            raise TrackerError('Error connecting to tracker.')
+        except JSONDecodeError:
+            raise TrackerError('Error parsing tracker response.')
+        except:
+            logger.exception('Exception raised')
+            raise TrackerError('Error getting response from tracker. '
+                               'Please check log files.')
+
         if 'error' in data:
-            raise ValueError(data['error'])
+            raise TrackerResponseError(data['error'])
         self.cache_time = time()
         self.cache = data
 
         return data
 
+    @handle_tracker_error
     def low_fuel(self, **kw):
 
         def append_(by_region, p):
@@ -87,12 +140,14 @@ class LogiCommand(Command):
         # otherwise return a blank string to not say anything.
         return ''
 
+    @handle_tracker_error
     def ok_fuel(self, **kw):
         data = self._overview()
         if data.get('online'):
             return ''
         return 'There are no towers with low fuel levels.'
 
+    @handle_tracker_error
     def reinforced(self, **kw):
         data = self._overview()
         if not data.get('reinforced'):
@@ -116,6 +171,7 @@ class LogiCommand(Command):
 
         return '\n'.join(lines)
 
+    @handle_tracker_error
     def offlined(self, **kw):
         data = self._overview()
         if not data.get('offlined'):
