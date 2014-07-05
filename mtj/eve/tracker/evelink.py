@@ -32,9 +32,10 @@ class Corp(evelink.corp.Corp):
         Copy of the parent, except state is not converted to string,
         and the keys are identical to the api.
         """
+
         api_result = self.api.get('corp/StarbaseList')
 
-        rowset = api_result.find('rowset')
+        rowset = api_result.result.find('rowset')
         results = {}
         for row in rowset.findall('row'):
             a = row.attrib
@@ -50,7 +51,8 @@ class Corp(evelink.corp.Corp):
             }
             results[starbase['itemID']] = starbase
 
-        return results
+        return evelink.api.APIResult(results,
+            api_result.timestamp, api_result.expires)
 
 
 class UtilityAPICache(evelink.api.APICache):
@@ -125,7 +127,7 @@ class Helper(object):
     def alliances(self):
         if not self._alliances:
             self._alliances = self.eve.alliances()
-        return self._alliances
+        return self._alliances.result
 
     @property
     def corporations(self):
@@ -139,5 +141,5 @@ class Helper(object):
     @property
     def sov(self):
         if not self._sov:
-            self._sov, self._sov_timestamp = self.map.sov_by_system()
+            self._sov, self._sov_timestamp = self.map.sov_by_system().result
         return self._sov

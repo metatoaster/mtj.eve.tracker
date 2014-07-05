@@ -27,7 +27,7 @@ setup(name='mtj.eve.tracker',
           # -*- Extra requirements: -*-
           'zope.component',
           'zope.interface',
-          'evelink',
+          'EVELink>=0.4.0',
           'mtj.f3u1',
       ],
       entry_points="""

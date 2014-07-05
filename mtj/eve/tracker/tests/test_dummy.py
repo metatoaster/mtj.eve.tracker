@@ -13,14 +13,16 @@ class DummyCorpTestCase(TestCase):
 
     def test_0000_starbases(self):
         corp = DummyCorp()
-        self.assertEqual(len(corp.starbases()), 1)
+        self.assertEqual(len(corp.starbases().result), 1)
         corp.starbases_index = 1
-        self.assertEqual(len(corp.starbases()), 2)
+        self.assertEqual(len(corp.starbases().result), 2)
 
     def test_0001_starbase_details(self):
         corp = DummyCorp()
         result = corp.starbase_details(507862)
-        self.assertEqual(result['state_ts'], 1362793009)
+        self.assertEqual(result.result['state_ts'], 1362793009)
+        self.assertEqual(result.timestamp, 1362792986)
+        self.assertEqual(result.expires, 1362793351)
 
     def test_0002_starbase_details_error(self):
         corp = DummyCorp()
@@ -48,7 +50,7 @@ class JsonDummyCorpTestCase(TestCase):
         json_corp = JsonDummyCorp()
         json_corp.loads(result)
         self.assertEqual(dummy_corp.starbases(), json_corp.starbases())
-        self.assertEqual(sorted(json_corp.starbases().keys()),
+        self.assertEqual(sorted(json_corp.starbases().result.keys()),
             [507862, 507863])
         self.assertEqual(dummy_corp.starbase_details(507862),
             json_corp.starbase_details(507862))

@@ -6,8 +6,15 @@ import itertools
 from collections import OrderedDict
 import zope.interface
 from evelink.api import APIError
+from evelink.api import APIResult
 
 from mtj.eve.tracker.interfaces import IAPIHelper
+
+def mkresult(result):
+    return APIResult(result['results'],
+        result['last_timestamps']['current_time'],
+        result['last_timestamps']['cached_until'],
+    )
 
 
 class DummyCorp(object):
@@ -29,10 +36,7 @@ class DummyCorp(object):
             dummy_starbases[self.starbases_index].items()))
 
     def starbases(self):
-        results = self._dummy_starbases()
-        # XXX "set" api timestamp
-        self.api.last_timestamps = results['last_timestamps']
-        return results['results']
+        return mkresult(self._dummy_starbases())
 
     def _dummy_starbase_details(self):
         return OrderedDict(sorted(
@@ -42,9 +46,7 @@ class DummyCorp(object):
         all_results = self._dummy_starbase_details()
         results = all_results.get(itemID, None)
         if results:
-            result = results['results']
-            self.api.last_timestamps = results['last_timestamps']
-            return result
+            return mkresult(results)
         # pretend this is a bad itemID, as there can be condition where
         # the starbases list is returned from cache (because :ccp:) and
         # the actual starbase could have been taken down and repackaged
@@ -91,20 +93,28 @@ class JsonDummyCorp(DummyCorp):
 
     @staticmethod
     def dumps(corp):
-        starbases = corp.starbases()
+        result = corp.starbases()
+        starbases = result.result
         corp_dump = {
             'starbases': {
                 'results': starbases,
-                'last_timestamps': corp.api.last_timestamps,
+                'last_timestamps': {
+                    'current_time': result.timestamp,
+                    'cached_until': result.expires,
+                }
             },
             'starbase_details': {},
         }
         sbd = {}
         for i in starbases.keys():
             try:
+                result = corp.starbase_details(i)
                 sd = {
-                    'results': corp.starbase_details(i),
-                    'last_timestamps': corp.api.last_timestamps,
+                    'results': result.result,
+                    'last_timestamps': {
+                        'current_time': result.timestamp,
+                        'cached_until': result.expires,
+                    },
                 }
             except APIError, e:
                 continue

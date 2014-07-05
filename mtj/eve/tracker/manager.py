@@ -60,7 +60,7 @@ class BaseTowerManager(object):
             - the corp API object.
         """
 
-        starbases = corp.starbases()
+        starbases = corp.starbases().result
         starbases_c = len(starbases)
 
         logger.info('%d starbases returned', starbases_c)
@@ -84,7 +84,7 @@ class BaseTowerManager(object):
             # Get time right before the request.
             try:
                 ts = time.time()
-                details = corp.starbase_details(k)
+                raw_details = corp.starbase_details(k)
             except APIError as e:
                 logger.warning('Fail to retrieve corp/StarbaseDetail for %s; '
                     'corp/StarbaseList may be out of date', k)
@@ -95,7 +95,9 @@ class BaseTowerManager(object):
                 continue
 
             # Determine relevant fields.
-            api_time = corp.api.last_timestamps['current_time']
+            api_time = raw_details.timestamp
+            details = raw_details.result
+
             state_ts = details['state_ts'] or 0
             delta = api_time - state_ts
             state = details['state']

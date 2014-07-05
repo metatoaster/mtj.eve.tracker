@@ -124,7 +124,8 @@ class DefaultManagerTestCase(TestCase):
         corp = DummyCorp()
         self.manager.importWithCorp(corp)
         tower = self.backend.getTower(1)
-        current_time = corp.api.last_timestamps['current_time']
+        # derived from test data.
+        current_time = 1362792986
         fuel_ts = tower.fuels[4312].timestamp
 
         # fuel timestamp and stateTimestamps are in the future.
@@ -152,7 +153,8 @@ class DefaultManagerTestCase(TestCase):
         corp.starbase_details_index = 1
         self.manager.importWithCorp(corp)
         tower = self.backend.getTower(1)
-        current_time = corp.api.last_timestamps['current_time']
+        # derived from test data.
+        current_time = 1362792986
 
         fuel_ts = tower.fuels[4312].timestamp
 
