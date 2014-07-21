@@ -7,7 +7,7 @@ This probably could be placed in a separate egg.
 import logging
 
 import zope.component
-from zope.component.hooks import setSite, setHooks
+from zope.component.hooks import setSite, setHooks, getSite
 
 from mtj.evedb.core import init_db, Db
 
@@ -25,9 +25,9 @@ class BaseRunner(object):
     The base runner for the tracker.
     """
 
+    site = None
+
     def __init__(self):
-        self.site = BaseSite()
-        self.sitemanager = self.site.getSiteManager()
         self.has_db = False
         setHooks()
 
@@ -91,13 +91,22 @@ class BaseRunner(object):
             logger.critical('Incomplete or no evedb is present, pos tracker '
                             'WILL fail.')
 
-        self._registerSite(evelink_cache, backend_url, api_src, api_keys)
+        self._registerCoreConfig(
+            evelink_cache=evelink_cache,
+            backend_url=backend_url,
+            api_src=api_src,
+            api_keys=api_keys,
+        )
+
+    def _registerCoreConfig(self, **kw):
+        self._core_config = kw
 
     def _registerSite(self, evelink_cache, backend_url, api_src, api_keys):
         # set the site and then register the utilities
 
         setSite(self.site)
-        sitemanager = self.sitemanager
+
+        sitemanager = getSite().getSiteManager()
 
         # first the cache as others will depend on this.
         cache = evelink.EvelinkSqliteCache(evelink_cache)
@@ -124,10 +133,18 @@ class BaseRunner(object):
                 provided=interfaces.IAPIKeyManager,
             )
 
+    def _preinitialize(self):
+        # Thread-locals...
+        if self.site is None:
+            self.site = BaseSite()
+        self._registerSite(**self._core_config)
+
     def initialize(self):
         """
         Load various core data into the tracker.
         """
+
+        self._preinitialize()
 
         manager = zope.component.queryUtility(interfaces.ITowerManager)
         if manager is None:

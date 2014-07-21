@@ -23,6 +23,7 @@ class RunnerTestCase(TestCase):
     def test_0000_base_runner(self):
         runner = BaseRunner()
         runner.configure(config=self.base_config)
+        runner._preinitialize()
 
         manager = zope.component.queryUtility(interfaces.ITowerManager)
         self.assertTrue(interfaces.ITowerManager.providedBy(manager))
@@ -41,6 +42,7 @@ class RunnerTestCase(TestCase):
         config = {'api': {'source': 'backend'}}
         config.update(self.base_config)
         runner.configure(config=config)
+        runner._preinitialize()
 
         backend = zope.component.queryUtility(interfaces.ITrackerBackend)
         backend._conn.execute('insert into api_key values '
