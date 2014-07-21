@@ -228,6 +228,9 @@ class DefaultManagerTestCase(TestCase):
         # This has failed to update.
         self.assertEqual(tower_apis[1].currentTime, 1363225863)
 
+    # XXX create test case for fudge factor, where API fuel values did
+    # not decrement as expected.
+
 
 def test_suite():
     suite = TestSuite()

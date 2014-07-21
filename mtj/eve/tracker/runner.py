@@ -202,7 +202,9 @@ class FlaskRunner(BaseRunner):
             from tornado.ioloop import IOLoop
             http_server = HTTPServer(WSGIContainer(app))
             http_server.listen(port)
+            logger.info('tornado.httpserver listening on port %s', port)
             try:
+                logger.info('Starting tornado.ioloop.')
                 IOLoop.instance().start()
             except KeyboardInterrupt:
                 return
