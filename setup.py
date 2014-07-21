@@ -26,6 +26,7 @@ setup(name='mtj.eve.tracker',
           'setuptools',
           # -*- Extra requirements: -*-
           'zope.component',
+          'zope.interface',
           'evelink',
           'mtj.f3u1',
       ],
