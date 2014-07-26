@@ -34,7 +34,7 @@ class OptionsTestCase(TestCase):
     def test_0200_update_apikey(self):
         options = Options()
         options.update({'implementations': {'IAPIKeyManager': {
-            'class': 'mtj.eve.tracker.manager.APIKeyManager',
+            'class': 'mtj.eve.tracker.manager:APIKeyManager',
             'args': [],
             'kwargs': {'api_keys': {'1': '2'}},
         }}})
@@ -46,7 +46,7 @@ class OptionsTestCase(TestCase):
     def test_0300_update_backend(self):
         options = Options()
         options.update({'implementations': {'ITrackerBackend': {
-            'class': 'mtj.eve.tracker.backend.sql.SQLAlchemyBackend',
+            'class': 'mtj.eve.tracker.backend.sql:SQLAlchemyBackend',
             'kwargs': {'src': 'sqlite:///backend.db'},
         }}})
         self.assertEqual(options.config['implementations']['ITrackerBackend'
@@ -58,13 +58,16 @@ class OptionsTestCase(TestCase):
         options = Options()
         # missing kwargs
         options.update({'implementations': {'IEvelinkCache': {
-            'class': 'mtj.eve.tracker.evelink.EveCache',
+            'class': 'mtj.eve.tracker.evelink:FakeEveCache',
             'args': ['/tmp/file'],
         }}})
         self.assertEqual(options.config['implementations']['IEvelinkCache'
             ].get('kwargs'), {})
         self.assertEqual(options.config['implementations']['IEvelinkCache'
             ].get('args'), ['/tmp/file'])
+        # can't change default
+        self.assertNotEqual(options.default_config['implementations'][
+            'IEvelinkCache']['class'], 'mtj.eve.tracker.evelink:FakeEveCache')
 
 
 def test_suite():

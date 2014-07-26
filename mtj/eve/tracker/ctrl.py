@@ -37,17 +37,19 @@ class Options(object):
         'implementations': {
             # will be initialized first.
             'IEvelinkCache': {
-                'class': 'mtj.eve.tracker.evelink.EvelinkSqliteCache',
+                'class': 'mtj.eve.tracker.evelink:EvelinkSqliteCache',
                 'args': [':memory:'],
                 'kwargs': {},
             },
             # optional
             'IAPIHelper': {
-                'class': 'mtj.eve.tracker.evelink.Helper',
+                'class': 'mtj.eve.tracker.evelink:Helper',
+                'args': [],
+                'kwargs': {},
             },
             # required
             'IAPIKeyManager': {
-                'class': 'mtj.eve.tracker.manager.APIKeyManager',
+                'class': 'mtj.eve.tracker.manager:APIKeyManager',
                 'args': [],
                 'kwargs': {
                     'api_keys': {},
@@ -55,15 +57,15 @@ class Options(object):
             },
             # required
             'ITrackerBackend': {
-                'class': 'mtj.eve.tracker.backend.sql.SQLAlchemyBackend',
+                'class': 'mtj.eve.tracker.backend.sql:SQLAlchemyBackend',
                 'args': [],
                 'kwargs': {
-                    'backend_url': 'sqlite:///:memory:',
+                    'src': 'sqlite:///:memory:',
                 },
             },
             # optional.
             'ITowerManager': {
-                'class': 'mtj.eve.tracker.manager.TowerManager',
+                'class': 'mtj.eve.tracker.manager:TowerManager',
                 'args': [],
                 'kwargs': {},
             },
@@ -167,6 +169,9 @@ class Options(object):
                 continue
 
             if isinstance(_schema[k], dict):
+                d = {}
+                d.update(target[k])
+                target[k] = d
                 self.update(v, target[k], _schema[k])
 
             if isinstance(_schema[k], type):
