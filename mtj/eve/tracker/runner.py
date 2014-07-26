@@ -50,14 +50,7 @@ class BaseRunner(object):
 
         # data
         s_paths = config.get('data', {})
-        evelink_cache = s_paths.get('evelink_cache', ':memory:')
         evedb_url = s_paths.get('evedb_url', None)
-        backend_url = s_paths.get('backend_url', 'sqlite:///:memory:')
-
-        # api
-        s_api = config.get('api', {})
-        api_src = s_api.get('source', 'config')
-        api_keys = s_api.get('api_keys', {})
 
         # set up the logging.
 
@@ -92,47 +85,44 @@ class BaseRunner(object):
             logger.critical('Incomplete or no evedb is present, pos tracker '
                             'WILL fail.')
 
-        self._registerCoreConfig(
-            evelink_cache=evelink_cache,
-            backend_url=backend_url,
-            api_src=api_src,
-            api_keys=api_keys,
-        )
-
-    def _registerCoreConfig(self, **kw):
-        self._core_config = kw
-
-    def _registerSite(self, evelink_cache, backend_url, api_src, api_keys):
-        # set the site and then register the utilities
+    def _registerSite(self):
+        # set the site and then register the utilities from self.config
 
         setSite(self.site)
-
         sitemanager = getSite().getSiteManager()
 
+        # the list of required interfaces to register utilities for,
+        # in the order they need to be done.
+        interface_names = ['IEvelinkCache', 'IAPIHelper', 'ITrackerBackend',
+            'ITowerManager', 'IAPIKeyManager',]
+
+        implementations = self.config.get('implementations', {})
+
         # first the cache as others will depend on this.
-        cache = evelink.EvelinkSqliteCache(evelink_cache)
-        sitemanager.registerUtility(cache, interfaces.IEvelinkCache)
+        for ifacename in interface_names:
+            impspec = implementations[ifacename]
+            ns, clsname = impspec['class'].split(':')
+            mod = importlib.import_module(ns)
+            cls = getattr(mod, clsname)
+            iface = getattr(interfaces, ifacename)
+            if ifacename == 'ITowerManager':
+                # this should be a factory, which then will adapt
+                # to the backend, but eh this works for now.
+                backend = sitemanager.getUtility(interfaces.ITrackerBackend)
+                obj = cls(backend)
+            else:
+                obj = cls(*impspec['args'], **impspec['kwargs'])
 
-        helper = evelink.Helper()
-        sitemanager.registerUtility(helper, interfaces.IAPIHelper)
+            sitemanager.registerUtility(obj, iface)
 
-        backend = SQLAlchemyBackend(backend_url)
-        sitemanager.registerUtility(backend, interfaces.ITrackerBackend)
-
-        tower_manager = TowerManager(backend)
-        sitemanager.registerUtility(tower_manager, interfaces.ITowerManager)
-
-        # default key manager, always registered.
-        key_manager = APIKeyManager(api_keys=api_keys)
-        sitemanager.registerUtility(key_manager, interfaces.IAPIKeyManager)
-
-        if api_src == 'backend':
-            # alternatively provide the adapter for the key manager if
-            # configured as such. 
-            sitemanager.registerAdapter(SQLAPIKeyManager,
-                required=(interfaces.ITrackerBackend,),
-                provided=interfaces.IAPIKeyManager,
-            )
+        #if api_src == 'backend':
+        #    # XXX this implementation needs adjustments.
+        #    # alternatively provide the adapter for the key manager if
+        #    # configured as such. 
+        #    sitemanager.registerAdapter(SQLAPIKeyManager,
+        #        required=(interfaces.ITrackerBackend,),
+        #        provided=interfaces.IAPIKeyManager,
+        #    )
 
     def validateSite(self):
         """
@@ -150,7 +140,7 @@ class BaseRunner(object):
         # Thread-locals...
         if self.site is None:
             self.site = BaseSite()
-        self._registerSite(**self._core_config)
+        self._registerSite()
         self.validateSite()
 
     def initialize(self):

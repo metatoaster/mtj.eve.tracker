@@ -4,6 +4,7 @@ import zope.component
 
 from mtj.eve.tracker import interfaces
 from mtj.eve.tracker.runner import BaseRunner
+from mtj.eve.tracker.ctrl import Options
 
 from mtj.evedb.tests.base import test_db_path
 from .dummyevelink import DummyCorp
@@ -15,14 +16,15 @@ class RunnerTestCase(TestCase):
     """
 
     def setUp(self):
-        self.base_config = {'data': {'evedb_url': test_db_path()}}
+        self.config = Options()
+        self.config.update({'data': {'evedb_url': test_db_path()}})
 
     def tearDown(self):
         pass
 
     def test_0000_base_runner(self):
         runner = BaseRunner()
-        runner.configure(config=self.base_config)
+        runner.configure(config=self.config.config)
         runner._preinitialize()
 
         manager = zope.component.queryUtility(interfaces.ITowerManager)
@@ -39,9 +41,12 @@ class RunnerTestCase(TestCase):
     def test_1000_sql_api(self):
         runner = BaseRunner()
         # no colliding keys.
-        config = {'api': {'source': 'backend'}}
-        config.update(self.base_config)
-        runner.configure(config=config)
+        self.config.update({'implementations': {'IAPIKeyManager': {
+            'class': 'mtj.eve.tracker.backend.sql:SQLAPIKeyManager',
+            'args': [],
+            'kwargs': {},
+        }}})
+        runner.configure(config=self.config.config)
         runner._preinitialize()
 
         backend = zope.component.queryUtility(interfaces.ITrackerBackend)
