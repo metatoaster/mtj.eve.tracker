@@ -123,14 +123,13 @@ class JsonDummyCorp(DummyCorp):
         return json.dumps(corp_dump)
 
 
+@zope.interface.implementer(IAPIHelper)
 class DummyHelper(object):
     """
     Dummy API Helper.
 
     Provides access to the dummy data below this class definition.
     """
-
-    zope.interface.implements(IAPIHelper)
 
     # the data indexes for the dynamic data tests.
     alliances_index = 0

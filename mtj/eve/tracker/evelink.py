@@ -74,15 +74,15 @@ class UtilityAPICache(evelink.api.APICache):
         return self._get_cache().put(*a, **kw)
 
 
+@zope.interface.implementer(IEvelinkCache)
 class EvelinkSqliteCache(SqliteCache):
     """
     For a zope component registered cache class extending from the
     default sqlite cache.
     """
 
-    zope.interface.implements(IEvelinkCache)
 
-
+@zope.interface.implementer(IAPIHelper)
 class Helper(object):
     """
     API helper class
@@ -90,8 +90,6 @@ class Helper(object):
     Provides some methods that helps with providing data from the API to
     the pos tracker.
     """
-
-    zope.interface.implements(IAPIHelper)
 
     api_cache = None
 

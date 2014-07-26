@@ -8,8 +8,8 @@ from mtj.eve.tracker.backend import monitor
 from .base import setUp, tearDown
 
 
+@zope.interface.implementer(ITrackerBackend)
 class DummyBackend(object):
-    zope.interface.implements(ITrackerBackend)
 
     def __init__(self):
         self.towers = []

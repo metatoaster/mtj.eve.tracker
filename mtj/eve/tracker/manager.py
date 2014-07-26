@@ -16,12 +16,11 @@ from mtj.eve.tracker import evelink
 logger = logging.getLogger('mtj.eve.pos.manager')
 
 
+@zope.interface.implementer(IAPIKeyManager)
 class APIKeyManager(object):
     """
     Base class for managing API keys.
     """
-
-    zope.interface.implements(IAPIKeyManager)
 
     def __init__(self, api_keys=None):
         if api_keys is None:
@@ -35,12 +34,11 @@ class APIKeyManager(object):
             self.api_keys.iteritems()]
 
 
+@zope.interface.implementer(ITowerManager)
 class BaseTowerManager(object):
     """
     A class that gathers the loose bits of functions.
     """
-
-    zope.interface.implements(ITowerManager)
 
     def __init__(self):
         pass

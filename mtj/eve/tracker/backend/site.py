@@ -6,12 +6,11 @@ from zope.component.globalregistry import BaseGlobalComponents
 from zope.component.hooks import getSite, setSite
 
 
+@zope.interface.implementer(ISite)
 class BaseSite(object):
     """
     For a segregated installation.
     """
-
-    zope.interface.implements(ISite)
 
     def __init__(self, sitemanager=None):
         if sitemanager is None:
