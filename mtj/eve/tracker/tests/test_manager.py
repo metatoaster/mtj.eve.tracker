@@ -4,7 +4,7 @@ import zope.component
 
 from mtj.eve.tracker.interfaces import IAPIHelper, ITrackerBackend
 from mtj.eve.tracker.pos import Tower
-from mtj.eve.tracker.manager import APIKeyManager, DefaultTowerManager
+from mtj.eve.tracker.manager import APIKeyManager, BaseTowerManager
 
 from .base import setUp, tearDown
 from .dummyevelink import DummyCorp
@@ -44,7 +44,7 @@ class DefaultManagerTestCase(TestCase):
     def setUp(self):
         setUp(self)
         self.backend = zope.component.getUtility(ITrackerBackend)
-        self.manager = DefaultTowerManager()
+        self.manager = BaseTowerManager()
         self.helper = zope.component.getUtility(IAPIHelper)
 
     def tearDown(self):

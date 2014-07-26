@@ -105,24 +105,8 @@ class BaseRunner(object):
             mod = importlib.import_module(ns)
             cls = getattr(mod, clsname)
             iface = getattr(interfaces, ifacename)
-            if ifacename == 'ITowerManager':
-                # this should be a factory, which then will adapt
-                # to the backend, but eh this works for now.
-                backend = sitemanager.getUtility(interfaces.ITrackerBackend)
-                obj = cls(backend)
-            else:
-                obj = cls(*impspec['args'], **impspec['kwargs'])
-
+            obj = cls(*impspec['args'], **impspec['kwargs'])
             sitemanager.registerUtility(obj, iface)
-
-        #if api_src == 'backend':
-        #    # XXX this implementation needs adjustments.
-        #    # alternatively provide the adapter for the key manager if
-        #    # configured as such. 
-        #    sitemanager.registerAdapter(SQLAPIKeyManager,
-        #        required=(interfaces.ITrackerBackend,),
-        #        provided=interfaces.IAPIKeyManager,
-        #    )
 
     def validateSite(self):
         """
@@ -150,13 +134,13 @@ class BaseRunner(object):
 
         self._preinitialize()
 
-        manager = zope.component.queryUtility(interfaces.ITowerManager)
-        if manager is None:
-            raise TypeError('No manager is registered.  Site not registered?')
+        backend = zope.component.queryUtility(interfaces.ITrackerBackend)
+        if backend is None:
+            raise TypeError('No backend is registered.  Site not registered?')
 
         logger.info('%s starting up', self.__class__.__name__)
         logger.info('Instantiating towers from database.')
-        manager.backend.reinstantiate()
+        backend.reinstantiate()
 
     def run(self):
         raise NotImplementedError

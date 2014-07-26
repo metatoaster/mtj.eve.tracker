@@ -42,14 +42,8 @@ class BaseTowerManager(object):
 
     zope.interface.implements(ITowerManager)
 
-    def __init__(self, backend):
-        self._setBackend(backend)
-        # TODO setup evelink cache here too?
-
-    def _setBackend(self, backend):
-        if not ITrackerBackend.providedBy(backend):
-            raise TypeError('provided backend is not of the correct type')
-        self.backend = backend
+    def __init__(self):
+        pass
 
     def importWithCorp(self, corp):
         """
@@ -59,6 +53,12 @@ class BaseTowerManager(object):
         corp
             - the corp API object.
         """
+
+        backend = zope.component.queryUtility(ITrackerBackend)
+        if not ITrackerBackend.providedBy(backend):
+            logger.warning('No validtracker backend can be acquired, '
+                           'nothing to do')
+            return
 
         starbases = corp.starbases().result
         starbases_c = len(starbases)
@@ -71,7 +71,7 @@ class BaseTowerManager(object):
             logger.info('processing itemID: %s', k)
 
             try:
-                tower = self.backend.addTower(**v)
+                tower = backend.addTower(**v)
             except TypeError:
                 # can be caused by celestialId being undefined from an
                 # unanchored tower.
@@ -123,24 +123,9 @@ class BaseTowerManager(object):
             # itemID is not reset when unanchored.  This is why some
             # corporation ensure that every unanchored tower is to be
             # repackaged before being anchored again, if possible.
-            self.backend.setTowerApi(tower.id, corp.api.api_key[0], api_time)
+            backend.setTowerApi(tower.id, corp.api.api_key[0], api_time)
 
         logger.info('(%d/%d) processing complete', starbases_c, starbases_c)
-
-
-class DefaultTowerManager(BaseTowerManager):
-    """
-    Default tower manager that acquires whatever default backend that is
-    currently registered if one is not provided.
-    """
-
-    def __init__(self, backend=None):
-        if not backend:
-            self.backend = zope.component.queryUtility(ITrackerBackend)
-            if not ITrackerBackend.providedBy(self.backend):
-                raise TypeError('No appropriate backend is registered.')
-        else:
-            self._setBackend(backend)
 
 
 class TowerManager(BaseTowerManager):
@@ -150,28 +135,12 @@ class TowerManager(BaseTowerManager):
     Requires explicit backend, and provides
     """
 
-    def __init__(self, backend=None):
-        if not ITrackerBackend.providedBy(backend):
-            raise TypeError('inappropriate backend is provided.')
-
-        self._setBackend(backend)
-        self._api_keys = {}
-        self.updateApiTowerIds()
-
-    def addApiKey(self, api_id, vcode):
-        self._api_keys[api_id] = vcode
-
-    def updateApiTowerIds(self):
-        self._api_tower_ids = self.backend.getApiTowerIds()
-
-    def getTowerApiTimestamp(self, id_):
-        return self._api_tower_ids.get(id_, None)
-
     def importAll(self):
-        keyman = zope.component.queryAdapter(self.backend, IAPIKeyManager)
-
-        if keyman is None:
-            keyman = zope.component.queryUtility(IAPIKeyManager)
+        keyman = zope.component.queryUtility(IAPIKeyManager)
+        backend = zope.component.queryUtility(ITrackerBackend)
+        if not backend:
+            logger.warning('No backend is present')
+            return
 
         if not keyman:
             logger.warning('No key manager is present')
@@ -180,22 +149,26 @@ class TowerManager(BaseTowerManager):
         corps = keyman.getAllWith(evelink.Corp)
         for corp in corps:
             error = 0
-            m_usage = self.backend.beginApiUsage(corp.api.api_key[0])
+            m_usage = backend.beginApiUsage(corp.api.api_key[0])
             try:
                 self.importWithCorp(corp)
             except:
                 # well crap.
                 logger.exception('Import failed with uncaught exception')
                 error = 1
-            self.backend.endApiUsage(m_usage, error)
+            backend.endApiUsage(m_usage, error)
 
         # update the api key usage.
-        self.updateApiTowerIds()
+        backend.cacheApiTowerIds()
 
     def refresh(self):
         """
         Refresh all data from the db.
         """
 
-        self.updateApiTowerIds()
-        return self.backend.reinstantiate()
+        backend = zope.component.queryUtility(ITrackerBackend)
+        if not backend:
+            logger.warning('No backend is present')
+            return
+
+        return backend.reinstantiate()

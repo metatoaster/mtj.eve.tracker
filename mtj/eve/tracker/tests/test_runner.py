@@ -55,8 +55,7 @@ class RunnerTestCase(TestCase):
         backend._conn.execute('insert into api_key values '
             '("test2", "testing2_vcode4")')
 
-        keyman = zope.component.queryAdapter(backend,
-            interfaces.IAPIKeyManager)
+        keyman = zope.component.queryUtility(interfaces.IAPIKeyManager)
         self.assertTrue(interfaces.IAPIKeyManager.providedBy(keyman))
 
         results = keyman.getAllWith(DummyCorp)

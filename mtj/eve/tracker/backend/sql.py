@@ -10,8 +10,12 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 
 import zope.interface
+import zope.component
 
-from mtj.eve.tracker.interfaces import ITrackerBackend, IAPIKeyManager
+from mtj.eve.tracker.interfaces import ITrackerBackend
+from mtj.eve.tracker.interfaces import IAPIKeyManager
+from mtj.eve.tracker.backend.interfaces import ISQLAlchemyBackend
+from mtj.eve.tracker.backend.interfaces import ISQLAPIKeyManager
 from mtj.eve.tracker import pos
 from mtj.eve.tracker import evelink
 
@@ -292,6 +296,7 @@ class ApiUsageLog(Base):
         self.end_ts = None
 
 
+@zope.interface.implementer(ISQLAlchemyBackend)
 class SQLAlchemyBackend(object):
     """
     SQLAlchemy based backend.
@@ -310,8 +315,6 @@ class SQLAlchemyBackend(object):
         >>> list(bn._conn.execute('select * from audit'))
         [(1, u'silo', 24, u'skimmed 100 tech', u'dj', u'', 1359350165)]
     """
-
-    zope.interface.implements(ITrackerBackend)
 
     def __init__(self, src=None):
         if not src:
@@ -431,6 +434,12 @@ class SQLAlchemyBackend(object):
             ).filter(or_(*conditions))
         return {i[0]: i[1] for i in q.all()}
 
+    def cacheApiTowerIds(self):
+        self._api_tower_ids = self.getApiTowerIds()
+
+    def getTowerApiTimestamp(self, id_):
+        return self._api_tower_ids.get(id_, None)
+
     def reinstantiate(self):
         """
         Recreate all the objects in the tracker from the database.
@@ -442,6 +451,7 @@ class SQLAlchemyBackend(object):
         # that got written are left unread here.
 
         logger.info('Reinstantiation requested.')
+        self.cacheApiTowerIds()
         session = self.session()
         towerq = session.query(Tower)
         towers = {}
@@ -737,15 +747,18 @@ class SQLAlchemyBackend(object):
         return result
 
 
+@zope.interface.implementer(ISQLAPIKeyManager)
 class SQLAPIKeyManager(object):
 
-    zope.interface.implements(IAPIKeyManager)
-
-    def __init__(self, backend):
-        self.backend = backend
+    def __init__(self):
+        pass
 
     def getAllWith(self, cls):
-        api_keys = self.backend.getApiKeys()
+        backend = zope.component.queryUtility(ITrackerBackend)
+        if not ISQLAlchemyBackend.providedBy(backend):
+            raise TypeError('backend does not provide ISQLALchemyBackend')
+
+        api_keys = backend.getApiKeys()
         return [cls(api=evelink.API(api_key=(api_key.key, api_key.vcode)))
             for api_key in api_keys]
 

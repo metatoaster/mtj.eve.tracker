@@ -77,7 +77,7 @@ class Json(object):
 
     def _towers(self):
         timestamp = int(time())
-        api_ts = self._manager.getTowerApiTimestamp
+        api_ts = self._backend.getTowerApiTimestamp
         tower_labels = self._backend.getAuditForTable('tower')
 
         def getLabel(id_):
@@ -175,7 +175,7 @@ class Json(object):
 
         backend = self._backend
         timestamp = int(time())
-        api_ts = self._manager.getTowerApiTimestamp
+        api_ts = self._backend.getTowerApiTimestamp
 
         tower = backend.getTower(tower_id, None)
         if tower is None:
