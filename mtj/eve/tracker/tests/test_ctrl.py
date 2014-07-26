@@ -31,19 +31,38 @@ class OptionsTestCase(TestCase):
         options.update({'logging': {'no_value': 'no_value'}})
         self.assertEqual(options.config['logging'].get('no_value'), None)
 
-    def test_0102_update_apikey(self):
+    def test_0200_update_apikey(self):
         options = Options()
-        options.update({'api': {'api_keys': {'1': '2'}}})
-        self.assertEqual(options.config['api'].get('api_keys'), {'1': '2'})
+        options.update({'api': {
+            'class': 'mtj.eve.tracker.manager.APIKeyManager',
+            'args': [],
+            'kwargs': {'api_keys': {'1': '2'}},
+        }})
+        self.assertEqual(options.config['api'].get('args'), [])
+        self.assertEqual(options.config['api'].get('kwargs'), {
+            'api_keys': {'1': '2'},
+        })
 
-    def test_0103_update_choice(self):
+    def test_0300_update_backend(self):
         options = Options()
-        options.update({'api': {'source': 'backend'}})
-        self.assertEqual(options.config['api']['source'], 'backend')
-        options.update({'api': {'source': 'fake'}})
-        self.assertEqual(options.config['api']['source'], 'backend')
-        options.update({'api': {'source': 'config'}})
-        self.assertEqual(options.config['api']['source'], 'config')
+        options.update({'backend': {
+            'class': 'mtj.eve.tracker.evelink.EveCache',
+            'kwargs': {'src': 'sqlite:///backend.db'},
+        }})
+        self.assertEqual(options.config['backend'].get('args'), [])
+        self.assertEqual(options.config['backend'].get('kwargs'), {
+            'src': 'sqlite:///backend.db',
+        })
+
+    def test_0400_update_cache(self):
+        options = Options()
+        # missing kwargs
+        options.update({'cache': {
+            'class': 'mtj.eve.tracker.evelink.EveCache',
+            'args': ['/tmp/file'],
+        }})
+        self.assertEqual(options.config['cache'].get('kwargs'), {})
+        self.assertEqual(options.config['cache'].get('args'), ['/tmp/file'])
 
 
 def test_suite():

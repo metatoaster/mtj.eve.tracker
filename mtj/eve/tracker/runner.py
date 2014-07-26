@@ -5,6 +5,7 @@ This probably could be placed in a separate egg.
 """
 
 import logging
+import importlib
 
 import zope.component
 from zope.component.hooks import setSite, setHooks, getSite
@@ -133,11 +134,24 @@ class BaseRunner(object):
                 provided=interfaces.IAPIKeyManager,
             )
 
+    def validateSite(self):
+        """
+        Ensure all utilities are present and available.
+        """
+
+        sm = getSite().getSiteManager()
+        cache = sm.getUtility(interfaces.IEvelinkCache)
+        helper = sm.getUtility(interfaces.IAPIHelper)
+        backend = sm.getUtility(interfaces.ITrackerBackend)
+        tower_manager = sm.getUtility(interfaces.ITowerManager)
+        key_manager = sm.getUtility(interfaces.IAPIKeyManager)
+
     def _preinitialize(self):
         # Thread-locals...
         if self.site is None:
             self.site = BaseSite()
         self._registerSite(**self._core_config)
+        self.validateSite()
 
     def initialize(self):
         """

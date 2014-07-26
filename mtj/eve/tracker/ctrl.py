@@ -33,14 +33,27 @@ class Options(object):
             'time_format': '%Y-%m-%d %H:%M:%S',
             'path': None,
         },
-        'data': {
-            'evelink_cache': ':memory:',
-            'evedb_url': None,
-            'backend_url': 'sqlite:///:memory:',
-        },
         'api': {
-            'source': 'config',
-            'api_keys': {},
+            'class': 'mtj.eve.tracker.manager.APIKeyManager',
+            'args': [],
+            'kwargs': {
+                'api_keys': {},
+            },
+        },
+        'backend': {
+            'class': 'mtj.eve.tracker.backend.sql.SQLAlchemyBackend',
+            'args': [],
+            'kwargs': {
+                'backend_url': 'sqlite:///:memory:',
+            },
+        },
+        'cache': {
+            'class': 'mtj.eve.tracker.evelink.EvelinkSqliteCache',
+            'args': [':memory:'],
+            'kwargs': {},
+        },
+        'data': {
+            'evedb_url': None,
         },
         'daemon': {
             'effective_user': None,
@@ -65,14 +78,23 @@ class Options(object):
             'time_format': basestring,
             'path': basestring,
         },
-        'data': {
-            'evelink_cache': basestring,
-            'evedb_url': basestring,
-            'backend_url': basestring,
-        },
         'api': {
-            'source': ('config', 'backend'),
-            'api_keys': dict,
+            'class': basestring,
+            'args': list,
+            'kwargs': dict,
+        },
+        'backend': {
+            'class': basestring,
+            'args': list,
+            'kwargs': dict,
+        },
+        'cache': {
+            'class': basestring,
+            'args': list,
+            'kwargs': dict,
+        },
+        'data': {
+            'evedb_url': basestring,
         },
         'daemon': {
             'effective_user': basestring,
