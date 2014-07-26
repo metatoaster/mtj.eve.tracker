@@ -33,25 +33,42 @@ class Options(object):
             'time_format': '%Y-%m-%d %H:%M:%S',
             'path': None,
         },
-        'api': {
-            'class': 'mtj.eve.tracker.manager.APIKeyManager',
-            'args': [],
-            'kwargs': {
-                'api_keys': {},
+
+        'implementations': {
+            # will be initialized first.
+            'IEvelinkCache': {
+                'class': 'mtj.eve.tracker.evelink.EvelinkSqliteCache',
+                'args': [':memory:'],
+                'kwargs': {},
+            },
+            # optional
+            'IAPIHelper': {
+                'class': 'mtj.eve.tracker.evelink.Helper',
+            },
+            # required
+            'IAPIKeyManager': {
+                'class': 'mtj.eve.tracker.manager.APIKeyManager',
+                'args': [],
+                'kwargs': {
+                    'api_keys': {},
+                },
+            },
+            # required
+            'ITrackerBackend': {
+                'class': 'mtj.eve.tracker.backend.sql.SQLAlchemyBackend',
+                'args': [],
+                'kwargs': {
+                    'backend_url': 'sqlite:///:memory:',
+                },
+            },
+            # optional.
+            'ITowerManager': {
+                'class': 'mtj.eve.tracker.manager.TowerManager',
+                'args': [],
+                'kwargs': {},
             },
         },
-        'backend': {
-            'class': 'mtj.eve.tracker.backend.sql.SQLAlchemyBackend',
-            'args': [],
-            'kwargs': {
-                'backend_url': 'sqlite:///:memory:',
-            },
-        },
-        'cache': {
-            'class': 'mtj.eve.tracker.evelink.EvelinkSqliteCache',
-            'args': [':memory:'],
-            'kwargs': {},
-        },
+
         'data': {
             'evedb_url': None,
         },
@@ -78,20 +95,32 @@ class Options(object):
             'time_format': basestring,
             'path': basestring,
         },
-        'api': {
-            'class': basestring,
-            'args': list,
-            'kwargs': dict,
-        },
-        'backend': {
-            'class': basestring,
-            'args': list,
-            'kwargs': dict,
-        },
-        'cache': {
-            'class': basestring,
-            'args': list,
-            'kwargs': dict,
+        'implementations': {
+            'IEvelinkCache': {
+                'class': basestring,
+                'args': list,
+                'kwargs': dict,
+            },
+            'IAPIHelper': {
+                'class': basestring,
+                'args': list,
+                'kwargs': dict,
+            },
+            'IAPIKeyManager': {
+                'class': basestring,
+                'args': list,
+                'kwargs': dict,
+            },
+            'ITrackerBackend': {
+                'class': basestring,
+                'args': list,
+                'kwargs': dict,
+            },
+            'ITowerManager': {
+                'class': basestring,
+                'args': list,
+                'kwargs': dict,
+            },
         },
         'data': {
             'evedb_url': basestring,

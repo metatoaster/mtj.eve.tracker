@@ -33,36 +33,38 @@ class OptionsTestCase(TestCase):
 
     def test_0200_update_apikey(self):
         options = Options()
-        options.update({'api': {
+        options.update({'implementations': {'IAPIKeyManager': {
             'class': 'mtj.eve.tracker.manager.APIKeyManager',
             'args': [],
             'kwargs': {'api_keys': {'1': '2'}},
-        }})
-        self.assertEqual(options.config['api'].get('args'), [])
-        self.assertEqual(options.config['api'].get('kwargs'), {
-            'api_keys': {'1': '2'},
-        })
+        }}})
+        self.assertEqual(options.config['implementations']['IAPIKeyManager'
+            ].get('args'), [])
+        self.assertEqual(options.config['implementations']['IAPIKeyManager'
+            ].get('kwargs'), {'api_keys': {'1': '2'},})
 
     def test_0300_update_backend(self):
         options = Options()
-        options.update({'backend': {
-            'class': 'mtj.eve.tracker.evelink.EveCache',
+        options.update({'implementations': {'ITrackerBackend': {
+            'class': 'mtj.eve.tracker.backend.sql.SQLAlchemyBackend',
             'kwargs': {'src': 'sqlite:///backend.db'},
-        }})
-        self.assertEqual(options.config['backend'].get('args'), [])
-        self.assertEqual(options.config['backend'].get('kwargs'), {
-            'src': 'sqlite:///backend.db',
-        })
+        }}})
+        self.assertEqual(options.config['implementations']['ITrackerBackend'
+            ].get('args'), [])
+        self.assertEqual(options.config['implementations']['ITrackerBackend'
+            ].get('kwargs'), {'src': 'sqlite:///backend.db',})
 
     def test_0400_update_cache(self):
         options = Options()
         # missing kwargs
-        options.update({'cache': {
+        options.update({'implementations': {'IEvelinkCache': {
             'class': 'mtj.eve.tracker.evelink.EveCache',
             'args': ['/tmp/file'],
-        }})
-        self.assertEqual(options.config['cache'].get('kwargs'), {})
-        self.assertEqual(options.config['cache'].get('args'), ['/tmp/file'])
+        }}})
+        self.assertEqual(options.config['implementations']['IEvelinkCache'
+            ].get('kwargs'), {})
+        self.assertEqual(options.config['implementations']['IEvelinkCache'
+            ].get('args'), ['/tmp/file'])
 
 
 def test_suite():
