@@ -1,5 +1,6 @@
 from unittest import TestCase, TestSuite, makeSuite
 
+import time
 import zope.component
 from zope.component.hooks import getSiteManager
 
@@ -11,6 +12,17 @@ from mtj.eve.tracker.evelink import Helper, API, EvelinkSqliteCache
 from mtj.evedb.tests.base import init_test_db
 from .base import installTestSite, tearDown
 
+
+_error_xml = r"""
+<?xml version="1.0"?>
+<eveapi version="2">
+  <currentTime>2009-09-09 12:34:56</currentTime>
+  <error code="221">
+    Invalid page error
+  </error>
+  <cachedUntil>2038-12-31 23:59:59</cachedUntil>
+</eveapi>
+""".strip()
 
 class CacheTestCase(TestCase):
     """
@@ -89,7 +101,42 @@ class CacheTestCase(TestCase):
         self.assertTrue(hasattr(api.cache, 'connection'))
 
 
+class EvelinkSqliteCacheTestCase(TestCase):
+
+    def test_0000_standard_cache(self):
+        cache = EvelinkSqliteCache(':memory:')
+        key = 'dummy'
+        duration = 86400000
+        cache.put(key, 'test_value', duration)
+        cursor = cache.connection.cursor()
+        cursor.execute('select value, expiration from cache where "key"=?',
+            (key,))
+        cache_until = time.time() + duration
+        value, expiration = cursor.fetchone()
+        self.assertTrue(cache_until > expiration)
+
+        # not actually limited to this.
+        cache_until = time.time() + EvelinkSqliteCache.max_error_cache_duration
+        self.assertFalse(cache_until > expiration)
+
+    def test_0001_limited_error_duration(self):
+        cache = EvelinkSqliteCache(':memory:')
+        key = 'dummy'
+        duration = 86400000
+        cache.put(key, _error_xml, duration)
+        cursor = cache.connection.cursor()
+        cursor.execute('select value, expiration from cache where "key"=?',
+            (key,))
+        # the duration is forcibly
+        cache_until = time.time() + EvelinkSqliteCache.max_error_cache_duration
+        value, expiration = cursor.fetchone()
+        self.assertTrue(cache_until > expiration)
+
+        self.assertFalse(cache_until > time.time() + duration)
+
+
 def test_suite():
     suite = TestSuite()
     suite.addTest(makeSuite(CacheTestCase))
+    suite.addTest(makeSuite(EvelinkSqliteCacheTestCase))
     return suite

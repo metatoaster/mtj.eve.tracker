@@ -9,6 +9,7 @@ from __future__ import absolute_import
 
 import itertools
 from time import time
+from xml.etree import ElementTree
 
 import zope.interface
 import zope.component
@@ -80,6 +81,19 @@ class EvelinkSqliteCache(SqliteCache):
     For a zope component registered cache class extending from the
     default sqlite cache.
     """
+
+    max_error_cache_duration = 3540  # an hour less one minute
+
+    def put(self, key, value, duration):
+        try:
+            tree = ElementTree.fromstring(value)
+        except ElementTree.ParseError:
+            # Let this continue without issues.
+            return super(EvelinkSqliteCache, self).put(key, value, duration)
+
+        if tree.find('error') is not None:
+            duration = min(duration, self.max_error_cache_duration)
+        return super(EvelinkSqliteCache, self).put(key, value, duration)
 
 
 @zope.interface.implementer(IAPIHelper)
