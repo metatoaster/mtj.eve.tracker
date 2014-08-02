@@ -16,6 +16,7 @@ from mtj.eve.tracker.interfaces import ITrackerBackend
 from mtj.eve.tracker.interfaces import IAPIKeyManager
 from mtj.eve.tracker.backend.interfaces import ISQLAlchemyBackend
 from mtj.eve.tracker.backend.interfaces import ISQLAPIKeyManager
+from mtj.eve.tracker.backend.model import ApiTowerStatus
 from mtj.eve.tracker import pos
 from mtj.eve.tracker import evelink
 
@@ -138,8 +139,12 @@ class TowerApi(Base):
     api_key = Column(Integer, index=True)
     currentTime = Column(Integer)
     timestamp = Column(Integer)
+    # If present in TowerList but a transient error happened this is
+    # incremented.  Otherwise it should always be set to 0.
+    api_error_count = Column(Integer)
 
-    def __init__(self, tower_id, api_key, currentTime, timestamp=None):
+    def __init__(self, tower_id, api_key, currentTime, timestamp=None,
+            api_error_count=0):
 
         self.tower_id = tower_id
         self.api_key = api_key
@@ -147,6 +152,7 @@ class TowerApi(Base):
         # this may seem to duplicate above, but is useful to verify
         # the staleness of the data's currentTime.
         self.timestamp = timestamp is None and int(time.time()) or timestamp
+        self.api_error_count = api_error_count
 
 
 class Fuel(Base):
@@ -430,9 +436,9 @@ class SQLAlchemyBackend(object):
                 (TowerApi.api_key == k) & (TowerApi.timestamp >= begin))
 
         session = self.session()
-        q = session.query(TowerApi.tower_id, TowerApi.currentTime
-            ).filter(or_(*conditions))
-        return {i[0]: i[1] for i in q.all()}
+        q = session.query(TowerApi.tower_id, TowerApi.currentTime,
+            TowerApi.api_error_count).filter(or_(*conditions))
+        return {i[0]: ApiTowerStatus(i[1], i[2]) for i in q.all()}
 
     def cacheApiTowerIds(self):
         self._api_tower_ids = self.getApiTowerIds()
@@ -601,16 +607,28 @@ class SQLAlchemyBackend(object):
 
         return fuel
 
-    def setTowerApi(self, tower_id, api_key, currentTime, timestamp=None):
+    def setTowerApi(self, tower_id, api_key, currentTime, timestamp=None,
+            api_error=False):
         """
         Sets the tower API.
         """
 
         # don't trigger autoincrement.
         assert tower_id is not None
-
-        tower_api = TowerApi(tower_id, api_key, currentTime, timestamp)
         session = self.session()
+
+        api_error_count = 0
+        if api_error:
+            q = session.query(TowerApi).filter_by(tower_id=tower_id)
+            current_tower_api = q.first()
+            if current_tower_api:
+                api_error_count = current_tower_api.api_error_count
+
+            # increment.
+            api_error_count += 1
+
+        tower_api = TowerApi(tower_id, api_key, currentTime, timestamp,
+            api_error_count)
         session.merge(tower_api)
         session.commit()
 

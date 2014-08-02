@@ -422,17 +422,17 @@ class SqlBackendTestCase(TestCase):
         self.backend.setTowerApi(4, 123456, 10003, 10003)
         self.backend.endApiUsage(m, 0, 10004)
         self.assertEqual(self.backend.getApiTowerIds(), {
-            1: 10000, 2: 10001, 3: 10001, 4: 10003})
+            1: (10000, 0), 2: (10001, 0), 3: (10001, 0), 4: (10003, 0)})
 
         m = self.backend.beginApiUsage(123456, 20000)
         self.backend.setTowerApi(1, 123456, 20000, 20000)
         self.backend.setTowerApi(4, 123456, 20001, 20001)
         # update has not been marked as completed.
         self.assertEqual(self.backend.getApiTowerIds(), {
-            1: 20000, 2: 10001, 3: 10001, 4: 20001})
+            1: (20000, 0), 2: (10001, 0), 3: (10001, 0), 4: (20001, 0)})
         self.backend.endApiUsage(m, 0, 20004)
         self.assertEqual(self.backend.getApiTowerIds(), {
-            1: 20000, 4: 20001})
+            1: (20000, 0), 4: (20001, 0)})
 
         # Extra keys overlapping shouldn't cause problems.
         m = self.backend.beginApiUsage(123457, 30000)
@@ -443,14 +443,16 @@ class SqlBackendTestCase(TestCase):
         # This is still stuck a number of seconds behind but it's of
         # a different API key...
         self.assertEqual(self.backend.getApiTowerIds(), {
-            1: 30000, 2: 30001, 4: 20001, 5: 29957})  # note, API timestamp
+            # note, API timestamp
+            1: (30000, 0), 2: (30001, 0), 4: (20001, 0), 5: (29957, 0)}) 
 
         m = self.backend.beginApiUsage(123456, 40000)
         self.backend.setTowerApi(1, 123456, 40000, 40000)
         self.backend.endApiUsage(m, 0, 40000)
         # ... until that API key is fetched to verify that this is gone.
         self.assertEqual(self.backend.getApiTowerIds(), {
-            1: 40000, 2: 30001, 5: 29957})  # note, API timestamp
+            # note, API timestamp
+            1: (40000, 0), 2: (30001, 0), 5: (29957, 0)})
 
         m = self.backend.beginApiUsage(123457, 50000)
         self.backend.setTowerApi(1, 123457, 50000, 50000)
@@ -459,7 +461,36 @@ class SqlBackendTestCase(TestCase):
         self.backend.endApiUsage(m, 1, 50004)
         # the time stuck is from the previous success call.
         self.assertEqual(self.backend.getApiTowerIds(), {
-            1: 50000, 2: 50001, 5: 29957})
+            1: (50000, 0), 2: (50001, 0), 5: (29957, 0)})
+
+    def test_4001_tower_api_usage_errors(self):
+        m = self.backend.beginApiUsage(123456, 10000)
+        self.backend.setTowerApi(1, 123456, 10000, 10000)
+        self.backend.setTowerApi(2, 123456, 10001, 10001, api_error=True)
+        self.backend.setTowerApi(3, 123456, 10001, 10001)
+        self.backend.setTowerApi(4, 123456, 10003, 10003)
+        self.backend.endApiUsage(m, 0, 10004)
+        self.assertEqual(self.backend.getApiTowerIds(), {
+            1: (10000, 0), 2: (10001, 1), 3: (10001, 0), 4: (10003, 0)})
+
+        m = self.backend.beginApiUsage(123456, 20000)
+        self.backend.setTowerApi(1, 123456, 20000, 20000)
+        self.backend.setTowerApi(2, 123456, 20001, 20001, api_error=True)
+        self.backend.setTowerApi(3, 123456, 20001, 20001, api_error=True)
+        self.backend.setTowerApi(4, 123456, 20003, 20003)
+        self.backend.endApiUsage(m, 0, 20004)
+        self.assertEqual(self.backend.getApiTowerIds(), {
+            1: (20000, 0), 2: (20001, 2), 3: (20001, 1), 4: (20003, 0)})
+
+        # all is well now.
+        m = self.backend.beginApiUsage(123456, 30000)
+        self.backend.setTowerApi(1, 123456, 30000, 30000)
+        self.backend.setTowerApi(2, 123456, 30001, 30001)
+        self.backend.setTowerApi(3, 123456, 30001, 30001)
+        self.backend.setTowerApi(4, 123456, 30003, 30003)
+        self.backend.endApiUsage(m, 0, 30004)
+        self.assertEqual(self.backend.getApiTowerIds(), {
+            1: (30000, 0), 2: (30001, 0), 3: (30001, 0), 4: (30003, 0)})
 
 def test_suite():
     suite = TestSuite()
