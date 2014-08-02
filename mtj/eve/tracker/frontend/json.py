@@ -75,9 +75,23 @@ class Json(object):
         }
         return json.dumps(result)
 
+    def api_ts(self, tower_id):
+        value = self._backend.getTowerApiTimestamp(tower_id)
+        if not value:
+            return {
+                'apiTimestamp': None,
+                'apiTimestampFormatted': '',
+                'apiErrorCount': None,
+            }
+        return {
+            'apiTimestamp': value.currentTime,
+            'apiTimestampFormatted': strftime(
+                '%Y-%m-%d %H:%M', gmtime(value.currentTime)),
+            'apiErrorCount': value.api_error_count,
+        }
+
     def _towers(self):
         timestamp = int(time())
-        api_ts = self._backend.getTowerApiTimestamp
         tower_labels = self._backend.getAuditForTable('tower')
 
         def getLabel(id_):
@@ -87,13 +101,11 @@ class Json(object):
                     return label.reason
             return ''
 
-        all_towers = {
-            v.id: {
+        all_towers = {}
+        # FIXME using private _towers.
+        for v in self._backend._towers.values():
+            tower = {
                 'id': v.id,
-                'apiTimestamp': api_ts(v.id),
-                'apiTimestampFormatted': api_ts(v.id) is not None and
-                        strftime('%Y-%m-%d %H:%M', gmtime(api_ts(v.id)))
-                        or '',
                 'celestialName': v.celestialName,
                 'regionName': v.regionName,
                 'typeID': v.typeID,
@@ -116,8 +128,9 @@ class Json(object):
                 'timeRemainingFormatted':
                     str(timedelta(seconds=v.getTimeRemaining(timestamp))),
                 'auditLabel': getLabel(v.id),
-            # FIXME using private _towers.
-            } for v in self._backend._towers.values()}
+            }
+            tower.update(self.api_ts(v.id))
+            all_towers[v.id] = tower
         return timestamp, all_towers
 
     def towers(self):
@@ -175,7 +188,6 @@ class Json(object):
 
         backend = self._backend
         timestamp = int(time())
-        api_ts = self._backend.getTowerApiTimestamp
 
         tower = backend.getTower(tower_id, None)
         if tower is None:
@@ -210,10 +222,6 @@ class Json(object):
 
         tower_json = {
             'id': tower.id,
-            'apiTimestamp': api_ts(tower.id),
-            'apiTimestampFormatted': api_ts(tower.id) is not None and
-                    strftime('%Y-%m-%d %H:%M', gmtime(api_ts(tower.id)))
-                    or '',
             'celestialName': tower.celestialName,
             'regionName': tower.regionName,
             'typeName': tower.typeName,
@@ -242,6 +250,7 @@ class Json(object):
                 str(timedelta(seconds=tower.getTimeRemaining(timestamp))),
             'audits': self._audits('tower', tower.id),
         }
+        tower_json.update(self.api_ts(tower.id))
 
         fuels = tower.getResources(timestamp)
         fuel_ratio = tower.getIdealFuelRatio()

@@ -78,9 +78,34 @@ class DefaultManagerTestCase(TestCase):
         self.assertEqual(len(tower.fuels), 0)
 
         tower_apis = self.backend.getTowerApis()
-        # Only details are counted.
-        self.assertEqual(len(tower_apis), 1)
+
+        # Tower list is the de-facto listing so it will be counted.
+        self.assertEqual(len(tower_apis), 2)
         self.assertEqual(tower_apis[0].currentTime, 1362792986)
+        self.assertEqual(tower_apis[0].api_error_count, 0)
+        # of course that new tower with missing tower details will have
+        # an api error count.
+        self.assertEqual(tower_apis[1].api_error_count, 1)
+
+    def test_0011_dropped_tower_apis(self):
+        corp = DummyCorp()
+        corp.starbases_index = 1
+        corp.starbase_details_index = 2
+        self.manager.importWithCorp(corp)
+        self.assertEqual(len(self.backend.getTowerIds()), 2)
+        tower_apis = self.backend.getTowerApis()
+        # both are successful
+        self.assertEqual(tower_apis[0].api_error_count, 0)
+        self.assertEqual(tower_apis[1].api_error_count, 0)
+
+        # now drop that first tower
+        corp.starbase_details_index = 5
+        self.manager.importWithCorp(corp)
+        tower_apis = self.backend.getTowerApis()
+        # first one should show this
+        self.assertEqual(tower_apis[0].api_error_count, 1)
+        self.assertEqual(tower_apis[0].currentTime, 1363260409)
+        self.assertEqual(tower_apis[1].api_error_count, 0)
 
     def test_0100_states(self):
         corp = DummyCorp()

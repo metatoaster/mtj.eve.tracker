@@ -44,15 +44,16 @@ class DummyCorp(object):
 
     def starbase_details(self, itemID):
         all_results = self._dummy_starbase_details()
-        results = all_results.get(itemID, None)
-        if results:
+        results = all_results.get(itemID, {})
+        if results.get('results'):
             return mkresult(results)
         # pretend this is a bad itemID, as there can be condition where
         # the starbases list is returned from cache (because :ccp:) and
         # the actual starbase could have been taken down and repackaged
         # (or even destroyed).
-        ts = time.time()
-        raise APIError(114, 'Invalid itemID provided.')
+        ts = results.get('last_timestamps', {}
+            ).get('current_time', time.time())
+        raise APIError(114, 'Invalid itemID provided.', ts)
 
 
 class JsonDummyCorp(DummyCorp):
@@ -517,6 +518,28 @@ dummy_starbase_details = [
                 u'state': u'online',
                 u'state_ts': 1363261009,
                 u'fuel': {16275: 2250, 4312: 4027},
+            },
+            'last_timestamps': {
+                'current_time': 1363260409,
+                'cached_until': 1363264009,
+            },
+        },
+    },
+
+    {
+        507862: {
+            'last_timestamps': {
+                'current_time': 1363260409,
+                'cached_until': 1363264009,
+            },
+        },
+
+        507863: {
+            'results': {
+                u'online_ts': 1362109986,
+                u'state': u'online',
+                u'state_ts': 1363261009,
+                u'fuel': {16275: 2000, 4051: 6000},
             },
             'last_timestamps': {
                 'current_time': 1363260409,

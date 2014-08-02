@@ -84,8 +84,11 @@ class BaseTowerManager(object):
                 ts = time.time()
                 raw_details = corp.starbase_details(k)
             except APIError as e:
+                api_time = e.timestamp
                 logger.warning('Fail to retrieve corp/StarbaseDetail for %s; '
                     'corp/StarbaseList may be out of date', k)
+                backend.setTowerApi(tower.id, corp.api.api_key[0], api_time,
+                    api_error=True)
                 continue
             except ElementTree.ParseError as e:
                 logger.warning('Fail to retrieve corp/StarbaseDetail for %s; '
