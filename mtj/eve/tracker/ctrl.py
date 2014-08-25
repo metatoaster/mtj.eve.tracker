@@ -461,14 +461,13 @@ class TrackerCmd(cmd.Cmd):
             return
 
         try:
-            fd = open(arg)
-            try:
-                self.options.load_config(fd)
-            except TypeError as e:
-                print('invalid config file `%s`, %s' % (arg, str(e)))
-            except ValueError as e:
-                print('invalid config file `%s`, %s' % (arg, str(e)))
-            fd.close()
+            with open(arg) as fd:
+                try:
+                    self.options.load_config(fd)
+                except TypeError as e:
+                    print('invalid config file `%s`, %s' % (arg, str(e)))
+                except ValueError as e:
+                    print('invalid config file `%s`, %s' % (arg, str(e)))
         except IOError:
             print('cannot load config from file `%s`' % arg)
 
