@@ -192,6 +192,7 @@ class FlaskRunner(BaseRunner):
             from tornado.wsgi import WSGIContainer
             from tornado.httpserver import HTTPServer
             from tornado.ioloop import IOLoop
+            app.config['TORNADO'] = True
             http_server = HTTPServer(WSGIContainer(app))
             http_server.listen(port)
             logger.info('tornado.httpserver listening on port %s', port)
