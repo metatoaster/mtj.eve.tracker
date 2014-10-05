@@ -79,6 +79,10 @@ class Options(object):
             'pidfile': 'mtj_daemon.pid',
             'working_directory': None,
         },
+        'defaults': {
+            'update_timer': 3610,
+            'target_reinforce': None,
+        },
         'flask': {
             'host': '127.0.0.1',
             'port': 8000,
@@ -131,6 +135,10 @@ class Options(object):
             'effective_user': basestring,
             'pidfile': basestring,
             'working_directory': basestring,
+        },
+        'defaults': {
+            'update_timer': int,
+            'target_reinforce': int,
         },
         'flask': {
             'host': basestring,
@@ -311,7 +319,7 @@ class TrackerCmd(cmd.Cmd):
         except (lockfile.LockTimeout, lockfile.AlreadyLocked):
             print("ERROR: Failed to acquire pid lock file.")
 
-        # Elsie's homeworld opened.
+        # Elsie and Haqua's homeworld opened.
 
         logger = logging.getLogger('mtj.eve.tracker.ctrl')
         runner = self.make_runner(self.options.config)
