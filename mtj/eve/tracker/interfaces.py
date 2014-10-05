@@ -26,6 +26,12 @@ class IHistorian(zope.interface.Interface):
     """
 
 
+class ISettingsManager(zope.interface.Interface):
+    """
+    Settings manager.
+    """
+
+
 class ITrackerBackend(zope.interface.Interface):
     """
     Interface for the pos tracker backend.

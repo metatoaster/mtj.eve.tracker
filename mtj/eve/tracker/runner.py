@@ -93,8 +93,8 @@ class BaseRunner(object):
 
         # the list of required interfaces to register utilities for,
         # in the order they need to be done.
-        interface_names = ['IEvelinkCache', 'IAPIHelper', 'ITrackerBackend',
-            'ITowerManager', 'IAPIKeyManager',]
+        interface_names = ['IEvelinkCache', 'IAPIHelper', 'ISettingsManager',
+            'ITrackerBackend', 'ITowerManager', 'IAPIKeyManager',]
 
         implementations = self.config.get('implementations', {})
 
@@ -114,11 +114,15 @@ class BaseRunner(object):
         """
 
         sm = getSite().getSiteManager()
+        # should probably use the keys defined in implementations
+        # schema, but a little duplication here doesn't hurt for
+        # validation.  Also see above method.
         cache = sm.getUtility(interfaces.IEvelinkCache)
         helper = sm.getUtility(interfaces.IAPIHelper)
         backend = sm.getUtility(interfaces.ITrackerBackend)
         tower_manager = sm.getUtility(interfaces.ITowerManager)
         key_manager = sm.getUtility(interfaces.IAPIKeyManager)
+        settings = sm.getUtility(interfaces.ISettingsManager)
 
     def _preinitialize(self):
         # Thread-locals...

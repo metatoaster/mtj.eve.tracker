@@ -55,6 +55,15 @@ class Options(object):
                     'api_keys': {},
                 },
             },
+            # optional.
+            'ISettingsManager': {
+                'class': 'mtj.eve.tracker.settings:DefaultSettingsManager',
+                'args': [],
+                'kwargs': {
+                    'update_timer': 3610,
+                    'target_reinforce': None,
+                },
+            },
             # required
             'ITrackerBackend': {
                 'class': 'mtj.eve.tracker.backend.sql:SQLAlchemyBackend',
@@ -135,10 +144,6 @@ class Options(object):
             'effective_user': basestring,
             'pidfile': basestring,
             'working_directory': basestring,
-        },
-        'defaults': {
-            'update_timer': int,
-            'target_reinforce': int,
         },
         'flask': {
             'host': basestring,
