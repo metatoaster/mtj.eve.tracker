@@ -7,6 +7,14 @@ This probably could be placed in a separate egg.
 import logging
 import importlib
 
+try:
+    from tornado.wsgi import WSGIContainer
+    from tornado.httpserver import HTTPServer
+    from tornado.ioloop import IOLoop
+    HAS_TORNADO = True
+except ImportError:
+    HAS_TORNADO = False
+
 import zope.component
 from zope.component.hooks import setSite, setHooks, getSite
 
@@ -31,6 +39,7 @@ class BaseRunner(object):
     def __init__(self):
         self.has_db = False
         setHooks()
+        self.updater = None
 
     def configure(self, config):
         """
@@ -149,6 +158,19 @@ class BaseRunner(object):
     def run(self):
         raise NotImplementedError
 
+    def _manager_importAll(self):
+        # helper method that will call manager.importAll.  Should only
+        # be spawned in a separate thread.
+        # XXX set up the threadpool for this?
+        manager = zope.component.getUtility(interfaces.ITowerManager)
+        manager.importAll()
+
+    def periodic_callback(self):
+        settings = zope.component.getUtility(interfaces.ISettingsManager)
+        period = settings.update_timer
+        if not isinstance(period, int):
+            raise TypeError('`update_timer` must be an integer')
+
 
 class FlaskRunner(BaseRunner):
     """
@@ -188,17 +210,18 @@ class FlaskRunner(BaseRunner):
         # must be casted into a string.
         app.config['SECRET_KEY'] = str(self.config['flask']['secret'])
 
-        try:
-            from tornado.wsgi import WSGIContainer
-            from tornado.httpserver import HTTPServer
-            from tornado.ioloop import IOLoop
+        if HAS_TORNADO:
             http_server = HTTPServer(WSGIContainer(app))
             http_server.listen(port)
             logger.info('tornado.httpserver listening on port %s', port)
             try:
                 logger.info('Starting tornado.ioloop.')
+                #callback = PeriodicCallback(trigger, 3000)
+                #callback.start()
                 IOLoop.instance().start()
             except KeyboardInterrupt:
                 return
-        except ImportError:
+        else:
+            logger.warning('Using default Werkzeug server; '
+                           'automatic update will not be enabled.')
             app.run(host=host, port=port)
