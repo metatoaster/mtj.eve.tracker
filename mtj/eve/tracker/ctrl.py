@@ -88,10 +88,6 @@ class Options(object):
             'pidfile': 'mtj_daemon.pid',
             'working_directory': None,
         },
-        'defaults': {
-            'update_timer': 3610,
-            'target_reinforce': None,
-        },
         'flask': {
             'host': '127.0.0.1',
             'port': 8000,
