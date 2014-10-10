@@ -155,6 +155,7 @@ class Tower(object):
     def querySovStatus(self):
         evelink_helper = zope.component.getUtility(IAPIHelper)
         evelink_helper.refresh()
+        self.allianceID = self.queryAllianceID()
         sov_info = evelink_helper.sov.get(self.locationID)
         return sov_info and sov_info['alliance_id'] == self.allianceID or False
 
