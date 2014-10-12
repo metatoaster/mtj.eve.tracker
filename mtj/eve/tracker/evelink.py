@@ -8,6 +8,7 @@ as optional and provides an object for use.
 from __future__ import absolute_import
 
 import itertools
+import sqlite3
 from time import time
 from xml.etree import ElementTree
 
@@ -83,6 +84,12 @@ class EvelinkSqliteCache(SqliteCache):
     """
 
     max_error_cache_duration = 3540  # an hour less one minute
+
+    def __init__(self, path):
+        super(EvelinkSqliteCache, self).__init__(path)
+        if path != ':memory:':
+            # this is safe(TM)
+            self.connection = sqlite3.connect(path, check_same_thread=False)
 
     def put(self, key, value, duration):
         try:
