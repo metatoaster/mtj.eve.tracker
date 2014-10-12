@@ -7,6 +7,7 @@ from sqlalchemy import Column, Integer, String, Boolean, Float, MetaData, Text
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import scoped_session
 from sqlalchemy.orm.exc import MultipleResultsFound, NoResultFound
 
 import zope.interface
@@ -326,14 +327,19 @@ class SQLAlchemyBackend(object):
         if not src:
             src = 'sqlite://'
 
-        self._conn = create_engine(src)
+        connect_args = {}
+        if src.startswith('sqlite://'):
+            # workaround the thread issues.
+            connect_args['check_same_thread'] = False
+
+        self._conn = create_engine(src, connect_args=connect_args)
         self._metadata = MetaData()
         self._metadata.reflect(bind=self._conn)
         Base.metadata.create_all(self._conn)
-        self._sessions = sessionmaker(
+        self._sessions = scoped_session(sessionmaker(
             bind=self._conn,
             expire_on_commit=False,
-        )
+        ))
 
         self._towers = {}
         self._setAuditables(Fuel, Tower, TowerLog, Silo)
