@@ -60,7 +60,7 @@ class Options(object):
                 'class': 'mtj.eve.tracker.settings:DefaultSettingsManager',
                 'args': [],
                 'kwargs': {
-                    'update_timer': 3610,
+                    'import_frequency': 3610,
                     'target_reinforce': None,
                 },
             },
