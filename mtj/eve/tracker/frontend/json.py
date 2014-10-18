@@ -55,21 +55,18 @@ class Json(object):
                 and tower.get('timeRemaining', 0) < low_fuel
                 and tower.get('apiTimestamp')
                 and not is_ignored(tower.get('auditLabel'))
-            ],
-            lambda x, y: cmp(x.get('timeRemaining'), y.get('timeRemaining'))
+            ], key=itemgetter('timeRemaining'),
         )
         reinforced = sorted(
             [tower for tower in towers if tower.get('state') == 3
                 and tower.get('apiTimestamp')
-            ],
-            lambda x, y: cmp(x.get('stateTimestamp'), y.get('stateTimestamp'))
+            ], key=itemgetter('stateTimestamp'),
         )
         offlined = sorted(
             [tower for tower in towers if tower.get('state') == 1
-                and tower.get('apiTimestamp') and
-                not is_ignored(tower.get('auditLabel'))
-            ],
-            lambda x, y: cmp(x.get('auditLabel'), y.get('auditLabel'))
+                and tower.get('apiTimestamp')
+                and not is_ignored(tower.get('auditLabel'))
+            ], key=itemgetter('auditLabel'),
         )
         api_usage = self.api_usage()
 
