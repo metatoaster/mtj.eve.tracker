@@ -105,8 +105,7 @@ class Json(object):
             }
         return {
             'apiTimestamp': value.currentTime,
-            'apiTimestampFormatted': strftime(
-                '%Y-%m-%d %H:%M', gmtime(value.currentTime)),
+            'apiTimestampFormatted': format_ts(value.currentTime),
             'apiErrorCount': value.api_error_count,
         }
 
@@ -131,17 +130,11 @@ class Json(object):
                 'typeID': v.typeID,
                 'typeName': v.typeName,
                 'offlineAt': v.getOfflineTimestamp(),
-                'offlineAtFormatted': strftime(
-                    '%Y-%m-%d %H:%M',
-                    gmtime(v.getOfflineTimestamp())
-                ),
+                'offlineAtFormatted': format_ts(v.getOfflineTimestamp()),
                 'state': v.getState(timestamp),
                 'stateName': constants.Corp.pos_states[v.getState(timestamp)],
                 'stateTimestamp': v.stateTimestamp,
-                'stateTimestampFormatted': strftime(
-                    '%Y-%m-%d %H:%M',
-                    gmtime(v.stateTimestamp)
-                ),
+                'stateTimestampFormatted': format_ts(v.stateTimestamp),
                 'stateTimestampDeltaFormatted':
                     str(timedelta(seconds=(v.stateTimestamp - timestamp))),
                 'timeRemaining': v.getTimeRemaining(timestamp),
@@ -165,8 +158,7 @@ class Json(object):
                     'reason': v.reason,
                     'user': v.user,
                     'timestamp': v.timestamp,
-                    'timestampFormatted':
-                        strftime('%Y-%m-%d %H:%M:%S', gmtime(v.timestamp)),
+                    'timestampFormatted': format_ts(v.timestamp),
                 }
                 for v in audits
             ] for category_name, audits in all_audits.iteritems()
@@ -180,8 +172,7 @@ class Json(object):
                 'reason': v.reason,
                 'user': v.user,
                 'timestamp': v.timestamp,
-                'timestampFormatted':
-                    strftime('%Y-%m-%d %H:%M:%S', gmtime(v.timestamp)),
+                'timestampFormatted': format_ts(v.timestamp),
             } for v in audits]
         }
         return json.dumps(result)
@@ -196,8 +187,7 @@ class Json(object):
                 'reason': v.reason,
                 'user': v.user,
                 'timestamp': v.timestamp,
-                'timestampFormatted':
-                    strftime('%Y-%m-%d %H:%M:%S', gmtime(v.timestamp)),
+                'timestampFormatted': format_ts(v.timestamp),
             } for v in audits]
         }
         return json.dumps(result)
@@ -221,11 +211,9 @@ class Json(object):
             'state': v.state,
             'stateName': constants.Corp.pos_states[v.state],
             'timestamp': v.timestamp,
-            'timestampFormatted':
-                strftime('%Y-%m-%d %H:%M:%S', gmtime(v.timestamp)),
+            'timestampFormatted': format_ts(v.timestamp),
             'stateTimestamp': v.stateTimestamp,
-            'stateTimestampFormatted':
-                strftime('%Y-%m-%d %H:%M:%S', gmtime(v.stateTimestamp)),
+            'stateTimestampFormatted': format_ts(v.stateTimestamp),
         } for v in tower_log]
 
         fuel_log = backend.getFuelLog(tower_id, 10)
@@ -236,8 +224,7 @@ class Json(object):
             'value': v.value,
             'delta': v.delta,
             'timestamp': v.timestamp,
-            'timestampFormatted':
-                strftime('%Y-%m-%d %H:%M:%S', gmtime(v.timestamp)),
+            'timestampFormatted': format_ts(v.timestamp),
         } for v in fuel_log]
 
         tower_json = {
@@ -246,20 +233,13 @@ class Json(object):
             'regionName': tower.regionName,
             'typeName': tower.typeName,
             'onlineSince': tower.onlineTimestamp,
-            'onlineSinceFormatted': tower.onlineTimestamp and
-                strftime('%Y-%m-%d %H:%M', gmtime(tower.onlineTimestamp)) or
-                    'N/A',
+            'onlineSinceFormatted': format_ts(tower.onlineTimestamp),
             'offlineAt': tower.getOfflineTimestamp(),
-            'offlineAtFormatted': tower.getOfflineTimestamp() and strftime(
-                '%Y-%m-%d %H:%M', gmtime(tower.getOfflineTimestamp())) or
-                    'N/A',
+            'offlineAtFormatted': format_ts(tower.getOfflineTimestamp()),
             'state': tower.getState(timestamp),
             'stateName': constants.Corp.pos_states[tower.getState(timestamp)],
             'stateTimestamp': tower.stateTimestamp,
-            'stateTimestampFormatted': strftime(
-                '%Y-%m-%d %H:%M',
-                gmtime(tower.stateTimestamp)
-            ),
+            'stateTimestampFormatted': format_ts(tower.stateTimestamp),
             'stateTimestampDeltaFormatted':
                 str(timedelta(seconds=(tower.stateTimestamp - timestamp))),
             'reinforcementLength': tower.getReinforcementLength(),
