@@ -338,7 +338,7 @@ class SqlBackendTestCase(TestCase):
 
         m = self.backend.beginApiUsage(123456, 1000000)
         self.assertEqual(self.backend.currentApiUsage(), {
-            123456: (1000000, None, None),
+            123456: (1000000, None, -1),
         })
         self.assertEqual(self.backend.completedApiUsage(), {})
 
@@ -349,7 +349,7 @@ class SqlBackendTestCase(TestCase):
 
         m = self.backend.beginApiUsage(123456, 2000000)
         self.assertEqual(self.backend.currentApiUsage(), {
-            123456: (2000000, None, None),
+            123456: (2000000, None, -1),
         })
         # completed usage still unchanged.
         self.assertEqual(self.backend.completedApiUsage(), {
@@ -362,7 +362,7 @@ class SqlBackendTestCase(TestCase):
         })
         self.backend.endApiUsage(n, 1, 1000041)
         self.assertEqual(self.backend.currentApiUsage(), {
-            123456: (2000000, None, None),
+            123456: (2000000, None, -1),
             123457: (1000000, 1000041, 1),
         })
         self.assertEqual(self.backend.completedApiUsage(), {
@@ -390,7 +390,7 @@ class SqlBackendTestCase(TestCase):
         self.backend.endApiUsage(m, 0, 1000001)
         m = self.backend.beginApiUsage(123458, 3000000)
         self.assertEqual(self.backend.currentApiUsage(), {
-            123458: (3000000, None, None),
+            123458: (3000000, None, -1),
         })
         # heh backwards in time, but that's expected due to GIGO
         self.assertEqual(self.backend.completedApiUsage(), {
@@ -402,7 +402,7 @@ class SqlBackendTestCase(TestCase):
         self.backend.beginApiUsage(123458, 2000000)
         self.backend.beginApiUsage(123458, 3000000)
         self.assertEqual(self.backend.currentApiUsage(), {
-            123458: (3000000, None, None),
+            123458: (3000000, None, -1),
         })
 
     def test_3003_api_usage_orphan_close(self):
