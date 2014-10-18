@@ -299,7 +299,8 @@ class ApiUsageLog(Base):
 
     def __init__(self, api_key, start_ts=None):
         self.api_key = api_key
-        self.start_ts = start_ts and start_ts or int(time.time())
+        self.start_ts = start_ts or int(time.time())
+        self.state = -1
         self.end_ts = None
 
 
@@ -374,11 +375,13 @@ class SQLAlchemyBackend(object):
 
         Third value is the conclusion state.
 
+        Values based on `.models.api_usage_states`
+
+        -1
+            In progress
         0
             Success
         1
-            In progress
-        2
             Failed with error
         """
 
