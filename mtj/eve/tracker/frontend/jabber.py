@@ -143,9 +143,20 @@ class LogiCommand(Command):
     @handle_tracker_error
     def ok_fuel(self, **kw):
         data = self._overview()
+        safe = 'There are no towers with low fuel levels.'
+        api_usage = data.get('api_usage', [])
+        usage_str = 'Update status unknown.'
+        if api_usage:
+            # XXX only using the latest entry, so no support for
+            # multiple keys
+            usage = api_usage[-1]
+            usage_str = 'Update %s since %s ago.' % (
+                usage['state'],
+                (usage['end_ts_delta'] or usage['start_ts_delta']),
+            )
         if data.get('online'):
-            return ''
-        return 'There are no towers with low fuel levels.'
+            return usage_str
+        return safe + '\n' + usage_str
 
     @handle_tracker_error
     def reinforced(self, **kw):
