@@ -1,6 +1,7 @@
 from __future__ import absolute_import
 
 import re
+from operator import itemgetter
 from time import time, strftime, gmtime
 from datetime import timedelta
 from evelink import constants
@@ -10,9 +11,13 @@ import zope.component
 from mtj.f3u1.units import Time
 from mtj.evedb.structure import ControlTower
 from mtj.eve.tracker.interfaces import ITrackerBackend, ITowerManager
+from mtj.eve.tracker.backend.model import api_usage_states
 
 # for case insensitive matching of '[ignore] in audit label.
 is_ignored = re.compile('\\[ignore\\]', re.IGNORECASE).search
+
+def format_ts(ts):
+    return ts and strftime('%Y-%m-%d %H:%M', gmtime(ts)) or 'N/A'
 
 
 class Json(object):
@@ -66,14 +71,32 @@ class Json(object):
             ],
             lambda x, y: cmp(x.get('auditLabel'), y.get('auditLabel'))
         )
+        api_usage = self.api_usage()
 
         result = {
             'timestamp': timestamp,
+            'api_usage': api_usage,
             'online': online,
             'reinforced': reinforced,
             'offlined': offlined,
         }
         return json.dumps(result)
+
+    def api_usage(self):
+        timestamp = int(time())
+        return [{
+            'start_ts': start_ts,
+            'start_ts_delta': str(Time('second',
+                second=(timestamp - start_ts))),
+            'start_ts_formatted': format_ts(start_ts),
+            'end_ts': end_ts,
+            'end_ts_delta': end_ts and str(Time('second',
+                second=(timestamp - end_ts))),
+            'end_ts_formatted': format_ts(end_ts),
+            'state': api_usage_states.get(s, 'unknown'),
+        } for start_ts, end_ts, s in
+            sorted(self._backend.currentApiUsage().values(),
+                key=itemgetter(0))]
 
     def api_ts(self, tower_id):
         value = self._backend.getTowerApiTimestamp(tower_id)
