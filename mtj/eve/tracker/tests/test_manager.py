@@ -1,13 +1,23 @@
 from unittest import TestCase, TestSuite, makeSuite
 
 import zope.component
+import zope.interface
+from zope.component.hooks import setSite, setHooks, getSiteManager
 
 from mtj.eve.tracker.interfaces import IAPIHelper, ITrackerBackend
+from mtj.eve.tracker.interfaces import IAPIKeyManager
 from mtj.eve.tracker.pos import Tower
 from mtj.eve.tracker.manager import APIKeyManager, BaseTowerManager
+from mtj.eve.tracker.manager import TowerManager
 
 from .base import setUp, tearDown
 from .dummyevelink import DummyCorp
+
+
+@zope.interface.implementer(IAPIKeyManager)
+class DummyKeyManager(object):
+    def getAllWith(self, dummy):
+        return [DummyCorp()]
 
 
 class APIKeyManagerTestCase(TestCase):
@@ -36,9 +46,9 @@ class APIKeyManagerTestCase(TestCase):
         self.assertEqual(results[2].api.api_key, ('2', 'test2'))
 
 
-class DefaultManagerTestCase(TestCase):
+class BaseManagerTestCase(TestCase):
     """
-    Unit tests for default tower manager
+    Unit tests for the base tower manager
     """
 
     def setUp(self):
@@ -257,8 +267,40 @@ class DefaultManagerTestCase(TestCase):
     # not decrement as expected.
 
 
+class DefaultManagerTestCase(TestCase):
+    """
+    Unit tests for the base tower manager
+    """
+
+    def setUp(self):
+        setUp(self)
+        sm = getSiteManager()
+        self.dk = DummyKeyManager()
+        sm.registerUtility(self.dk, IAPIKeyManager)
+
+        self.backend = zope.component.getUtility(ITrackerBackend)
+        self.manager = TowerManager()
+
+    def tearDown(self):
+        tearDown(self)
+
+    def test_import_all(self):
+        self.manager.importAll()
+
+        tower_apis = self.backend.getTowerApis()
+        self.assertEqual(len(tower_apis), 1)
+        self.assertEqual(tower_apis[0].api_key, 1)
+        self.assertEqual(tower_apis[0].currentTime, 1362792986)
+
+        usage = self.backend.currentApiUsage()
+        self.assertEqual(list(usage.keys()), [1])
+        # 0 on third element denoting success
+        self.assertEqual(usage[1][2], 0)
+
+
 def test_suite():
     suite = TestSuite()
     suite.addTest(makeSuite(APIKeyManagerTestCase))
+    suite.addTest(makeSuite(BaseManagerTestCase))
     suite.addTest(makeSuite(DefaultManagerTestCase))
     return suite
