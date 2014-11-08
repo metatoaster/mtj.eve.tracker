@@ -137,18 +137,18 @@ class TowerApi(Base):
     tower_id = Column(Integer, primary_key=True)
     # Assuming to be integer.  If this requires nuking it's trivial to
     # regenerate this whole table.
-    api_key = Column(Integer, index=True)
+    api_id = Column(Integer, index=True)
     currentTime = Column(Integer)
     timestamp = Column(Integer)
     # If present in TowerList but a transient error happened this is
     # incremented.  Otherwise it should always be set to 0.
     api_error_count = Column(Integer)
 
-    def __init__(self, tower_id, api_key, currentTime, timestamp=None,
+    def __init__(self, tower_id, api_id, currentTime, timestamp=None,
             api_error_count=0):
 
         self.tower_id = tower_id
-        self.api_key = api_key
+        self.api_id = api_id
         self.currentTime = currentTime
         # this may seem to duplicate above, but is useful to verify
         # the staleness of the data's currentTime.
@@ -279,7 +279,9 @@ class APIKey(Base):
 
     __tablename__ = 'api_key'
 
-    key = Column(String(255), primary_key=True)
+    id = Column(Integer, primary_key=True)
+
+    key = Column(Integer, primary_key=True)
     vcode = Column(String(255))
 
     def __init__(self, key, vcode):
@@ -292,13 +294,13 @@ class ApiUsageLog(Base):
     __tablename__ = 'api_usage_log'
 
     id = Column(Integer, primary_key=True)
-    api_key = Column(Integer, index=True)
+    api_id = Column(Integer, index=True)
     state = Column(Integer)
     start_ts = Column(Integer, index=True)
     end_ts = Column(Integer)
 
-    def __init__(self, api_key, start_ts=None):
-        self.api_key = api_key
+    def __init__(self, api_id, start_ts=None):
+        self.api_id = api_id
         self.start_ts = start_ts or int(time.time())
         self.state = -1
         self.end_ts = None
@@ -390,7 +392,7 @@ class SQLAlchemyBackend(object):
         logs = session.query(ApiUsageLog)
 
         logs = logs.order_by(
-            desc(ApiUsageLog.start_ts)).group_by(ApiUsageLog.api_key
+            desc(ApiUsageLog.start_ts)).group_by(ApiUsageLog.api_id
                 ).having(func.max(ApiUsageLog.start_ts))
 
         if completed:
@@ -399,21 +401,21 @@ class SQLAlchemyBackend(object):
 
         results = {}
         for log in logs:
-            results[log.api_key] = (log.start_ts, log.end_ts, log.state)
+            results[log.api_id] = (log.start_ts, log.end_ts, log.state)
 
         return results
 
     def completedApiUsage(self):
         return self.currentApiUsage(completed=True)
 
-    def beginApiUsage(self, api_key, timestamp=None):
+    def beginApiUsage(self, api_id, timestamp=None):
         """
         Return a marker for an API usage.
 
         returns a usage marker.
         """
 
-        usage = ApiUsageLog(api_key, timestamp)
+        usage = ApiUsageLog(api_id, timestamp)
         session = self.session()
         session.add(usage)
         session.commit()
@@ -442,7 +444,7 @@ class SQLAlchemyBackend(object):
         for k, v in completed.iteritems():
             begin, end, state = v
             conditions.append(
-                (TowerApi.api_key == k) & (TowerApi.timestamp >= begin))
+                (TowerApi.api_id == k) & (TowerApi.timestamp >= begin))
 
         session = self.session()
         q = session.query(TowerApi.tower_id, TowerApi.currentTime,
@@ -616,7 +618,7 @@ class SQLAlchemyBackend(object):
 
         return fuel
 
-    def setTowerApi(self, tower_id, api_key, currentTime, timestamp=None,
+    def setTowerApi(self, tower_id, api_id, currentTime, timestamp=None,
             api_error=False):
         """
         Sets the tower API.
@@ -636,12 +638,12 @@ class SQLAlchemyBackend(object):
             # increment.
             api_error_count += 1
 
-        tower_api = TowerApi(tower_id, api_key, currentTime, timestamp,
+        tower_api = TowerApi(tower_id, api_id, currentTime, timestamp,
             api_error_count)
         session.merge(tower_api)
         session.commit()
 
-    def getTowerApis(self, api_key=None):
+    def getTowerApis(self, api_id=None):
         # TODO implement filters.
         session = self.session()
         q = session.query(TowerApi)

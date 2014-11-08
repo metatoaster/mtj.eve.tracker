@@ -20,18 +20,20 @@ logger = logging.getLogger('mtj.eve.pos.manager')
 class APIKeyManager(object):
     """
     Base class for managing API keys.
+
+    It should be a list of 2-tuple of (key, vcode).
     """
 
     def __init__(self, api_keys=None):
         if api_keys is None:
-            api_keys = {}
-        assert isinstance(api_keys, dict)
+            api_keys = []
+        assert isinstance(api_keys, list)
 
         self.api_keys = api_keys
 
     def getAllWith(self, cls):
-        return [cls(api=evelink.API(api_key=(id_, vcode))) for id_, vcode in
-            self.api_keys.iteritems()]
+        return [(id_, cls(api=evelink.API(api_key=api_key)))
+            for id_, api_key in enumerate(self.api_keys)]
 
 
 @zope.interface.implementer(ITowerManager)
@@ -148,9 +150,9 @@ class TowerManager(BaseTowerManager):
             return
 
         corps = keyman.getAllWith(evelink.Corp)
-        for corp in corps:
+        for key_id, corp in corps:
             error = 0
-            m_usage = backend.beginApiUsage(corp.api.api_key[0])
+            m_usage = backend.beginApiUsage(key_id)
             try:
                 self.importWithCorp(corp)
             except:

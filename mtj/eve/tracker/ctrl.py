@@ -52,7 +52,7 @@ class Options(object):
                 'class': 'mtj.eve.tracker.manager:APIKeyManager',
                 'args': [],
                 'kwargs': {
-                    'api_keys': {},
+                    'api_keys': [],
                 },
             },
             # optional.

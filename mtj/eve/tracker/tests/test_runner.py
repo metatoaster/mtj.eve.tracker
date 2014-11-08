@@ -51,9 +51,9 @@ class RunnerTestCase(TestCase):
 
         backend = zope.component.queryUtility(interfaces.ITrackerBackend)
         backend._conn.execute('insert into api_key values '
-            '("test1", "testing1_vcode2")')
+            '(1, "test1", "testing1_vcode2")')
         backend._conn.execute('insert into api_key values '
-            '("test2", "testing2_vcode4")')
+            '(2, "test2", "testing2_vcode4")')
 
         keyman = zope.component.queryUtility(interfaces.IAPIKeyManager)
         self.assertTrue(interfaces.IAPIKeyManager.providedBy(keyman))
@@ -66,7 +66,7 @@ class RunnerTestCase(TestCase):
 
         # new API entries immediately available.
         backend._conn.execute('insert into api_key values '
-            '("test3", "testing3_vcode6")')
+            '(3, "test3", "testing3_vcode6")')
         results = keyman.getAllWith(DummyCorp)
         self.assertEqual(results[2].api.api_key, ('test3', 'testing3_vcode6'))
 

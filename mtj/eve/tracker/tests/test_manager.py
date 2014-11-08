@@ -1,13 +1,23 @@
 from unittest import TestCase, TestSuite, makeSuite
 
 import zope.component
+import zope.interface
+from zope.component.hooks import setSite, setHooks, getSiteManager
 
 from mtj.eve.tracker.interfaces import IAPIHelper, ITrackerBackend
+from mtj.eve.tracker.interfaces import IAPIKeyManager
 from mtj.eve.tracker.pos import Tower
 from mtj.eve.tracker.manager import APIKeyManager, BaseTowerManager
+from mtj.eve.tracker.manager import TowerManager
 
 from .base import setUp, tearDown
 from .dummyevelink import DummyCorp
+
+
+@zope.interface.implementer(IAPIKeyManager)
+class DummyKeyManager(object):
+    def getAllWith(self, dummy):
+        return [(-1, DummyCorp())]
 
 
 class APIKeyManagerTestCase(TestCase):
@@ -23,22 +33,24 @@ class APIKeyManagerTestCase(TestCase):
 
     def test_0000_base(self):
         keyman = APIKeyManager()
-        keyman.api_keys = {
-            '1': 'test1',
-            '2': 'test2',
-            '3': 'test3',
-        }
+        keyman.api_keys = [
+            ('1234', 'test1',),
+            ('2468', 'test2',),
+            ('36912', 'test3',),
+        ]
 
         results = keyman.getAllWith(DummyCorp)
         self.assertEqual(len(results), 3)
-        self.assertTrue(isinstance(results[0], DummyCorp))
-        self.assertEqual(results[0].api.api_key, ('1', 'test1'))
-        self.assertEqual(results[2].api.api_key, ('2', 'test2'))
+        self.assertTrue(isinstance(results[0][1], DummyCorp))
+        self.assertEqual(results[0][0], 0)
+        self.assertEqual(results[0][1].api.api_key, ('1234', 'test1'))
+        self.assertEqual(results[2][0], 2)
+        self.assertEqual(results[2][1].api.api_key, ('36912', 'test3'))
 
 
-class DefaultManagerTestCase(TestCase):
+class BaseManagerTestCase(TestCase):
     """
-    Unit tests for default tower manager
+    Unit tests for the base tower manager
     """
 
     def setUp(self):
@@ -61,7 +73,7 @@ class DefaultManagerTestCase(TestCase):
 
         tower_apis = self.backend.getTowerApis()
         self.assertEqual(len(tower_apis), 1)
-        self.assertEqual(tower_apis[0].api_key, 1)
+        self.assertEqual(tower_apis[0].api_id, 1)
         self.assertEqual(tower_apis[0].currentTime, 1362792986)
 
     def test_0010_missing_details(self):
@@ -257,8 +269,35 @@ class DefaultManagerTestCase(TestCase):
     # not decrement as expected.
 
 
+class DefaultManagerTestCase(TestCase):
+    """
+    Unit tests for the base tower manager
+    """
+
+    def setUp(self):
+        setUp(self)
+        sm = getSiteManager()
+        self.dk = DummyKeyManager()
+        sm.registerUtility(self.dk, IAPIKeyManager)
+
+        self.backend = zope.component.getUtility(ITrackerBackend)
+        self.manager = TowerManager()
+
+    def tearDown(self):
+        tearDown(self)
+
+    def test_import_all(self):
+        self.manager.importAll()
+
+        tower_apis = self.backend.getTowerApis()
+        self.assertEqual(len(tower_apis), 1)
+        self.assertEqual(tower_apis[0].api_id, 1)
+        self.assertEqual(tower_apis[0].currentTime, 1362792986)
+
+
 def test_suite():
     suite = TestSuite()
     suite.addTest(makeSuite(APIKeyManagerTestCase))
+    suite.addTest(makeSuite(BaseManagerTestCase))
     suite.addTest(makeSuite(DefaultManagerTestCase))
     return suite
