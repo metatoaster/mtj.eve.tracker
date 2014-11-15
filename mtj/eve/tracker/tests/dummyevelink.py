@@ -9,6 +9,7 @@ from evelink.api import APIError
 from evelink.api import APIResult
 
 from mtj.eve.tracker.interfaces import IAPIHelper
+from mtj.eve.tracker.interfaces import IAPIKeyManager
 
 def mkresult(result):
     return APIResult(result['results'],
@@ -122,6 +123,12 @@ class JsonDummyCorp(DummyCorp):
             sbd[i] = sd
         corp_dump['starbase_details'] = sbd
         return json.dumps(corp_dump)
+
+
+@zope.interface.implementer(IAPIKeyManager)
+class DummyKeyManager(object):
+    def getAllWith(self, dummy):
+        return [DummyCorp()]
 
 
 @zope.interface.implementer(IAPIHelper)

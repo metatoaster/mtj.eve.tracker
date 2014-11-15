@@ -12,12 +12,7 @@ from mtj.eve.tracker.manager import TowerManager
 
 from .base import setUp, tearDown
 from .dummyevelink import DummyCorp
-
-
-@zope.interface.implementer(IAPIKeyManager)
-class DummyKeyManager(object):
-    def getAllWith(self, dummy):
-        return [DummyCorp()]
+from .dummyevelink import DummyKeyManager
 
 
 class APIKeyManagerTestCase(TestCase):
