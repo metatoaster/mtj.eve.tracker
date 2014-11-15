@@ -127,8 +127,11 @@ class JsonDummyCorp(DummyCorp):
 
 @zope.interface.implementer(IAPIKeyManager)
 class DummyKeyManager(object):
+    def __init__(self):
+        self.dummy = DummyCorp()
+
     def getAllWith(self, dummy):
-        return [DummyCorp()]
+        return [self.dummy]
 
 
 @zope.interface.implementer(IAPIHelper)

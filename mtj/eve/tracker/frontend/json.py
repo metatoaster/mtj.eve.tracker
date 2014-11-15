@@ -6,11 +6,10 @@ from time import time, strftime, gmtime
 from datetime import timedelta
 from evelink import constants
 import json
-import zope.component
 
 from mtj.f3u1.units import Time
 from mtj.evedb.structure import ControlTower
-from mtj.eve.tracker.interfaces import ITrackerBackend, ITowerManager
+from mtj.eve.tracker.interfaces import ITrackerBackend
 from mtj.eve.tracker.backend.model import api_usage_states
 
 # for case insensitive matching of '[ignore] in audit label.
@@ -28,11 +27,11 @@ class Json(object):
     format.
     """
 
-    def __init__(self, backend, manager):
+    def __init__(self, backend, manager=None):
+        # XXX manager was required, I thought I might do submission and
+        # updates but I decided against it.
         assert ITrackerBackend.providedBy(backend)
-        assert ITowerManager.providedBy(manager)
         self._backend = backend
-        self._manager = manager
 
     @property
     def fuel_names(self):
