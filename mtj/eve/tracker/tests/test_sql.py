@@ -492,6 +492,28 @@ class SqlBackendTestCase(TestCase):
         self.assertEqual(self.backend.getApiTowerIds(), {
             1: (30000, 0), 2: (30001, 0), 3: (30001, 0), 4: (30003, 0)})
 
+    def test_4100_api_add(self):
+        self.backend.addApiKey('1234', 'secretvcode')
+        self.backend.addApiKey('2468', 'anothervcode')
+        keys = self.backend.getApiKeys()
+        self.assertEqual(len(keys), 2)
+        self.assertEqual(keys[0].key, '1234')
+        self.assertEqual(keys[0].vcode, 'secretvcode')
+        self.assertEqual(keys[1].key, '2468')
+
+    def test_4101_api_del(self):
+        self.backend.addApiKey('1234', 'secretvcode')
+        self.backend.addApiKey('2468', 'anothervcode')
+
+        self.backend.delApiKey('1234')
+        # ignore bad ones?
+        self.backend.delApiKey('4321')
+
+        keys = self.backend.getApiKeys()
+        self.assertEqual(len(keys), 1)
+        self.assertEqual(keys[0].key, '2468')
+        self.assertEqual(keys[0].vcode, 'anothervcode')
+
 def test_suite():
     suite = TestSuite()
     suite.addTest(makeSuite(SqlBackendTestCase))

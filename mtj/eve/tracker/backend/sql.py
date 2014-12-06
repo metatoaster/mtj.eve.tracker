@@ -767,6 +767,17 @@ class SQLAlchemyBackend(object):
         session.expunge_all()
         return result
 
+    def addApiKey(self, key, vcode):
+        apikey = APIKey(key, vcode)
+        session = self.session()
+        session.add(apikey)
+        session.commit()
+
+    def delApiKey(self, key):
+        session = self.session()
+        session.query(APIKey).filter(APIKey.key == key).delete()
+        session.commit()
+
 
 @zope.interface.implementer(ISQLAPIKeyManager)
 class SQLAPIKeyManager(object):
@@ -783,3 +794,10 @@ class SQLAPIKeyManager(object):
         return [cls(api=evelink.API(api_key=(api_key.key, api_key.vcode)))
             for api_key in api_keys]
 
+    def addApiKey(self, key, vcode):
+        backend = zope.component.queryUtility(ITrackerBackend)
+        backend.addApiKey(key, vcode)
+
+    def delApiKey(self, key, vcode):
+        backend = zope.component.queryUtility(ITrackerBackend)
+        backend.delApiKey(key, vcode)
