@@ -356,7 +356,7 @@ class SQLAlchemyBackend(object):
     def session(self):
         return self._sessions()
 
-    def currentApiUsage(self, completed=False):
+    def currentApiUsage(self, completed=False, timestamp=None):
         """
         Report the current Api usage.
 
@@ -377,6 +377,13 @@ class SQLAlchemyBackend(object):
             Success
         1
             Failed with error
+
+        arguments:
+
+        completed
+            whether the call to API was completed. defaults to False.
+        timestamp
+            filters usage entries up to that timestamp, inclusive.
         """
 
         # query for stuff
@@ -391,14 +398,17 @@ class SQLAlchemyBackend(object):
             logs = logs.filter((ApiUsageLog.end_ts != None) &
                 (ApiUsageLog.state == 0))
 
+        if timestamp:
+            logs = logs.filter((ApiUsageLog.start_ts <= timestamp))
+
         results = {}
         for log in logs:
             results[log.api_key] = (log.start_ts, log.end_ts, log.state)
 
         return results
 
-    def completedApiUsage(self):
-        return self.currentApiUsage(completed=True)
+    def completedApiUsage(self, timestamp=None):
+        return self.currentApiUsage(completed=True, timestamp=timestamp)
 
     def beginApiUsage(self, api_key, timestamp=None):
         """

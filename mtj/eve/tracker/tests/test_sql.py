@@ -383,6 +383,19 @@ class SqlBackendTestCase(TestCase):
             123457: (1000000, 1000081, 0),
         })
 
+        # try a timewarp
+        self.assertEqual(self.backend.currentApiUsage(timestamp=100000), {})
+        self.assertEqual(self.backend.currentApiUsage(timestamp=1000000), {
+            123456: (1000000, 1000020, 0),
+            123457: (1000000, 1000041, 1),
+        })
+
+        self.assertEqual(self.backend.completedApiUsage(timestamp=100000), {})
+        self.assertEqual(self.backend.completedApiUsage(timestamp=1000000), {
+            123456: (1000000, 1000020, 0),
+            123457: (1000000, 1000081, 0),
+        })
+
     def test_3001_api_usage_alt(self):
         m = self.backend.beginApiUsage(123458, 1000000)
         self.backend.endApiUsage(m, None, 1000001)
