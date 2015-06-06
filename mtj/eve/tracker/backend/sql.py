@@ -1,4 +1,4 @@
-import time
+from time import time
 import logging
 
 import sqlalchemy
@@ -119,7 +119,7 @@ class TowerLog(Base):
         self.stateTimestamp = stateTimestamp
         self.onlineTimestamp = onlineTimestamp
         self.standingOwnerID = standingOwnerID
-        self.timestamp = int(time.time())
+        self.timestamp = int(time())
 
 
 class TowerApi(Base):
@@ -151,7 +151,7 @@ class TowerApi(Base):
         self.currentTime = currentTime
         # this may seem to duplicate above, but is useful to verify
         # the staleness of the data's currentTime.
-        self.timestamp = timestamp is None and int(time.time()) or timestamp
+        self.timestamp = timestamp is None and int(time()) or timestamp
         self.api_error_count = api_error_count
 
 
@@ -264,7 +264,7 @@ class Audit(Base):
 
     def __init__(self, table, rowid, reason, user, name='', timestamp=None):
         if timestamp is None:
-            timestamp = int(time.time())
+            timestamp = int(time())
 
         self.table = table
         self.rowid = rowid
@@ -298,7 +298,7 @@ class ApiUsageLog(Base):
 
     def __init__(self, api_key, start_ts=None):
         self.api_key = api_key
-        self.start_ts = start_ts or int(time.time())
+        self.start_ts = start_ts or int(time())
         self.state = -1
         self.end_ts = None
 
@@ -432,7 +432,7 @@ class SQLAlchemyBackend(object):
         """
 
         if timestamp is None:
-            timestamp = int(time.time())
+            timestamp = int(time())
         usage.state = state
         usage.end_ts = timestamp
         session = self.session()

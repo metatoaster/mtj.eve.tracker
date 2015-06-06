@@ -63,7 +63,8 @@ class JsonTestCase(TestCase):
 
     def test_one_import(self):
         # can't just import by corp, have to import all
-        self.manager.importAll()
+        with at_time(sql, 1362794809):
+            self.manager.importAll()
 
         self.frontend.set_timestamp(1364175409)
         overview = loads(self.frontend.overview())
@@ -86,4 +87,14 @@ class JsonTestCase(TestCase):
             u'timeRemainingFormatted': u'4 days, 23:00:00',
             u'typeID': 20064,
             u'typeName': u'Gallente Control Tower Small'
+        }])
+
+        self.assertEqual(overview['api_usage'], [{
+            u'start_ts_delta': u'15 days, 23 hours, 30 minutes',
+            u'end_ts_delta': u'15 days, 23 hours, 30 minutes',
+            u'end_ts': 1362794809,
+            u'start_ts': 1362794809,
+            u'state': u'completed',
+            u'end_ts_formatted': u'2013-03-09 02:06',
+            u'start_ts_formatted': u'2013-03-09 02:06',
         }])
