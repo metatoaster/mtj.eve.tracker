@@ -54,36 +54,36 @@ class JsonTestCase(TestCase):
         tearDown(self)
 
     def test_empty(self):
-        with at_time(mtj.eve.tracker.frontend.json, 1400000000):
-            overview = loads(self.frontend.overview())
-            self.assertEqual(overview, {
-                u'offlined': [], u'timestamp': 1400000000, u'online': [],
-                u'api_usage': [], u'reinforced': []
-            })
+        self.frontend.set_timestamp(1400000000)
+        overview = loads(self.frontend.overview())
+        self.assertEqual(overview, {
+            u'offlined': [], u'timestamp': 1400000000, u'online': [],
+            u'api_usage': [], u'reinforced': []
+        })
 
     def test_one_import(self):
         # can't just import by corp, have to import all
         self.manager.importAll()
 
-        with at_time(mtj.eve.tracker.frontend.json, 1364175409):
-            overview = loads(self.frontend.overview())
-            self.assertEqual(overview['online'], [{
-                u'apiErrorCount': 0,
-                u'apiTimestamp': 1362792986,
-                u'apiTimestampFormatted': u'2013-03-09 01:36',
-                u'auditLabel': u'',
-                u'celestialName': u'6VDT-H III - Moon 1',
-                u'id': 1,
-                u'offlineAt': 1364603809,
-                u'offlineAtFormatted': u'2013-03-30 00:36',
-                u'regionName': u'Fountain',
-                u'state': 4,
-                u'stateName': u'online',
-                u'stateTimestamp': 1362793009,
-                u'stateTimestampDeltaFormatted': u'-16 days, 0:00:00',
-                u'stateTimestampFormatted': u'2013-03-09 01:36',
-                u'timeRemaining': 428400,
-                u'timeRemainingFormatted': u'4 days, 23:00:00',
-                u'typeID': 20064,
-                u'typeName': u'Gallente Control Tower Small'
-            }])
+        self.frontend.set_timestamp(1364175409)
+        overview = loads(self.frontend.overview())
+        self.assertEqual(overview['online'], [{
+            u'apiErrorCount': 0,
+            u'apiTimestamp': 1362792986,
+            u'apiTimestampFormatted': u'2013-03-09 01:36',
+            u'auditLabel': u'',
+            u'celestialName': u'6VDT-H III - Moon 1',
+            u'id': 1,
+            u'offlineAt': 1364603809,
+            u'offlineAtFormatted': u'2013-03-30 00:36',
+            u'regionName': u'Fountain',
+            u'state': 4,
+            u'stateName': u'online',
+            u'stateTimestamp': 1362793009,
+            u'stateTimestampDeltaFormatted': u'-16 days, 0:00:00',
+            u'stateTimestampFormatted': u'2013-03-09 01:36',
+            u'timeRemaining': 428400,
+            u'timeRemainingFormatted': u'4 days, 23:00:00',
+            u'typeID': 20064,
+            u'typeName': u'Gallente Control Tower Small'
+        }])

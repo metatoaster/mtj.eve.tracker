@@ -32,6 +32,10 @@ class Json(object):
         # updates but I decided against it.
         assert ITrackerBackend.providedBy(backend)
         self._backend = backend
+        self.set_timestamp()
+
+    def set_timestamp(self, timestamp=None):
+        self.current_timestamp = timestamp or int(time())
 
     @property
     def fuel_names(self):
@@ -79,7 +83,7 @@ class Json(object):
         return json.dumps(result)
 
     def api_usage(self):
-        timestamp = int(time())
+        timestamp = self.current_timestamp
         return [{
             'start_ts': start_ts,
             'start_ts_delta': str(Time('second',
@@ -91,7 +95,7 @@ class Json(object):
             'end_ts_formatted': format_ts(end_ts),
             'state': api_usage_states.get(s, 'unknown'),
         } for start_ts, end_ts, s in
-            sorted(self._backend.currentApiUsage().values(),
+            sorted(self._backend.currentApiUsage(timestamp=timestamp).values(),
                 key=itemgetter(0))]
 
     def api_ts(self, tower_id):
@@ -109,7 +113,7 @@ class Json(object):
         }
 
     def _towers(self):
-        timestamp = int(time())
+        timestamp = self.current_timestamp
         tower_labels = self._backend.getAuditForTable('tower')
 
         def getLabel(id_):
@@ -196,7 +200,7 @@ class Json(object):
             return self.towers()
 
         backend = self._backend
-        timestamp = int(time())
+        timestamp = self.current_timestamp
 
         tower = backend.getTower(tower_id, None)
         if tower is None:
