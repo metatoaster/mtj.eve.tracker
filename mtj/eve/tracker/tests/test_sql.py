@@ -476,6 +476,13 @@ class SqlBackendTestCase(TestCase):
         self.assertEqual(self.backend.getApiTowerIds(), {
             1: (50000, 0), 2: (50001, 0), 5: (29957, 0)})
 
+        # getting specific data back in time should work.
+        self.assertEqual(self.backend.getApiTowerIdTimestamp(3, 12345),
+            {3: (10001, 0)})
+        # fast-forwarding to some point in future where this is gone.
+        self.assertEqual(self.backend.getApiTowerIdTimestamp(3, 54321),
+            {})
+
     def test_4001_tower_api_usage_errors(self):
         m = self.backend.beginApiUsage(123456, 10000)
         self.backend.setTowerApi(1, 123456, 10000, 10000)
@@ -504,6 +511,63 @@ class SqlBackendTestCase(TestCase):
         self.backend.endApiUsage(m, 0, 30004)
         self.assertEqual(self.backend.getApiTowerIds(), {
             1: (30000, 0), 2: (30001, 0), 3: (30001, 0), 4: (30003, 0)})
+
+        # Should all return the same result.
+        self.assertEqual(self.backend.getApiTowerIdTimestamp(3, 12345),
+            {3: (30001, 0)})
+        self.assertEqual(self.backend.getApiTowerIdTimestamp(3, 23456),
+            {3: (30001, 0)})
+        self.assertEqual(self.backend.getApiTowerIdTimestamp(3, 34567),
+            {3: (30001, 0)})
+
+    def test_4002_tower_api_usage_errors(self):
+        m = self.backend.beginApiUsage(123456, 10000)
+        self.backend.setTowerApi(1, 123456, 10000, 10000)
+        self.backend.setTowerApi(2, 123456, 10001, 10001)
+        self.backend.endApiUsage(m, 0, 10001)
+
+        self.assertEqual(self.backend.getApiTowerIdTimestamp(1, 12345),
+            {1: (10000, 0)})
+
+        m = self.backend.beginApiUsage(123456, 20000)
+        self.backend.setTowerApi(1, 123456, 20000, 20000)
+        self.backend.setTowerApi(2, 123456, 20001, 20001, api_error=True)
+        self.backend.endApiUsage(m, 0, 20001)
+
+        # get this from a much later time, but we only have up to 20004.
+        self.assertEqual(self.backend.getApiTowerIdTimestamp(2, 34567),
+            {2: (20001, 1)})
+
+        m = self.backend.beginApiUsage(123456, 30000)
+        self.backend.setTowerApi(1, 123456, 30000, 30000)
+        self.backend.setTowerApi(3, 123456, 30001, 30001)
+        self.backend.endApiUsage(m, 0, 30001)
+
+        # Well, this got retroactively removed in relation to the same
+        # run as above.
+        self.assertEqual(self.backend.getApiTowerIdTimestamp(2, 34567), {})
+        # However, checking tower 3 using really early time will show
+        # that as alive.  No big deal if we actually check the tower
+        # from that time because it wouldn't have existed.
+        self.assertEqual(self.backend.getApiTowerIdTimestamp(3, 12345),
+            {3: (30001, 0)})
+
+        # Problem.  A director quit, keys had to be remade.
+        m = self.backend.beginApiUsage(234567, 40000)
+        self.backend.setTowerApi(1, 234567, 40000, 40000)
+        self.backend.setTowerApi(3, 234567, 40001, 40001)
+        self.backend.endApiUsage(m, 0, 40001)
+
+        # Getting the most recent one shouldn't be a problem.
+        self.assertEqual(self.backend.getApiTowerIdTimestamp(1, 45678),
+            {1: (40000, 0)})
+
+        # Getting a historic one, however....
+        self.assertEqual(self.backend.getApiTowerIdTimestamp(1, 12345), {})
+        # At least until we figure out a way to either do more detailed
+        # API usage recording, or a way to migrate the api_key for old
+        # entries to new, but this may potentially cause unwanted side
+        # effects.
 
     def test_4100_api_add(self):
         self.backend.addApiKey('1234', 'secretvcode')

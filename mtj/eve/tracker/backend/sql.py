@@ -439,6 +439,27 @@ class SQLAlchemyBackend(object):
         session.merge(usage)
         session.commit()
 
+    def getApiTowerIdTimestamp(self, id_, timestamp):
+        # Get the timestamp of the most recent completed usage prior to
+        # timestamp.
+        completed = self.completedApiUsage(timestamp)
+
+        conditions = []
+        for k, v in completed.iteritems():
+            begin, end, state = v
+            # Use that timestamp and find the tower api entry iff it's
+            # after that.  This completes the conditional check.
+            conditions.append(
+                (TowerApi.api_key == k) & (TowerApi.timestamp >= begin))
+
+        session = self.session()
+        q = session.query(TowerApi.tower_id, TowerApi.currentTime,
+            TowerApi.api_error_count).filter(and_(
+                or_(*conditions),
+                TowerApi.tower_id == id_),
+            )
+        return {i[0]: ApiTowerStatus(i[1], i[2]) for i in q.all()}
+
     def getApiTowerIds(self):
         completed = self.completedApiUsage()
 
@@ -456,8 +477,10 @@ class SQLAlchemyBackend(object):
     def cacheApiTowerIds(self):
         self._api_tower_ids = self.getApiTowerIds()
 
-    def getTowerApiTimestamp(self, id_):
-        return self._api_tower_ids.get(id_, None)
+    def getTowerApiTimestamp(self, id_, timestamp=None):
+        if timestamp is None:
+            return self._api_tower_ids.get(id_, None)
+        return self.getApiTowerIdTimestamp(self, id_, timestamp)
 
     def reinstantiate(self):
         """
