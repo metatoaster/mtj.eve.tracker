@@ -17,6 +17,7 @@ from mtj.eve.tracker.interfaces import IAPIKeyManager
 from mtj.eve.tracker.backend.interfaces import ISQLAlchemyBackend
 from mtj.eve.tracker.backend.interfaces import ISQLAPIKeyManager
 from mtj.eve.tracker.backend.model import ApiTowerStatus
+from mtj.eve.tracker.backend.model import ApiUsage
 from mtj.eve.tracker import pos
 from mtj.eve.tracker import evelink
 
@@ -356,6 +357,28 @@ class SQLAlchemyBackend(object):
     def session(self):
         return self._sessions()
 
+    def _queryApiUsage(self, gfunc, extrafilters=None, completed=False):
+        session = self.session()
+        logs = session.query(ApiUsageLog)
+        logs = logs.order_by(
+            desc(ApiUsageLog.start_ts)).group_by(ApiUsageLog.api_key
+                ).having(gfunc(ApiUsageLog.start_ts))
+
+        if completed:
+            logs = logs.filter((ApiUsageLog.end_ts != None) &
+                (ApiUsageLog.state == 0))
+
+        if extrafilters is not None:
+            logs = logs.filter(extrafilters)
+
+        results = {log.api_key: ApiUsage(log.start_ts, log.end_ts, log.state)
+            for log in logs}
+
+        return results
+
+    def earliestApiUsage(self, completed=False):
+        return self._queryApiUsage(func.min, completed=completed)
+
     def currentApiUsage(self, completed=False, timestamp=None):
         """
         Report the current Api usage.
@@ -386,25 +409,15 @@ class SQLAlchemyBackend(object):
             filters usage entries up to that timestamp, inclusive.
         """
 
-        # query for stuff
-        session = self.session()
-        logs = session.query(ApiUsageLog)
-
-        logs = logs.order_by(
-            desc(ApiUsageLog.start_ts)).group_by(ApiUsageLog.api_key
-                ).having(func.max(ApiUsageLog.start_ts))
-
-        if completed:
-            logs = logs.filter((ApiUsageLog.end_ts != None) &
-                (ApiUsageLog.state == 0))
-
-        if timestamp:
-            logs = logs.filter((ApiUsageLog.start_ts <= timestamp))
-
+        extrafilters = None
         results = {}
-        for log in logs:
-            results[log.api_key] = (log.start_ts, log.end_ts, log.state)
-
+        if timestamp:
+            # ensure that the minimum time that falls out the filter
+            # will also be returned.
+            results.update(self.earliestApiUsage(completed=completed))
+            extrafilters = (ApiUsageLog.start_ts <= timestamp)
+        results.update(
+            self._queryApiUsage(func.max, extrafilters, completed=completed))
         return results
 
     def completedApiUsage(self, timestamp=None):
@@ -444,21 +457,23 @@ class SQLAlchemyBackend(object):
         # timestamp.
         completed = self.completedApiUsage(timestamp)
 
-        conditions = []
-        for k, v in completed.iteritems():
-            begin, end, state = v
-            # Use that timestamp and find the tower api entry iff it's
-            # after that.  This completes the conditional check.
-            conditions.append(
-                (TowerApi.api_key == k) & (TowerApi.timestamp >= begin))
+        #conditions = []
+        #for k, v in completed.iteritems():
+        #    begin, end, state = v
+        #    # Use that timestamp and find the tower api entry iff it's
+        #    # after that.  This completes the conditional check.
+        #    conditions.append(
+        #        (TowerApi.api_key == k) & (TowerApi.timestamp >= begin))
 
         session = self.session()
-        q = session.query(TowerApi.tower_id, TowerApi.currentTime,
-            TowerApi.api_error_count).filter(and_(
-                or_(*conditions),
-                TowerApi.tower_id == id_),
-            )
-        return {i[0]: ApiTowerStatus(i[1], i[2]) for i in q.all()}
+        q = session.query(TowerApi).filter(TowerApi.tower_id == id_)
+        r = q.one()
+        check = completed.get(r.api_key)
+        if not check:
+            return {}
+        if r.timestamp < check.start_ts:
+            return {}
+        return {r.tower_id: ApiTowerStatus(r.currentTime, r.api_error_count)}
 
     def getApiTowerIds(self):
         completed = self.completedApiUsage()
