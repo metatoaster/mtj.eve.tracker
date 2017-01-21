@@ -98,7 +98,7 @@ class LogiCommand(Command):
 
         def report_by_region(by_region):
             lines = []
-            for region, towers in by_region.iteritems():
+            for region, towers in by_region.items():
                 lines.append(region + ' towers<br/>')
                 for tower in towers:
                     tower['auditLabel'] = tower['auditLabel'] or \
