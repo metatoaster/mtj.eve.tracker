@@ -49,6 +49,13 @@ class LogiCommand(Command):
         self.tower_root = kw.pop('tracker_tower_root')
         self.overview = kw.pop('tracker_overview')
         self.backdoor = kw.pop('tracker_backdoor')
+
+        self.stale_threshold = kw.pop('tracker_stale_threshold', 3600)
+        self.stale_message = kw.pop(
+            'tracker_stale_message',
+            'Last update: %(state)s since %(time)s ago.'
+        )
+
         self.error_format_string = kw.pop('error_format_string', '')
 
         self.cache = {}
@@ -140,23 +147,41 @@ class LogiCommand(Command):
         # otherwise return a blank string to not say anything.
         return ''
 
+    def format_usage(
+            self, data,
+            format_str='Update %(state)s since %(time)s ago.',
+            threshold=0,
+            ):
+        # XXX only using the latest entry, so no support for
+        # multiple keys
+        api_usage = data.get('api_usage', [])
+        if not api_usage:
+            return 'Warning: tracker update status unknown.'
+        usage = api_usage[-1]
+        delta = time() - (usage['end_ts'] or usage['start_ts'])
+        if threshold and delta < threshold:
+            return ''
+        return format_str % {
+            'state': usage['state'],
+            'time': (usage['end_ts_delta'] or usage['start_ts_delta']),
+        }
+
     @handle_tracker_error
     def ok_fuel(self, **kw):
         data = self._overview()
         safe = 'There are no towers with low fuel levels.'
-        api_usage = data.get('api_usage', [])
-        usage_str = 'Update status unknown.'
-        if api_usage:
-            # XXX only using the latest entry, so no support for
-            # multiple keys
-            usage = api_usage[-1]
-            usage_str = 'Update %s since %s ago.' % (
-                usage['state'],
-                (usage['end_ts_delta'] or usage['start_ts_delta']),
-            )
+        usage_str = self.format_usage(data)
         if data.get('online'):
             return usage_str
         return safe + '\n' + usage_str
+
+    @handle_tracker_error
+    def stale_state(self, **kw):
+        data = self._overview()
+        result = self.format_usage(
+            data, self.stale_message, self.stale_threshold)
+        if result:
+            return result
 
     @handle_tracker_error
     def reinforced(self, **kw):
